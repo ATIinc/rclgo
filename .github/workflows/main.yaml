@@ -1,7 +1,7 @@
 name: main
 
 env:
-  ROS_DISTRO: humble
+  ROS_DISTRO: iron
 
 on:
   push:
