@@ -24,7 +24,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-const correctDistro = "humble"
+const defaultDistro = "humble"
 
 func validateGenerateArgs(cmd *cobra.Command, _ []string) error {
 	rootPaths := getRootPaths(cmd)
@@ -37,11 +37,11 @@ func validateGenerateArgs(cmd *cobra.Command, _ []string) error {
 
 	distro := os.Getenv("ROS_DISTRO")
 	if getBool(cmd, "ignore-ros-distro-mismatch") {
-		if distro != correctDistro {
-			gogen.PrintErrf("NOTE: Environment variable ROS_DISTRO is set to %q, generating files for %q\n", distro, correctDistro)
+		if distro != defaultDistro {
+			gogen.PrintErrf("NOTE: Environment variable ROS_DISTRO is set to %q, generating files for %q\n", distro, defaultDistro)
 		}
-	} else if distro != correctDistro {
-		return fmt.Errorf("ROS_DISTRO should be set to %q", correctDistro)
+	} else if distro != defaultDistro {
+		return fmt.Errorf("ROS_DISTRO should be set to %q", defaultDistro)
 	}
 
 	destPath := getString(cmd, "dest-path")

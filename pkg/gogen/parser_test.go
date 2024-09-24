@@ -15,6 +15,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"testing"
+	"os"
 
 	"github.com/bradleyjkemp/cupaloy/v2"
 	. "github.com/smartystreets/goconvey/convey" //nolint:revive
@@ -279,9 +280,10 @@ func TestSerDesSimple(t *testing.T) {
 
 func TestBlacklist(t *testing.T) {
 	SetDefaultFailureMode(FailureContinues)
+	distro := os.Getenv("ROS_DISTRO")
 
 	Convey("Blacklist", t, func() {
-		skip, blacklistEntry := blacklisted("/opt/ros/humble/this-is-a-test-blacklist-entry-do-not-remove-used-for-internal-testing/msgs/Lol.msg")
+		skip, blacklistEntry := blacklisted("/opt/ros/" + distro + "/this-is-a-test-blacklist-entry-do-not-remove-used-for-internal-testing/msgs/Lol.msg")
 		So(skip, ShouldBeTrue)
 		So(blacklistEntry, ShouldEqual, "this-is-a-test-blacklist-entry-do-not-remove-used-for-internal-testing")
 	})
