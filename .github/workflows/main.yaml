@@ -1,5 +1,8 @@
 name: main
 
+env:
+  ROS_DISTRO: humble
+
 on:
   push:
     branches: [main]
@@ -21,9 +24,9 @@ jobs:
           apt-get update
           apt-get install -y \
             make \
-            ros-humble-action-msgs \
-            ros-humble-example-interfaces \
-            ros-humble-test-msgs
+            ros-${ROS_DISTRO}-action-msgs \
+            ros-${ROS_DISTRO}-example-interfaces \
+            ros-${ROS_DISTRO}-test-msgs
 
       - name: Run tests
         run: make test
@@ -39,9 +42,9 @@ jobs:
         run: |
           apt-get update
           apt-get install -y \
-            ros-humble-action-msgs \
-            ros-humble-example-interfaces \
-            ros-humble-test-msgs
+            ros-${ROS_DISTRO}-action-msgs \
+            ros-${ROS_DISTRO}-example-interfaces \
+            ros-${ROS_DISTRO}-test-msgs
           env > "$GITHUB_ENV"
 
       - uses: golangci/golangci-lint-action@v3
