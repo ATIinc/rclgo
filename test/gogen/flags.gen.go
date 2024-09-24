@@ -20,13 +20,13 @@ package test
 #cgo CFLAGS: "-I/usr/include/std_msgs"
 #cgo CFLAGS: "-I/usr/include/test_msgs"
 
-#cgo LDFLAGS: "-L/opt/ros/humble/lib" "-Wl,-rpath=/opt/ros/humble/lib"
-#cgo CFLAGS: "-I/opt/ros/humble/include/builtin_interfaces"
-#cgo CFLAGS: "-I/opt/ros/humble/include/rosidl_runtime_c"
-#cgo CFLAGS: "-I/opt/ros/humble/include/rosidl_typesupport_interface"
-#cgo CFLAGS: "-I/opt/ros/humble/include/sensor_msgs"
-#cgo CFLAGS: "-I/opt/ros/humble/include/std_msgs"
-#cgo CFLAGS: "-I/opt/ros/humble/include/test_msgs"
+#cgo LDFLAGS: "-L/opt/ros/${ROS_DISTRO}/lib" "-Wl,-rpath=/opt/ros/${ROS_DISTRO}/lib"
+#cgo CFLAGS: "-I/opt/ros/${ROS_DISTRO}/include/builtin_interfaces"
+#cgo CFLAGS: "-I/opt/ros/${ROS_DISTRO}/include/rosidl_runtime_c"
+#cgo CFLAGS: "-I/opt/ros/${ROS_DISTRO}/include/rosidl_typesupport_interface"
+#cgo CFLAGS: "-I/opt/ros/${ROS_DISTRO}/include/sensor_msgs"
+#cgo CFLAGS: "-I/opt/ros/${ROS_DISTRO}/include/std_msgs"
+#cgo CFLAGS: "-I/opt/ros/${ROS_DISTRO}/include/test_msgs"
 
 #cgo LDFLAGS: -lrcl -lrcl_interfaces__rosidl_typesupport_c -lrcutils
 #cgo LDFLAGS: -lrmw_implementation -lrosidl_runtime_c -lrosidl_typesupport_c
