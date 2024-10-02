@@ -5,8 +5,8 @@ import (
 	"context"
 	"errors"
 
-	example_interfaces_action "github.com/tiiuae/rclgo/internal/msgs/example_interfaces/action"
-	"github.com/tiiuae/rclgo/pkg/rclgo"
+	example_interfaces_action "github.com/ATIinc/rclgo/internal/msgs/example_interfaces/action"
+	"github.com/ATIinc/rclgo/pkg/rclgo"
 )
 
 var typeSafeFibonacci = example_interfaces_action.NewFibonacciAction(

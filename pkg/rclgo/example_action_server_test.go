@@ -5,9 +5,9 @@ import (
 	"context"
 	"errors"
 
-	example_interfaces_action "github.com/tiiuae/rclgo/internal/msgs/example_interfaces/action"
-	"github.com/tiiuae/rclgo/pkg/rclgo"
-	"github.com/tiiuae/rclgo/pkg/rclgo/types"
+	example_interfaces_action "github.com/ATIinc/rclgo/internal/msgs/example_interfaces/action"
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 )
 
 var fibonacci = rclgo.NewAction(

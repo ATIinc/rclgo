@@ -30,7 +30,7 @@ generate:
 	    --root-path /usr \
 	    --root-path /opt/ros/${ROS_DISTRO} \
 	    --dest-path "$$dest_path" \
-		--message-module-prefix "github.com/tiiuae/rclgo/$$dest_path" \
+		--message-module-prefix "github.com/ATIinc/rclgo/$$dest_path" \
 		--license-header-path ./license-header.txt \
 		--include-go-package-deps ./... \
 		--cgo-flags-path "" \

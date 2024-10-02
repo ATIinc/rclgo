@@ -17,7 +17,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/tiiuae/rclgo/pkg/rclgo/types"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 )
 
 func NewDefaultStatusQosProfile() QosProfile {
