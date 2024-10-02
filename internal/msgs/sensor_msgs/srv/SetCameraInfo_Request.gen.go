@@ -13,10 +13,10 @@ package sensor_msgs_srv
 import (
 	"unsafe"
 
-	"github.com/tiiuae/rclgo/pkg/rclgo"
-	"github.com/tiiuae/rclgo/pkg/rclgo/types"
-	"github.com/tiiuae/rclgo/pkg/rclgo/typemap"
-	sensor_msgs_msg "github.com/tiiuae/rclgo/internal/msgs/sensor_msgs/msg"
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
+	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
+	sensor_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/sensor_msgs/msg"
 	
 )
 /*

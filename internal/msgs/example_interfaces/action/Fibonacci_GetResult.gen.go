@@ -22,9 +22,9 @@ import (
 	"errors"
 	"unsafe"
 
-	"github.com/tiiuae/rclgo/pkg/rclgo"
-	"github.com/tiiuae/rclgo/pkg/rclgo/typemap"
-	"github.com/tiiuae/rclgo/pkg/rclgo/types"
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 )
 
 func init() {

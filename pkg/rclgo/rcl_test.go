@@ -10,9 +10,9 @@ import (
 	"sync"
 	"testing"
 
+	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
+	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/stretchr/testify/require"
-	std_msgs_msg "github.com/tiiuae/rclgo/internal/msgs/std_msgs/msg"
-	"github.com/tiiuae/rclgo/pkg/rclgo"
 )
 
 var (

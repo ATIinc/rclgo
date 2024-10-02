@@ -17,10 +17,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/ATIinc/rclgo/pkg/gogen"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/tiiuae/rclgo/pkg/gogen"
 	"golang.org/x/tools/go/packages"
 )
 
