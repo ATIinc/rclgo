@@ -1,4 +1,4 @@
-module github.com/tiiuae/rclgo
+module github.com/ATIinc/rclgo
 
 go 1.20
 
@@ -36,6 +36,5 @@ require (
 	golang.org/x/mod v0.11.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 )
