@@ -32,5 +32,8 @@ ENV CGO_CFLAGS="-I/opt/ros/${ROS_DISTRO}/include/action_msgs \
 
 ENV CGO_LDFLAGS='-L/opt/ros/${ROS_DISTRO}/lib -Wl,-rpath=/opt/ros/${ROS_DISTRO}/lib '
 
-# Set the default entrypoint
-ENTRYPOINT [ "/ros_entrypoint.sh" ]
+# Source the ros2 installation (based on the original Dockerfile: https://github.com/josegron/fog-ros-baseimage/tree/main)
+SHELL [ "/bin/bash", "-c" ]
+
+ENV BASH_ENV="/opt/ros/$ROS_DISTRO/setup.bash"
+RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /etc/bash.bashrc
