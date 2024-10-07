@@ -1,17 +1,10 @@
 ARG ROS_DISTRO=iron
+# NOTE: This image is pushed to the docker hub to be accessible to the GitHub Actions
 
 FROM ros:${ROS_DISTRO}
 
-# This is pushed to the docker hub to be accessible to the GitHub Actions
-
-# Install the golang package
-RUN apt update && apt install -y \
-  wget
-
-# Install the specific golang version
-RUN cd /tmp \
-  && wget https://go.dev/dl/go1.23.2.linux-amd64.tar.gz \
-  && tar -C /usr/local -xzf go1.23.2.linux-amd64.tar.gz
+# Install the specific golang version from the official golang image
+COPY --from=golang:1.23.0-bookworm --chmod=777 /usr/local/go/ /usr/local/go/
 
 ENV PATH="$PATH:/usr/local/go/bin"
 
