@@ -33,4 +33,4 @@ ENV CGO_CFLAGS="-I/opt/ros/${ROS_DISTRO}/include/action_msgs \
 ENV CGO_LDFLAGS='-L/opt/ros/${ROS_DISTRO}/lib -Wl,-rpath=/opt/ros/${ROS_DISTRO}/lib '
 
 # Set the default entrypoint
-CMD [ "/ros_entrypoint.sh" ]
+ENTRYPOINT [ "/ros_entrypoint.sh" ]
