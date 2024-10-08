@@ -34,8 +34,10 @@ jobs:
   run-linter:
     runs-on: ubuntu-latest
     container: atijan/ros2-iron-golang
+    env:
+      GOFLAGS: -buildvcs=false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Prepare environment
         shell: bash
@@ -46,5 +48,5 @@ jobs:
             ros-${ROS_DISTRO}-example-interfaces \
             ros-${ROS_DISTRO}-test-msgs
           env > "$GITHUB_ENV"
-
+        
       - uses: golangci/golangci-lint-action@v6
