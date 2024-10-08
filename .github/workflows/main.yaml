@@ -48,5 +48,5 @@ jobs:
             ros-${ROS_DISTRO}-example-interfaces \
             ros-${ROS_DISTRO}-test-msgs
           env > "$GITHUB_ENV"
-        
-      - uses: golangci/golangci-lint-action@v6
+
+      - uses: golangci/golangci-lint-action@v3
