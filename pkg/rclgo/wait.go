@@ -200,7 +200,11 @@ func (w *WaitSet) Run(ctx context.Context) (err error) {
 			return err
 		}
 		if rc := C.rcl_wait(&w.rcl_wait_set_t, -1); rc != C.RCL_RET_OK {
-			return errorsCast(rc)
+			if rc == C.RCL_RET_TIMEOUT {
+				continue
+			} else {
+				return errorsCast(rc)
+			}
 		}
 		guardConditions := unsafe.Slice(w.rcl_wait_set_t.guard_conditions, len(w.guardConditions))
 		for i := range w.guardConditions {
