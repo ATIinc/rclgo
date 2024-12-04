@@ -199,9 +199,17 @@ func (w *WaitSet) Run(ctx context.Context) (err error) {
 		if err := w.initEntities(); err != nil {
 			return err
 		}
-		if rc := C.rcl_wait(&w.rcl_wait_set_t, -1); rc != C.RCL_RET_OK {
+		rc := C.rcl_wait(&w.rcl_wait_set_t, -1)
+
+		switch rc {
+		case C.RCL_RET_OK:
+			break
+		case C.RCL_RET_TIMEOUT:
+			continue
+		default:
 			return errorsCast(rc)
 		}
+
 		guardConditions := unsafe.Slice(w.rcl_wait_set_t.guard_conditions, len(w.guardConditions))
 		for i := range w.guardConditions {
 			if guardConditions[i] == w.cancelWait.rclGuardCondition {
