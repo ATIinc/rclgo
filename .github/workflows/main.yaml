@@ -1,7 +1,7 @@
 name: main
 
 env:
-  ROS_DISTRO: iron
+  ROS_DISTRO: humble
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
 jobs:
   run-tests:
     runs-on: ubuntu-latest
-    container: ros:iron
+    container: ros:humble
     env:
       GOFLAGS: -buildvcs=false
     steps:
@@ -33,7 +33,7 @@ jobs:
 
   run-linter:
     runs-on: ubuntu-latest
-    container: ros:iron
+    container: ros:humble
     steps:
       - uses: actions/checkout@v3
 
