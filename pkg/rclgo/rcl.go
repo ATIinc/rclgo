@@ -603,13 +603,14 @@ func (c *Context) NewTimer(timeout time.Duration, timer_callback func(*Timer)) (
 	*timer.rcl_timer_t = C.rcl_get_zero_initialized_timer()
 	defer onErr(&err, timer.Close)
 
-	rc := C.rcl_timer_init(
+	rc := C.rcl_timer_init2(
 		timer.rcl_timer_t,
 		c.Clock().rcl_clock_t,
 		c.rcl_context_t,
 		C.int64_t(timeout),
 		nil,
 		*c.rcl_allocator_t,
+        true,
 	)
 	if rc != C.RCL_RET_OK {
 		return nil, errorsCast(rc)
