@@ -98,7 +98,7 @@ type BasicTypesService struct {
 func NewBasicTypesService(node *rclgo.Node, name string, options *rclgo.ServiceOptions, handler BasicTypesServiceRequestHandler) (*BasicTypesService, error) {
 	h := func(rmw *rclgo.ServiceInfo, msg types.Message, rs rclgo.ServiceResponseSender) {
 		m := msg.(*BasicTypes_Request)
-		responseSender := BasicTypesServiceResponseSender{sender: rs} 
+		responseSender := BasicTypesServiceResponseSender{sender: rs}
 		handler(rmw, m, responseSender)
 	}
 	service, err := node.NewService(name, BasicTypesTypeSupport, options, h)

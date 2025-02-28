@@ -17,7 +17,7 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	unique_identifier_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/unique_identifier_msgs/msg"
-	
+
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>

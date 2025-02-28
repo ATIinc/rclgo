@@ -98,7 +98,7 @@ type NestedMessage_GetResultService struct {
 func NewNestedMessage_GetResultService(node *rclgo.Node, name string, options *rclgo.ServiceOptions, handler NestedMessage_GetResultServiceRequestHandler) (*NestedMessage_GetResultService, error) {
 	h := func(rmw *rclgo.ServiceInfo, msg types.Message, rs rclgo.ServiceResponseSender) {
 		m := msg.(*NestedMessage_GetResult_Request)
-		responseSender := NestedMessage_GetResultServiceResponseSender{sender: rs} 
+		responseSender := NestedMessage_GetResultServiceResponseSender{sender: rs}
 		handler(rmw, m, responseSender)
 	}
 	service, err := node.NewService(name, NestedMessage_GetResultTypeSupport, options, h)

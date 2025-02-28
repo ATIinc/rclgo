@@ -98,7 +98,7 @@ type AddTwoIntsService struct {
 func NewAddTwoIntsService(node *rclgo.Node, name string, options *rclgo.ServiceOptions, handler AddTwoIntsServiceRequestHandler) (*AddTwoIntsService, error) {
 	h := func(rmw *rclgo.ServiceInfo, msg types.Message, rs rclgo.ServiceResponseSender) {
 		m := msg.(*AddTwoInts_Request)
-		responseSender := AddTwoIntsServiceResponseSender{sender: rs} 
+		responseSender := AddTwoIntsServiceResponseSender{sender: rs}
 		handler(rmw, m, responseSender)
 	}
 	service, err := node.NewService(name, AddTwoIntsTypeSupport, options, h)

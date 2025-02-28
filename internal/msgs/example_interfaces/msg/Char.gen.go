@@ -16,7 +16,7 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-	
+
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>

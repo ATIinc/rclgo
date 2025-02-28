@@ -98,7 +98,7 @@ type Fibonacci_GetResultService struct {
 func NewFibonacci_GetResultService(node *rclgo.Node, name string, options *rclgo.ServiceOptions, handler Fibonacci_GetResultServiceRequestHandler) (*Fibonacci_GetResultService, error) {
 	h := func(rmw *rclgo.ServiceInfo, msg types.Message, rs rclgo.ServiceResponseSender) {
 		m := msg.(*Fibonacci_GetResult_Request)
-		responseSender := Fibonacci_GetResultServiceResponseSender{sender: rs} 
+		responseSender := Fibonacci_GetResultServiceResponseSender{sender: rs}
 		handler(rmw, m, responseSender)
 	}
 	service, err := node.NewService(name, Fibonacci_GetResultTypeSupport, options, h)

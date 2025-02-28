@@ -18,7 +18,7 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	geometry_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/geometry_msgs/msg"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
-	
+
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>

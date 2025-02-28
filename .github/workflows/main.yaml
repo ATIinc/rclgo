@@ -1,7 +1,7 @@
 name: main
 
 env:
-  ROS_DISTRO: iron
+  ROS_DISTRO: jazzy
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
 jobs:
   run-tests:
     runs-on: ubuntu-latest
-    container: ros:iron
+    container: ros:jazzy
     env:
       GOFLAGS: -buildvcs=false
     steps:
@@ -24,16 +24,16 @@ jobs:
           apt-get update
           apt-get install -y \
             make \
-            ros-${ROS_DISTRO}-action-msgs \
-            ros-${ROS_DISTRO}-example-interfaces \
-            ros-${ROS_DISTRO}-test-msgs
+            ros-jazzy-action-msgs \
+            ros-jazzy-example-interfaces \
+            ros-jazzy-test-msgs
 
       - name: Run tests
         run: make test
 
   run-linter:
     runs-on: ubuntu-latest
-    container: ros:iron
+    container: ros:jazzy
     steps:
       - uses: actions/checkout@v3
 
@@ -42,9 +42,9 @@ jobs:
         run: |
           apt-get update
           apt-get install -y \
-            ros-${ROS_DISTRO}-action-msgs \
-            ros-${ROS_DISTRO}-example-interfaces \
-            ros-${ROS_DISTRO}-test-msgs
+            ros-jazzy-action-msgs \
+            ros-jazzy-example-interfaces \
+            ros-jazzy-test-msgs
           env > "$GITHUB_ENV"
 
       - uses: golangci/golangci-lint-action@v3

@@ -6,9 +6,9 @@ package test
 import (
 	"testing"
 
+	. "github.com/smartystreets/goconvey/convey" //nolint:revive
 	std_srvs_srv "github.com/ATIinc/rclgo/internal/msgs/std_srvs/srv"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-	. "github.com/smartystreets/goconvey/convey" //nolint:revive
 )
 
 func TestGetService(t *testing.T) {

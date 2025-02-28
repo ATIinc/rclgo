@@ -152,7 +152,7 @@ int8 ERROR_GOAL_TERMINATED=3
 int8 return_code
 
 # Goals that accepted the cancel request.
-GoalInfo[] goals_canceling		
+GoalInfo[] goals_canceling
 `)
 		testParseService("tf2_msgs", "FrameGraph", `
 ---
@@ -283,7 +283,7 @@ func TestBlacklist(t *testing.T) {
 	distro := os.Getenv("ROS_DISTRO")
 
 	Convey("Blacklist", t, func() {
-		skip, blacklistEntry := blacklisted("/opt/ros/" + distro + "/this-is-a-test-blacklist-entry-do-not-remove-used-for-internal-testing/msgs/Lol.msg")
+		skip, blacklistEntry := blacklisted("/opt/ros/jazzy/this-is-a-test-blacklist-entry-do-not-remove-used-for-internal-testing/msgs/Lol.msg")
 		So(skip, ShouldBeTrue)
 		So(blacklistEntry, ShouldEqual, "this-is-a-test-blacklist-entry-do-not-remove-used-for-internal-testing")
 	})

@@ -14,8 +14,8 @@ package primitives
 /*
 #cgo LDFLAGS: "-L/usr/lib" "-Wl,-rpath=/usr/lib"
 #cgo CFLAGS: "-I/usr/include/rosidl_runtime_c"
-#cgo LDFLAGS: "-L/opt/ros/iron/lib" "-Wl,-rpath=/opt/ros/iron/lib"
-#cgo CFLAGS: "-I/opt/ros/iron/include/rosidl_runtime_c"
+#cgo LDFLAGS: "-L/opt/ros/jazzy/lib" "-Wl,-rpath=/opt/ros/jazzy/lib"
+#cgo CFLAGS: "-I/opt/ros/jazzy/include/rosidl_runtime_c"
 
 #cgo LDFLAGS: -lrcl -lrosidl_runtime_c -lrosidl_typesupport_c -lrcutils -lrmw_implementation
 

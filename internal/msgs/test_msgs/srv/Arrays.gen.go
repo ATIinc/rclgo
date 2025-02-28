@@ -98,7 +98,7 @@ type ArraysService struct {
 func NewArraysService(node *rclgo.Node, name string, options *rclgo.ServiceOptions, handler ArraysServiceRequestHandler) (*ArraysService, error) {
 	h := func(rmw *rclgo.ServiceInfo, msg types.Message, rs rclgo.ServiceResponseSender) {
 		m := msg.(*Arrays_Request)
-		responseSender := ArraysServiceResponseSender{sender: rs} 
+		responseSender := ArraysServiceResponseSender{sender: rs}
 		handler(rmw, m, responseSender)
 	}
 	service, err := node.NewService(name, ArraysTypeSupport, options, h)

@@ -18,7 +18,7 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	builtin_interfaces_msg "github.com/ATIinc/rclgo/internal/msgs/builtin_interfaces/msg"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-	
+
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
