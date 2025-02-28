@@ -19,10 +19,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	. "github.com/smartystreets/goconvey/convey" //nolint:revive
-	std_msgs "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
-	test_msgs "github.com/ATIinc/rclgo/internal/msgs/test_msgs/msg"
-	"github.com/ATIinc/rclgo/pkg/rclgo"
-	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"gopkg.in/yaml.v3"
 )
 
