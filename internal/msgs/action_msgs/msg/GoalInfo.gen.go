@@ -13,12 +13,12 @@ package action_msgs_msg
 import (
 	"unsafe"
 
-	"github.com/PolibaX/rclgo/pkg/rclgo"
-	"github.com/PolibaX/rclgo/pkg/rclgo/types"
-	"github.com/PolibaX/rclgo/pkg/rclgo/typemap"
-	builtin_interfaces_msg "github.com/PolibaX/rclgo/internal/msgs/builtin_interfaces/msg"
-	unique_identifier_msgs_msg "github.com/PolibaX/rclgo/internal/msgs/unique_identifier_msgs/msg"
-	
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
+	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
+	builtin_interfaces_msg "github.com/ATIinc/rclgo/internal/msgs/builtin_interfaces/msg"
+	unique_identifier_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/unique_identifier_msgs/msg"
+
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>

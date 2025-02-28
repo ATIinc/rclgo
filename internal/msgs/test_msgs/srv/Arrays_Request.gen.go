@@ -13,12 +13,12 @@ package test_msgs_srv
 import (
 	"unsafe"
 
-	"github.com/PolibaX/rclgo/pkg/rclgo"
-	"github.com/PolibaX/rclgo/pkg/rclgo/types"
-	"github.com/PolibaX/rclgo/pkg/rclgo/typemap"
-	test_msgs_msg "github.com/PolibaX/rclgo/internal/msgs/test_msgs/msg"
-	primitives "github.com/PolibaX/rclgo/pkg/rclgo/primitives"
-	
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
+	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
+	test_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/test_msgs/msg"
+	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
+
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>

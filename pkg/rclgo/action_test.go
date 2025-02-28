@@ -8,14 +8,19 @@ import (
 	"testing"
 	"time"
 
+	action_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/action_msgs/msg"
+	action_msgs_srv "github.com/ATIinc/rclgo/internal/msgs/action_msgs/srv"
+	test_msgs_action "github.com/ATIinc/rclgo/internal/msgs/test_msgs/action"
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/bradleyjkemp/cupaloy/v2"
 	. "github.com/smartystreets/goconvey/convey" //nolint:revive
 	"github.com/stretchr/testify/require"
-	action_msgs_msg "github.com/PolibaX/rclgo/internal/msgs/action_msgs/msg"
-	action_msgs_srv "github.com/PolibaX/rclgo/internal/msgs/action_msgs/srv"
-	test_msgs_action "github.com/PolibaX/rclgo/internal/msgs/test_msgs/action"
-	"github.com/PolibaX/rclgo/pkg/rclgo"
-	"github.com/PolibaX/rclgo/pkg/rclgo/types"
+	action_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/action_msgs/msg"
+	action_msgs_srv "github.com/ATIinc/rclgo/internal/msgs/action_msgs/srv"
+	test_msgs_action "github.com/ATIinc/rclgo/internal/msgs/test_msgs/action"
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 )
 
 var (

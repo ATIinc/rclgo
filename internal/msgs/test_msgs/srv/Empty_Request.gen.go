@@ -13,10 +13,10 @@ package test_msgs_srv
 import (
 	"unsafe"
 
-	"github.com/PolibaX/rclgo/pkg/rclgo"
-	"github.com/PolibaX/rclgo/pkg/rclgo/types"
-	"github.com/PolibaX/rclgo/pkg/rclgo/typemap"
-	
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
+	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
+
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -132,11 +132,11 @@ func (t _Empty_RequestTypeSupport) ReleaseMemory(pointer_to_free unsafe.Pointer)
 }
 
 func (t _Empty_RequestTypeSupport) AsCStruct(dst unsafe.Pointer, msg types.Message) {
-	
+
 }
 
 func (t _Empty_RequestTypeSupport) AsGoStruct(msg types.Message, ros2_message_buffer unsafe.Pointer) {
-	
+
 }
 
 func (t _Empty_RequestTypeSupport) TypeSupport() unsafe.Pointer {

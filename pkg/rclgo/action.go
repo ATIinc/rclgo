@@ -17,7 +17,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/PolibaX/rclgo/pkg/rclgo/types"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 )
 
 func NewDefaultStatusQosProfile() QosProfile {

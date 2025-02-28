@@ -13,11 +13,11 @@ package unique_identifier_msgs_msg
 import (
 	"unsafe"
 
-	"github.com/PolibaX/rclgo/pkg/rclgo"
-	"github.com/PolibaX/rclgo/pkg/rclgo/types"
-	"github.com/PolibaX/rclgo/pkg/rclgo/typemap"
-	primitives "github.com/PolibaX/rclgo/pkg/rclgo/primitives"
-	
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
+	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
+	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
+
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>

@@ -13,10 +13,10 @@ package geometry_msgs_msg
 import (
 	"unsafe"
 
-	"github.com/PolibaX/rclgo/pkg/rclgo"
-	"github.com/PolibaX/rclgo/pkg/rclgo/types"
-	"github.com/PolibaX/rclgo/pkg/rclgo/typemap"
-	
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
+	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
+
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>

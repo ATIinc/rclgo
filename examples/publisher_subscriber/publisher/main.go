@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"time"
 
-	std_msgs_msg "github.com/PolibaX/rclgo/examples/publisher_subscriber/msgs/std_msgs/msg"
-	"github.com/PolibaX/rclgo/pkg/rclgo"
+	std_msgs_msg "github.com/ATIinc/rclgo/examples/publisher_subscriber/msgs/std_msgs/msg"
+	"github.com/ATIinc/rclgo/pkg/rclgo"
 )
 
 func run() error {

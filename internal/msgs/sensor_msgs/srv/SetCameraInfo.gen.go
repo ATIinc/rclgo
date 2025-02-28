@@ -22,9 +22,9 @@ import (
 	"errors"
 	"unsafe"
 
-	"github.com/PolibaX/rclgo/pkg/rclgo"
-	"github.com/PolibaX/rclgo/pkg/rclgo/typemap"
-	"github.com/PolibaX/rclgo/pkg/rclgo/types"
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 )
 
 func init() {
@@ -98,7 +98,7 @@ type SetCameraInfoService struct {
 func NewSetCameraInfoService(node *rclgo.Node, name string, options *rclgo.ServiceOptions, handler SetCameraInfoServiceRequestHandler) (*SetCameraInfoService, error) {
 	h := func(rmw *rclgo.ServiceInfo, msg types.Message, rs rclgo.ServiceResponseSender) {
 		m := msg.(*SetCameraInfo_Request)
-		responseSender := SetCameraInfoServiceResponseSender{sender: rs} 
+		responseSender := SetCameraInfoServiceResponseSender{sender: rs}
 		handler(rmw, m, responseSender)
 	}
 	service, err := node.NewService(name, SetCameraInfoTypeSupport, options, h)

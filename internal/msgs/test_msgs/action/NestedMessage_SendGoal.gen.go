@@ -22,9 +22,9 @@ import (
 	"errors"
 	"unsafe"
 
-	"github.com/PolibaX/rclgo/pkg/rclgo"
-	"github.com/PolibaX/rclgo/pkg/rclgo/typemap"
-	"github.com/PolibaX/rclgo/pkg/rclgo/types"
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 )
 
 func init() {
@@ -98,7 +98,7 @@ type NestedMessage_SendGoalService struct {
 func NewNestedMessage_SendGoalService(node *rclgo.Node, name string, options *rclgo.ServiceOptions, handler NestedMessage_SendGoalServiceRequestHandler) (*NestedMessage_SendGoalService, error) {
 	h := func(rmw *rclgo.ServiceInfo, msg types.Message, rs rclgo.ServiceResponseSender) {
 		m := msg.(*NestedMessage_SendGoal_Request)
-		responseSender := NestedMessage_SendGoalServiceResponseSender{sender: rs} 
+		responseSender := NestedMessage_SendGoalServiceResponseSender{sender: rs}
 		handler(rmw, m, responseSender)
 	}
 	service, err := node.NewService(name, NestedMessage_SendGoalTypeSupport, options, h)

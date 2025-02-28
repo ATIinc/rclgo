@@ -14,12 +14,17 @@ import (
 	"errors"
 	"testing"
 
+	example_interfaces_action "github.com/ATIinc/rclgo/internal/msgs/example_interfaces/action"
+	std_msgs "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
+	std_srvs_srv "github.com/ATIinc/rclgo/internal/msgs/std_srvs/srv"
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	. "github.com/smartystreets/goconvey/convey" //nolint:revive
-	example_interfaces_action "github.com/PolibaX/rclgo/internal/msgs/example_interfaces/action"
-	std_msgs "github.com/PolibaX/rclgo/internal/msgs/std_msgs/msg"
-	std_srvs_srv "github.com/PolibaX/rclgo/internal/msgs/std_srvs/srv"
-	"github.com/PolibaX/rclgo/pkg/rclgo"
-	"github.com/PolibaX/rclgo/pkg/rclgo/types"
+	example_interfaces_action "github.com/ATIinc/rclgo/internal/msgs/example_interfaces/action"
+	std_msgs "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
+	std_srvs_srv "github.com/ATIinc/rclgo/internal/msgs/std_srvs/srv"
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 )
 
 type noOpAction struct{}

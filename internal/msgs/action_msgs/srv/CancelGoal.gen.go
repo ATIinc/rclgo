@@ -22,9 +22,9 @@ import (
 	"errors"
 	"unsafe"
 
-	"github.com/PolibaX/rclgo/pkg/rclgo"
-	"github.com/PolibaX/rclgo/pkg/rclgo/typemap"
-	"github.com/PolibaX/rclgo/pkg/rclgo/types"
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 )
 
 func init() {
@@ -98,7 +98,7 @@ type CancelGoalService struct {
 func NewCancelGoalService(node *rclgo.Node, name string, options *rclgo.ServiceOptions, handler CancelGoalServiceRequestHandler) (*CancelGoalService, error) {
 	h := func(rmw *rclgo.ServiceInfo, msg types.Message, rs rclgo.ServiceResponseSender) {
 		m := msg.(*CancelGoal_Request)
-		responseSender := CancelGoalServiceResponseSender{sender: rs} 
+		responseSender := CancelGoalServiceResponseSender{sender: rs}
 		handler(rmw, m, responseSender)
 	}
 	service, err := node.NewService(name, CancelGoalTypeSupport, options, h)

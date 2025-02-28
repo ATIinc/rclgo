@@ -5,9 +5,9 @@ import (
 	"context"
 	"fmt"
 
-	example_interfaces_action "github.com/PolibaX/rclgo/internal/msgs/example_interfaces/action"
-	"github.com/PolibaX/rclgo/pkg/rclgo"
-	"github.com/PolibaX/rclgo/pkg/rclgo/types"
+	example_interfaces_action "github.com/ATIinc/rclgo/internal/msgs/example_interfaces/action"
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 )
 
 func ExampleActionClient() {

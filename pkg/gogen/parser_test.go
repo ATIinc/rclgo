@@ -15,6 +15,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"testing"
+	"os"
 
 	"github.com/bradleyjkemp/cupaloy/v2"
 	. "github.com/smartystreets/goconvey/convey" //nolint:revive
@@ -151,7 +152,7 @@ int8 ERROR_GOAL_TERMINATED=3
 int8 return_code
 
 # Goals that accepted the cancel request.
-GoalInfo[] goals_canceling		
+GoalInfo[] goals_canceling
 `)
 		testParseService("tf2_msgs", "FrameGraph", `
 ---
@@ -279,6 +280,7 @@ func TestSerDesSimple(t *testing.T) {
 
 func TestBlacklist(t *testing.T) {
 	SetDefaultFailureMode(FailureContinues)
+	distro := os.Getenv("ROS_DISTRO")
 
 	Convey("Blacklist", t, func() {
 		skip, blacklistEntry := blacklisted("/opt/ros/jazzy/this-is-a-test-blacklist-entry-do-not-remove-used-for-internal-testing/msgs/Lol.msg")

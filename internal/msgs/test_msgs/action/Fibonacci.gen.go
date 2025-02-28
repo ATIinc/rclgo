@@ -22,12 +22,12 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/PolibaX/rclgo/pkg/rclgo"
-	"github.com/PolibaX/rclgo/pkg/rclgo/typemap"
-	"github.com/PolibaX/rclgo/pkg/rclgo/types"
+	"github.com/ATIinc/rclgo/pkg/rclgo"
+	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
+	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 
-	action_msgs_msg "github.com/PolibaX/rclgo/internal/msgs/action_msgs/msg"
-	action_msgs_srv "github.com/PolibaX/rclgo/internal/msgs/action_msgs/srv"
+	action_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/action_msgs/msg"
+	action_msgs_srv "github.com/ATIinc/rclgo/internal/msgs/action_msgs/srv"
 )
 
 func init() {
