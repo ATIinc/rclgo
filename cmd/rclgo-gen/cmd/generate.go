@@ -17,7 +17,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ATIinc/rclgo/pkg/gogen"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -25,7 +24,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-const correctDistro = "jazzy"
+const defaultDistro = "jazzy"
 
 func validateGenerateArgs(cmd *cobra.Command, _ []string) error {
 	rootPaths := getRootPaths(cmd)
