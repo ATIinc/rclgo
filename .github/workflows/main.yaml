@@ -19,6 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '^1.24.3'
+          check-latest: true
+
       - name: Install additional tools and libraries
         run: |
           apt-get update
@@ -36,6 +41,11 @@ jobs:
     container: ros:jazzy
     steps:
       - uses: actions/checkout@v3
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '^1.24.3'
+          check-latest: true
 
       - name: Prepare environment
         shell: bash
