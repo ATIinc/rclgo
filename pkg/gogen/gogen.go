@@ -161,8 +161,24 @@ var rclgoROSIncludes = []string{
 	"unique_identifier_msgs",
 }
 
-func includeDirFlag(rootPath, rosPkg string) string {
-	return fmt.Sprintf("-I%s", filepath.Join(rootPath, "include", rosPkg))
+func includeDir(rootPath, rosPkg string) string {
+	return filepath.Join(rootPath, "include", rosPkg)
+}
+
+func includeDirFlag(path string) string {
+	return fmt.Sprintf("-I%s", path)
+}
+
+func addIncludeDirFlagIfExists(set stringSet, rootPath, rosPkg string) {
+	dir := includeDir(rootPath, rosPkg)
+	if _, err := os.Stat(dir); err != nil {
+		if os.IsNotExist(err) {
+			return
+		}
+		PrintErrf("Failed to check include dir %s: %v\n", dir, err)
+		// assume it exists
+	}
+	set.Add(includeDirFlag(dir))
 }
 
 func libDirFlag(rootPath string) string {
@@ -188,7 +204,7 @@ func (g *Generator) GenerateCGOFlags() error {
 	for _, rootPath := range g.config.RootPaths {
 		libDirs.Add(libDirFlag(rootPath))
 		for _, dep := range rclgoROSIncludes {
-			includes.Add(includeDirFlag(rootPath, dep))
+			addIncludeDirFlagIfExists(includes, rootPath, dep)
 		}
 		for pkgAndType, imports := range g.cImportsByPkgAndType {
 			pkg, _, err := parsePkgAndType(pkgAndType)
@@ -196,9 +212,9 @@ func (g *Generator) GenerateCGOFlags() error {
 				PrintErrf("Failed to parse package and type from %s: %v\n", pkgAndType, err)
 				continue
 			}
-			includes.Add(includeDirFlag(rootPath, pkg))
+			addIncludeDirFlagIfExists(includes, rootPath, pkg)
 			for imp := range imports {
-				includes.Add(includeDirFlag(rootPath, imp))
+				addIncludeDirFlagIfExists(includes, rootPath, imp)
 			}
 		}
 	}
