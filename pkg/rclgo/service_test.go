@@ -10,9 +10,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	. "github.com/smartystreets/goconvey/convey" //nolint:revive
-	example_interfaces_srv "github.com/ATIinc/rclgo/internal/msgs/example_interfaces/srv"
-	"github.com/ATIinc/rclgo/pkg/rclgo"
-	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 )
 
 func TestServiceAndClient(t *testing.T) {

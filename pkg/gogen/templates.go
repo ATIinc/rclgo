@@ -153,7 +153,7 @@ func (t *{{$Md.Name}}) GetTypeSupport() types.MessageTypeSupport {
 
 {{- /* Some special cased methods to avoid cyclic dependency in actions */ -}}
 
-{{- if actionHasSuffix $Md 
+{{- if actionHasSuffix $Md
 	"_SendGoal_Request"
 	"_GetResult_Request"
 	"_CancelGoal_Request"
@@ -453,7 +453,7 @@ type {{.Service.Name}}Service struct {
 func New{{.Service.Name}}Service(node *rclgo.Node, name string, options *rclgo.ServiceOptions, handler {{.Service.Name}}ServiceRequestHandler) (*{{.Service.Name}}Service, error) {
 	h := func(rmw *rclgo.ServiceInfo, msg types.Message, rs rclgo.ServiceResponseSender) {
 		m := msg.(*{{.Service.Request.Name}})
-		responseSender := {{.Service.Name}}ServiceResponseSender{sender: rs} 
+		responseSender := {{.Service.Name}}ServiceResponseSender{sender: rs}
 		handler(rmw, m, responseSender)
 	}
 	service, err := node.NewService(name, {{.Service.Name}}TypeSupport, options, h)
