@@ -1,6 +1,6 @@
 module github.com/ATIinc/rclgo
 
-go 1.20
+go 1.24
 
 require (
 	github.com/alessio/shellescape v1.4.2
