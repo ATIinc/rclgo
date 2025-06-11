@@ -244,11 +244,11 @@ type rosPkgRef struct {
 func (g *Generator) GenerateGolangMessageTypes() error {
 	g.findPackages()
 	if len(g.config.RegexIncludes) == 0 && len(g.config.ROSPkgIncludes) == 0 && len(g.config.GoPkgIncludes) == 0 {
-		for pkg := range g.allPkgs {
+		for _, pkg := range sortedKeys(g.allPkgs) {
 			g.generatePkg(pkg, false)
 		}
 	} else {
-		for _, pkg := range g.config.ROSPkgIncludes {
+		for _, pkg := range sorted(g.config.ROSPkgIncludes) {
 			g.generatePkg(pkg, true)
 		}
 		goDeps, err := loadGoPkgDeps(g.config.GoPkgIncludes...)
@@ -256,7 +256,7 @@ func (g *Generator) GenerateGolangMessageTypes() error {
 			return fmt.Errorf("failed to load Go deps: %w", err)
 		}
 		prefix := g.config.MessageModulePrefix + "/"
-		for goDep := range goDeps {
+		for _, goDep := range sortedKeys(goDeps) {
 			pkgWithType := strings.TrimPrefix(goDep, prefix)
 			if pkgWithType != goDep {
 				g.generatePkg(path.Dir(pkgWithType), true)
@@ -265,13 +265,14 @@ func (g *Generator) GenerateGolangMessageTypes() error {
 		if g.actionMsgsNeeded {
 			g.generatePkg("action_msgs", true)
 		}
-		for pkg := range g.allPkgs {
+		for _, pkg := range sortedKeys(g.allPkgs) {
 			if g.config.RegexIncludes.Includes(pkg) {
 				g.generatePkg(pkg, false)
 			}
 		}
 	}
-	for pkgAndType, imports := range g.cImportsByPkgAndType {
+	for _, pkgAndType := range sortedKeys(g.cImportsByPkgAndType) {
+		imports := g.cImportsByPkgAndType[pkgAndType]
 		err := g.generateCommonPackageGoFile(pkgAndType, imports)
 		if err != nil {
 			PrintErrf("Failed to generate common package file for package %s: %v\n", pkgAndType, err)
@@ -290,13 +291,13 @@ func (g *Generator) generatePkg(pkg string, genDeps bool) {
 			g.generateInterface(meta, path)
 		}
 		if genDeps {
-			for imp := range g.cImportsByPkgAndType[pkg+"_msg"] {
+			for _, imp := range sortedKeys(g.cImportsByPkgAndType[pkg+"_msg"]) {
 				g.generatePkg(imp, genDeps)
 			}
-			for imp := range g.cImportsByPkgAndType[pkg+"_srv"] {
+			for _, imp := range sortedKeys(g.cImportsByPkgAndType[pkg+"_srv"]) {
 				g.generatePkg(imp, genDeps)
 			}
-			for imp := range g.cImportsByPkgAndType[pkg+"_action"] {
+			for _, imp := range sortedKeys(g.cImportsByPkgAndType[pkg+"_action"]) {
 				g.generatePkg(imp, genDeps)
 			}
 		}
