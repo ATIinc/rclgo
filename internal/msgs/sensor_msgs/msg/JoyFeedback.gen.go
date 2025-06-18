@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -37,9 +36,9 @@ const (
 )
 
 type JoyFeedback struct {
-	Type uint8 `yaml:"type"`
-	Id uint8 `yaml:"id"`// This will hold an id number for each type of each feedback.Example, the first led would be id=0, the second would be id=1
-	Intensity float32 `yaml:"intensity"`// Intensity of the feedback, from 0.0 to 1.0, inclusive.  If device isactually binary, driver should treat 0<=x<0.5 as off, 0.5<=x<=1 as on.
+	Type uint8 `yaml:"type" json:"type"`
+	Id uint8 `yaml:"id" json:"id"`// This will hold an id number for each type of each feedback.Example, the first led would be id=0, the second would be id=1
+	Intensity float32 `yaml:"intensity" json:"intensity"`// Intensity of the feedback, from 0.0 to 1.0, inclusive.  If device isactually binary, driver should treat 0<=x<0.5 as off, 0.5<=x<=1 as on.
 }
 
 // NewJoyFeedback creates a new JoyFeedback with default values.

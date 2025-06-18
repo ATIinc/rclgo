@@ -18,7 +18,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -34,13 +33,13 @@ func init() {
 }
 
 type Image struct {
-	Header std_msgs_msg.Header `yaml:"header"`// Header timestamp should be acquisition time of image
-	Height uint32 `yaml:"height"`// image height, that is, number of rows
-	Width uint32 `yaml:"width"`// image width, that is, number of columns
-	Encoding string `yaml:"encoding"`// Encoding of pixels -- channel meaning, ordering, size
-	IsBigendian uint8 `yaml:"is_bigendian"`// is this data bigendian?
-	Step uint32 `yaml:"step"`// Full row length in bytes
-	Data []uint8 `yaml:"data"`// actual matrix data, size is (step * rows)
+	Header std_msgs_msg.Header `yaml:"header" json:"header"`// Header timestamp should be acquisition time of image
+	Height uint32 `yaml:"height" json:"height"`// image height, that is, number of rows
+	Width uint32 `yaml:"width" json:"width"`// image width, that is, number of columns
+	Encoding string `yaml:"encoding" json:"encoding"`// Encoding of pixels -- channel meaning, ordering, size
+	IsBigendian uint8 `yaml:"is_bigendian" json:"is_bigendian"`// is this data bigendian?
+	Step uint32 `yaml:"step" json:"step"`// Full row length in bytes
+	Data []uint8 `yaml:"data" json:"data"`// actual matrix data, size is (step * rows)
 }
 
 // NewImage creates a new Image with default values.

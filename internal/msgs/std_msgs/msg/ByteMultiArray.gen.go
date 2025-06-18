@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -33,8 +32,8 @@ func init() {
 }
 
 type ByteMultiArray struct {
-	Layout MultiArrayLayout `yaml:"layout"`// specification of data layout
-	Data []byte `yaml:"data"`// array of data
+	Layout MultiArrayLayout `yaml:"layout" json:"layout"`// specification of data layout
+	Data []byte `yaml:"data" json:"data"`// array of data
 }
 
 // NewByteMultiArray creates a new ByteMultiArray with default values.

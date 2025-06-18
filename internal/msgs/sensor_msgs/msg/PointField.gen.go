@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -43,10 +42,10 @@ const (
 )
 
 type PointField struct {
-	Name string `yaml:"name"`// Name of field. Common PointField names are x, y, z, intensity, rgb, rgba
-	Offset uint32 `yaml:"offset"`// Offset from start of point struct
-	Datatype uint8 `yaml:"datatype"`// Datatype enumeration, see above
-	Count uint32 `yaml:"count"`// How many elements in the field
+	Name string `yaml:"name" json:"name"`// Name of field. Common PointField names are x, y, z, intensity, rgb, rgba
+	Offset uint32 `yaml:"offset" json:"offset"`// Offset from start of point struct
+	Datatype uint8 `yaml:"datatype" json:"datatype"`// Datatype enumeration, see above
+	Count uint32 `yaml:"count" json:"count"`// How many elements in the field
 }
 
 // NewPointField creates a new PointField with default values.

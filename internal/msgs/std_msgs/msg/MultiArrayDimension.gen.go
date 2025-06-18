@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -33,9 +32,9 @@ func init() {
 }
 
 type MultiArrayDimension struct {
-	Label string `yaml:"label"`// label of given dimension
-	Size uint32 `yaml:"size"`// size of given dimension (in type units)
-	Stride uint32 `yaml:"stride"`// stride of given dimension
+	Label string `yaml:"label" json:"label"`// label of given dimension
+	Size uint32 `yaml:"size" json:"size"`// size of given dimension (in type units)
+	Stride uint32 `yaml:"stride" json:"stride"`// stride of given dimension
 }
 
 // NewMultiArrayDimension creates a new MultiArrayDimension with default values.

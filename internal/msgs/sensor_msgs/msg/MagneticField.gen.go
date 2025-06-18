@@ -19,7 +19,6 @@ import (
 	geometry_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/geometry_msgs/msg"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -35,9 +34,9 @@ func init() {
 }
 
 type MagneticField struct {
-	Header std_msgs_msg.Header `yaml:"header"`// timestamp is the time the
-	MagneticField geometry_msgs_msg.Vector3 `yaml:"magnetic_field"`// x, y, and z components of the
-	MagneticFieldCovariance [9]float64 `yaml:"magnetic_field_covariance"`// Row major about x, y, z axes
+	Header std_msgs_msg.Header `yaml:"header" json:"header"`// timestamp is the time the
+	MagneticField geometry_msgs_msg.Vector3 `yaml:"magnetic_field" json:"magnetic_field"`// x, y, and z components of the
+	MagneticFieldCovariance [9]float64 `yaml:"magnetic_field_covariance" json:"magnetic_field_covariance"`// Row major about x, y, z axes
 }
 
 // NewMagneticField creates a new MagneticField with default values.

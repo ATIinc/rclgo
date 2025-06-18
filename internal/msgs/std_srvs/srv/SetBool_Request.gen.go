@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,7 +31,7 @@ func init() {
 }
 
 type SetBool_Request struct {
-	Data bool `yaml:"data"`// e.g. for hardware enabling / disabling
+	Data bool `yaml:"data" json:"data"`// e.g. for hardware enabling / disabling
 }
 
 // NewSetBool_Request creates a new SetBool_Request with default values.

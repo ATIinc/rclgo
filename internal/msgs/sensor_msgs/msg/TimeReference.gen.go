@@ -19,7 +19,6 @@ import (
 	builtin_interfaces_msg "github.com/ATIinc/rclgo/internal/msgs/builtin_interfaces/msg"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -35,9 +34,9 @@ func init() {
 }
 
 type TimeReference struct {
-	Header std_msgs_msg.Header `yaml:"header"`// stamp is system time for which measurement was valid
-	TimeRef builtin_interfaces_msg.Time `yaml:"time_ref"`// corresponding time from this external source
-	Source string `yaml:"source"`// (optional) name of time source
+	Header std_msgs_msg.Header `yaml:"header" json:"header"`// stamp is system time for which measurement was valid
+	TimeRef builtin_interfaces_msg.Time `yaml:"time_ref" json:"time_ref"`// corresponding time from this external source
+	Source string `yaml:"source" json:"source"`// (optional) name of time source
 }
 
 // NewTimeReference creates a new TimeReference with default values.

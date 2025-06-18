@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	action_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/action_msgs/msg"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -33,7 +32,7 @@ func init() {
 }
 
 type CancelGoal_Request struct {
-	GoalInfo action_msgs_msg.GoalInfo `yaml:"goal_info"`// Goal info describing the goals to cancel, see above.
+	GoalInfo action_msgs_msg.GoalInfo `yaml:"goal_info" json:"goal_info"`// Goal info describing the goals to cancel, see above.
 }
 
 // NewCancelGoal_Request creates a new CancelGoal_Request with default values.

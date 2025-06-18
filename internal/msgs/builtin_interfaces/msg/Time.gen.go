@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,8 +31,8 @@ func init() {
 }
 
 type Time struct {
-	Sec int32 `yaml:"sec"`// The seconds component, valid over all int32 values.
-	Nanosec uint32 `yaml:"nanosec"`// The nanoseconds component, valid in the range [0, 1e9).
+	Sec int32 `yaml:"sec" json:"sec"`// The seconds component, valid over all int32 values.
+	Nanosec uint32 `yaml:"nanosec" json:"nanosec"`// The nanoseconds component, valid in the range [0, 1e9).
 }
 
 // NewTime creates a new Time with default values.

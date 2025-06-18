@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,8 +31,8 @@ func init() {
 }
 
 type PolygonInstance struct {
-	Polygon Polygon `yaml:"polygon"`
-	Id int64 `yaml:"id"`
+	Polygon Polygon `yaml:"polygon" json:"polygon"`
+	Id int64 `yaml:"id" json:"id"`
 }
 
 // NewPolygonInstance creates a new PolygonInstance with default values.

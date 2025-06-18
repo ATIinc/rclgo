@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,8 +31,8 @@ func init() {
 }
 
 type Accel struct {
-	Linear Vector3 `yaml:"linear"`// This expresses acceleration in free space broken into its linear and angular parts.
-	Angular Vector3 `yaml:"angular"`
+	Linear Vector3 `yaml:"linear" json:"linear"`// This expresses acceleration in free space broken into its linear and angular parts.
+	Angular Vector3 `yaml:"angular" json:"angular"`
 }
 
 // NewAccel creates a new Accel with default values.

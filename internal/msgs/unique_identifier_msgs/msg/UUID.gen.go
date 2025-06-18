@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -33,7 +32,7 @@ func init() {
 }
 
 type UUID struct {
-	Uuid [16]uint8 `yaml:"uuid"`
+	Uuid [16]uint8 `yaml:"uuid" json:"uuid"`
 }
 
 // NewUUID creates a new UUID with default values.

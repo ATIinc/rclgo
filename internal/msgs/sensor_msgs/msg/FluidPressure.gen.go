@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -33,9 +32,9 @@ func init() {
 }
 
 type FluidPressure struct {
-	Header std_msgs_msg.Header `yaml:"header"`// timestamp of the measurement
-	FluidPressure float64 `yaml:"fluid_pressure"`// Absolute pressure reading in Pascals.
-	Variance float64 `yaml:"variance"`// 0 is interpreted as variance unknown
+	Header std_msgs_msg.Header `yaml:"header" json:"header"`// timestamp of the measurement
+	FluidPressure float64 `yaml:"fluid_pressure" json:"fluid_pressure"`// Absolute pressure reading in Pascals.
+	Variance float64 `yaml:"variance" json:"variance"`// 0 is interpreted as variance unknown
 }
 
 // NewFluidPressure creates a new FluidPressure with default values.

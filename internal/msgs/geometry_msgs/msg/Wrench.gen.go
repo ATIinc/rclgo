@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,8 +31,8 @@ func init() {
 }
 
 type Wrench struct {
-	Force Vector3 `yaml:"force"`
-	Torque Vector3 `yaml:"torque"`
+	Force Vector3 `yaml:"force" json:"force"`
+	Torque Vector3 `yaml:"torque" json:"torque"`
 }
 
 // NewWrench creates a new Wrench with default values.

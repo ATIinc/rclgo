@@ -18,7 +18,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	builtin_interfaces_msg "github.com/ATIinc/rclgo/internal/msgs/builtin_interfaces/msg"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -34,8 +33,8 @@ func init() {
 }
 
 type Header struct {
-	Stamp builtin_interfaces_msg.Time `yaml:"stamp"`// Two-integer timestamp that is expressed as seconds and nanoseconds.
-	FrameId string `yaml:"frame_id"`// Transform frame with which this data is associated.
+	Stamp builtin_interfaces_msg.Time `yaml:"stamp" json:"stamp"`// Two-integer timestamp that is expressed as seconds and nanoseconds.
+	FrameId string `yaml:"frame_id" json:"frame_id"`// Transform frame with which this data is associated.
 }
 
 // NewHeader creates a new Header with default values.

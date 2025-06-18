@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -33,7 +32,7 @@ func init() {
 }
 
 type String struct {
-	Data string `yaml:"data"`
+	Data string `yaml:"data" json:"data"`
 }
 
 // NewString creates a new String with default values.

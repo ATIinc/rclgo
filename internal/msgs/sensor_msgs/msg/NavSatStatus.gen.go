@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -44,8 +43,8 @@ const (
 )
 
 type NavSatStatus struct {
-	Status int8 `yaml:"status"`// STATUS_UNKNOWN
-	Service uint16 `yaml:"service"`
+	Status int8 `yaml:"status" json:"status"`// STATUS_UNKNOWN
+	Service uint16 `yaml:"service" json:"service"`
 }
 
 // NewNavSatStatus creates a new NavSatStatus with default values.

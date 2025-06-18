@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -33,8 +32,8 @@ func init() {
 }
 
 type ChannelFloat32 struct {
-	Name string `yaml:"name"`// The channel name should give semantics of the channel (e.g."intensity" instead of "value").
-	Values []float32 `yaml:"values"`// The values array should be 1-1 with the elements of the associatedPointCloud.
+	Name string `yaml:"name" json:"name"`// The channel name should give semantics of the channel (e.g."intensity" instead of "value").
+	Values []float32 `yaml:"values" json:"values"`// The values array should be 1-1 with the elements of the associatedPointCloud.
 }
 
 // NewChannelFloat32 creates a new ChannelFloat32 with default values.

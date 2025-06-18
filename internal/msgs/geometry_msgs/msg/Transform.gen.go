@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,8 +31,8 @@ func init() {
 }
 
 type Transform struct {
-	Translation Vector3 `yaml:"translation"`
-	Rotation Quaternion `yaml:"rotation"`
+	Translation Vector3 `yaml:"translation" json:"translation"`
+	Rotation Quaternion `yaml:"rotation" json:"rotation"`
 }
 
 // NewTransform creates a new Transform with default values.

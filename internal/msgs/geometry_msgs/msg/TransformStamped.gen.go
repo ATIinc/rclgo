@@ -18,7 +18,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -34,9 +33,9 @@ func init() {
 }
 
 type TransformStamped struct {
-	Header std_msgs_msg.Header `yaml:"header"`// The frame id in the header is used as the reference frame of this transform.
-	ChildFrameId string `yaml:"child_frame_id"`// The frame id of the child frame to which this transform points.
-	Transform Transform `yaml:"transform"`// Translation and rotation in 3-dimensions of child_frame_id from header.frame_id.
+	Header std_msgs_msg.Header `yaml:"header" json:"header"`// The frame id in the header is used as the reference frame of this transform.
+	ChildFrameId string `yaml:"child_frame_id" json:"child_frame_id"`// The frame id of the child frame to which this transform points.
+	Transform Transform `yaml:"transform" json:"transform"`// Translation and rotation in 3-dimensions of child_frame_id from header.frame_id.
 }
 
 // NewTransformStamped creates a new TransformStamped with default values.

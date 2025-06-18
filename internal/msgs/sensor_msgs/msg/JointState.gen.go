@@ -18,7 +18,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -34,11 +33,11 @@ func init() {
 }
 
 type JointState struct {
-	Header std_msgs_msg.Header `yaml:"header"`
-	Name []string `yaml:"name"`
-	Position []float64 `yaml:"position"`
-	Velocity []float64 `yaml:"velocity"`
-	Effort []float64 `yaml:"effort"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header"`
+	Name []string `yaml:"name" json:"name"`
+	Position []float64 `yaml:"position" json:"position"`
+	Velocity []float64 `yaml:"velocity" json:"velocity"`
+	Effort []float64 `yaml:"effort" json:"effort"`
 }
 
 // NewJointState creates a new JointState with default values.

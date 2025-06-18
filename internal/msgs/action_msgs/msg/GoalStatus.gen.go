@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -41,8 +40,8 @@ const (
 )
 
 type GoalStatus struct {
-	GoalInfo GoalInfo `yaml:"goal_info"`// Goal info (contains ID and timestamp).
-	Status int8 `yaml:"status"`// Action goal state-machine status.
+	GoalInfo GoalInfo `yaml:"goal_info" json:"goal_info"`// Goal info (contains ID and timestamp).
+	Status int8 `yaml:"status" json:"status"`// Action goal state-machine status.
 }
 
 // NewGoalStatus creates a new GoalStatus with default values.

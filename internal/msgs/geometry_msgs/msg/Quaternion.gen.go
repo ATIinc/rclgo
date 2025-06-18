@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,10 +31,10 @@ func init() {
 }
 
 type Quaternion struct {
-	X float64 `yaml:"x"`
-	Y float64 `yaml:"y"`
-	Z float64 `yaml:"z"`
-	W float64 `yaml:"w"`
+	X float64 `yaml:"x" json:"x"`
+	Y float64 `yaml:"y" json:"y"`
+	Z float64 `yaml:"z" json:"z"`
+	W float64 `yaml:"w" json:"w"`
 }
 
 // NewQuaternion creates a new Quaternion with default values.

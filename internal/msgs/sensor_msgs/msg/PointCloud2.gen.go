@@ -18,7 +18,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -34,15 +33,15 @@ func init() {
 }
 
 type PointCloud2 struct {
-	Header std_msgs_msg.Header `yaml:"header"`// Time of sensor data acquisition, and the coordinate frame ID (for 3d points).
-	Height uint32 `yaml:"height"`// 2D structure of the point cloud. If the cloud is unordered, height is1 and width is the length of the point cloud.
-	Width uint32 `yaml:"width"`
-	Fields []PointField `yaml:"fields"`// Describes the channels and their layout in the binary data blob.
-	IsBigendian bool `yaml:"is_bigendian"`// Is this data bigendian?
-	PointStep uint32 `yaml:"point_step"`// Length of a point in bytes
-	RowStep uint32 `yaml:"row_step"`// Length of a row in bytes
-	Data []uint8 `yaml:"data"`// Actual point data, size is (row_step*height)
-	IsDense bool `yaml:"is_dense"`// True if there are no invalid points
+	Header std_msgs_msg.Header `yaml:"header" json:"header"`// Time of sensor data acquisition, and the coordinate frame ID (for 3d points).
+	Height uint32 `yaml:"height" json:"height"`// 2D structure of the point cloud. If the cloud is unordered, height is1 and width is the length of the point cloud.
+	Width uint32 `yaml:"width" json:"width"`
+	Fields []PointField `yaml:"fields" json:"fields"`// Describes the channels and their layout in the binary data blob.
+	IsBigendian bool `yaml:"is_bigendian" json:"is_bigendian"`// Is this data bigendian?
+	PointStep uint32 `yaml:"point_step" json:"point_step"`// Length of a point in bytes
+	RowStep uint32 `yaml:"row_step" json:"row_step"`// Length of a row in bytes
+	Data []uint8 `yaml:"data" json:"data"`// Actual point data, size is (row_step*height)
+	IsDense bool `yaml:"is_dense" json:"is_dense"`// True if there are no invalid points
 }
 
 // NewPointCloud2 creates a new PointCloud2 with default values.

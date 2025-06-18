@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,10 +31,10 @@ func init() {
 }
 
 type ColorRGBA struct {
-	R float32 `yaml:"r"`
-	G float32 `yaml:"g"`
-	B float32 `yaml:"b"`
-	A float32 `yaml:"a"`
+	R float32 `yaml:"r" json:"r"`
+	G float32 `yaml:"g" json:"g"`
+	B float32 `yaml:"b" json:"b"`
+	A float32 `yaml:"a" json:"a"`
 }
 
 // NewColorRGBA creates a new ColorRGBA with default values.

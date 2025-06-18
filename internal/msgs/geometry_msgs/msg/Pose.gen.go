@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,8 +31,8 @@ func init() {
 }
 
 type Pose struct {
-	Position Point `yaml:"position"`
-	Orientation Quaternion `yaml:"orientation"`
+	Position Point `yaml:"position" json:"position"`
+	Orientation Quaternion `yaml:"orientation" json:"orientation"`
 }
 
 // NewPose creates a new Pose with default values.

@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -132,11 +131,11 @@ func (t _EmptyTypeSupport) ReleaseMemory(pointer_to_free unsafe.Pointer) {
 }
 
 func (t _EmptyTypeSupport) AsCStruct(dst unsafe.Pointer, msg types.Message) {
-
+	
 }
 
 func (t _EmptyTypeSupport) AsGoStruct(msg types.Message, ros2_message_buffer unsafe.Pointer) {
-
+	
 }
 
 func (t _EmptyTypeSupport) TypeSupport() unsafe.Pointer {

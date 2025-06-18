@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,9 +31,9 @@ func init() {
 }
 
 type Pose2D struct {
-	X float64 `yaml:"x"`
-	Y float64 `yaml:"y"`
-	Theta float64 `yaml:"theta"`
+	X float64 `yaml:"x" json:"x"`
+	Y float64 `yaml:"y" json:"y"`
+	Theta float64 `yaml:"theta" json:"theta"`
 }
 
 // NewPose2D creates a new Pose2D with default values.
