@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -33,8 +32,8 @@ func init() {
 }
 
 type PolygonInstanceStamped struct {
-	Header std_msgs_msg.Header `yaml:"header"`
-	Polygon PolygonInstance `yaml:"polygon"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Polygon PolygonInstance `yaml:"polygon" json:"polygon" mapstructure:"polygon"`
 }
 
 // NewPolygonInstanceStamped creates a new PolygonInstanceStamped with default values.

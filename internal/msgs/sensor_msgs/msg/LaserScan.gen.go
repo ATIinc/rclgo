@@ -18,7 +18,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -34,16 +33,16 @@ func init() {
 }
 
 type LaserScan struct {
-	Header std_msgs_msg.Header `yaml:"header"`// timestamp in the header is the acquisition time of
-	AngleMin float32 `yaml:"angle_min"`// start angle of the scan [rad]
-	AngleMax float32 `yaml:"angle_max"`// end angle of the scan [rad]
-	AngleIncrement float32 `yaml:"angle_increment"`// angular distance between measurements [rad]
-	TimeIncrement float32 `yaml:"time_increment"`// time between measurements [seconds] - if your scanner
-	ScanTime float32 `yaml:"scan_time"`// time between scans [seconds]. is moving, this will be used in interpolating positionof 3d points
-	RangeMin float32 `yaml:"range_min"`// minimum range value [m]
-	RangeMax float32 `yaml:"range_max"`// maximum range value [m]
-	Ranges []float32 `yaml:"ranges"`// range data [m]
-	Intensities []float32 `yaml:"intensities"`// intensity data [device-specific units].  If your. (Note: values < range_min or > range_max should be discarded)
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`// timestamp in the header is the acquisition time of
+	AngleMin float32 `yaml:"angle_min" json:"angle_min" mapstructure:"angle_min"`// start angle of the scan [rad]
+	AngleMax float32 `yaml:"angle_max" json:"angle_max" mapstructure:"angle_max"`// end angle of the scan [rad]
+	AngleIncrement float32 `yaml:"angle_increment" json:"angle_increment" mapstructure:"angle_increment"`// angular distance between measurements [rad]
+	TimeIncrement float32 `yaml:"time_increment" json:"time_increment" mapstructure:"time_increment"`// time between measurements [seconds] - if your scanner
+	ScanTime float32 `yaml:"scan_time" json:"scan_time" mapstructure:"scan_time"`// time between scans [seconds]. is moving, this will be used in interpolating positionof 3d points
+	RangeMin float32 `yaml:"range_min" json:"range_min" mapstructure:"range_min"`// minimum range value [m]
+	RangeMax float32 `yaml:"range_max" json:"range_max" mapstructure:"range_max"`// maximum range value [m]
+	Ranges []float32 `yaml:"ranges" json:"ranges" mapstructure:"ranges"`// range data [m]
+	Intensities []float32 `yaml:"intensities" json:"intensities" mapstructure:"intensities"`// intensity data [device-specific units].  If your. (Note: values < range_min or > range_max should be discarded)
 }
 
 // NewLaserScan creates a new LaserScan with default values.

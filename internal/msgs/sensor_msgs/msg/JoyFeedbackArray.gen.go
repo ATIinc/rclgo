@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,7 +31,7 @@ func init() {
 }
 
 type JoyFeedbackArray struct {
-	Array []JoyFeedback `yaml:"array"`// This message publishes values for multiple feedback at once.
+	Array []JoyFeedback `yaml:"array" json:"array" mapstructure:"array"`// This message publishes values for multiple feedback at once.
 }
 
 // NewJoyFeedbackArray creates a new JoyFeedbackArray with default values.

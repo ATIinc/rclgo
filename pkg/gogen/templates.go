@@ -60,7 +60,6 @@ package {{ .GoPackage }}
 #cgo CFLAGS: "-I{{$dir}}/include/service_msgs"
 #cgo CFLAGS: "-I{{$dir}}/include/std_msgs"
 #cgo CFLAGS: "-I{{$dir}}/include/std_srvs"
-#cgo CFLAGS: "-I{{$dir}}/include/test_msgs"
 #cgo CFLAGS: "-I{{$dir}}/include/type_description_interfaces"
 #cgo CFLAGS: "-I{{$dir}}/include/unique_identifier_msgs"
 {{- range $k, $v := $.CImports}}
@@ -86,9 +85,9 @@ import (
 	"{{.Config.RclgoImportPath}}/pkg/rclgo"
 	"{{.Config.RclgoImportPath}}/pkg/rclgo/types"
 	"{{.Config.RclgoImportPath}}/pkg/rclgo/typemap"
-	{{range $path, $name := $Md.GoImports -}}
+	{{- range $path, $name := $Md.GoImports}}
 	{{$name}} "{{$path}}"
-	{{""}}{{- end}}
+	{{- end}}
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -118,7 +117,7 @@ const (
 type {{$Md.Name}} struct {
 	{{- range $k, $v := $Md.Fields }}
 	{{$v.GoName }} {{$v.TypeArray}}{{$v.GoPkgReference}}{{$v.GoType}}` +
-			"{{\"\"}} `yaml:\"{{$v.RosName}}\"`" + `{{if .Comment -}} // {{.Comment}}{{- end}}
+			"{{\"\"}} `yaml:\"{{$v.RosName}}\" json:\"{{$v.RosName}}\" mapstructure:\"{{$v.RosName}}\"`" + `{{if .Comment -}} // {{.Comment}}{{- end}}
 	{{- end }}
 }
 
@@ -461,7 +460,8 @@ func New{{.Service.Name}}Service(node *rclgo.Node, name string, options *rclgo.S
 		return nil, err
 	}
 	return &{{.Service.Name}}Service{service}, nil
-}`),
+}
+`),
 )
 
 var ros2ActionToGolangTypeTemplate = template.Must(
@@ -883,14 +883,12 @@ package test
 #cgo CFLAGS: "-I{{$rootPath}}/include/rosidl_typesupport_interface"
 #cgo CFLAGS: "-I{{$rootPath}}/include/sensor_msgs"
 #cgo CFLAGS: "-I{{$rootPath}}/include/std_msgs"
-#cgo CFLAGS: "-I{{$rootPath}}/include/test_msgs"
 
 {{end -}}
 #cgo LDFLAGS: -lrcl -lrcl_interfaces__rosidl_typesupport_c -lrcutils
 #cgo LDFLAGS: -lrmw_implementation -lrosidl_runtime_c -lrosidl_typesupport_c
 #cgo LDFLAGS: -lsensor_msgs__rosidl_generator_c -lsensor_msgs__rosidl_typesupport_c
 #cgo LDFLAGS: -lstd_msgs__rosidl_generator_c -lstd_msgs__rosidl_typesupport_c
-#cgo LDFLAGS: -ltest_msgs__rosidl_generator_c -ltest_msgs__rosidl_typesupport_c
 */
 import "C"
 `),

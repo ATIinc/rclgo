@@ -18,7 +18,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	builtin_interfaces_msg "github.com/ATIinc/rclgo/internal/msgs/builtin_interfaces/msg"
 	unique_identifier_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/unique_identifier_msgs/msg"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -34,8 +33,8 @@ func init() {
 }
 
 type GoalInfo struct {
-	GoalId unique_identifier_msgs_msg.UUID `yaml:"goal_id"`// Goal ID
-	Stamp builtin_interfaces_msg.Time `yaml:"stamp"`// Time when the goal was accepted
+	GoalId unique_identifier_msgs_msg.UUID `yaml:"goal_id" json:"goal_id" mapstructure:"goal_id"`// Goal ID
+	Stamp builtin_interfaces_msg.Time `yaml:"stamp" json:"stamp" mapstructure:"stamp"`// Time when the goal was accepted
 }
 
 // NewGoalInfo creates a new GoalInfo with default values.

@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -33,8 +32,8 @@ func init() {
 }
 
 type QuaternionStamped struct {
-	Header std_msgs_msg.Header `yaml:"header"`
-	Quaternion Quaternion `yaml:"quaternion"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Quaternion Quaternion `yaml:"quaternion" json:"quaternion" mapstructure:"quaternion"`
 }
 
 // NewQuaternionStamped creates a new QuaternionStamped with default values.

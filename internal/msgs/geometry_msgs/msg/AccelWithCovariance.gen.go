@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -33,8 +32,8 @@ func init() {
 }
 
 type AccelWithCovariance struct {
-	Accel Accel `yaml:"accel"`
-	Covariance [36]float64 `yaml:"covariance"`// Row-major representation of the 6x6 covariance matrixThe orientation parameters use a fixed-axis representation.In order, the parameters are:(x, y, z, rotation about X axis, rotation about Y axis, rotation about Z axis)
+	Accel Accel `yaml:"accel" json:"accel" mapstructure:"accel"`
+	Covariance [36]float64 `yaml:"covariance" json:"covariance" mapstructure:"covariance"`// Row-major representation of the 6x6 covariance matrixThe orientation parameters use a fixed-axis representation.In order, the parameters are:(x, y, z, rotation about X axis, rotation about Y axis, rotation about Z axis)
 }
 
 // NewAccelWithCovariance creates a new AccelWithCovariance with default values.

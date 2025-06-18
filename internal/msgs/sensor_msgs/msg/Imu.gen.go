@@ -19,7 +19,6 @@ import (
 	geometry_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/geometry_msgs/msg"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -35,13 +34,13 @@ func init() {
 }
 
 type Imu struct {
-	Header std_msgs_msg.Header `yaml:"header"`
-	Orientation geometry_msgs_msg.Quaternion `yaml:"orientation"`
-	OrientationCovariance [9]float64 `yaml:"orientation_covariance"`// Row major about x, y, z axes
-	AngularVelocity geometry_msgs_msg.Vector3 `yaml:"angular_velocity"`
-	AngularVelocityCovariance [9]float64 `yaml:"angular_velocity_covariance"`// Row major about x, y, z axes
-	LinearAcceleration geometry_msgs_msg.Vector3 `yaml:"linear_acceleration"`
-	LinearAccelerationCovariance [9]float64 `yaml:"linear_acceleration_covariance"`// Row major x, y z
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Orientation geometry_msgs_msg.Quaternion `yaml:"orientation" json:"orientation" mapstructure:"orientation"`
+	OrientationCovariance [9]float64 `yaml:"orientation_covariance" json:"orientation_covariance" mapstructure:"orientation_covariance"`// Row major about x, y, z axes
+	AngularVelocity geometry_msgs_msg.Vector3 `yaml:"angular_velocity" json:"angular_velocity" mapstructure:"angular_velocity"`
+	AngularVelocityCovariance [9]float64 `yaml:"angular_velocity_covariance" json:"angular_velocity_covariance" mapstructure:"angular_velocity_covariance"`// Row major about x, y, z axes
+	LinearAcceleration geometry_msgs_msg.Vector3 `yaml:"linear_acceleration" json:"linear_acceleration" mapstructure:"linear_acceleration"`
+	LinearAccelerationCovariance [9]float64 `yaml:"linear_acceleration_covariance" json:"linear_acceleration_covariance" mapstructure:"linear_acceleration_covariance"`// Row major x, y z
 }
 
 // NewImu creates a new Imu with default values.

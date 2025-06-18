@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,11 +31,11 @@ func init() {
 }
 
 type RegionOfInterest struct {
-	XOffset uint32 `yaml:"x_offset"`// Leftmost pixel of the ROI
-	YOffset uint32 `yaml:"y_offset"`// Topmost pixel of the ROI. (0 if the ROI includes the left edge of the image)
-	Height uint32 `yaml:"height"`// Height of ROI. (0 if the ROI includes the top edge of the image)
-	Width uint32 `yaml:"width"`// Width of ROI
-	DoRectify bool `yaml:"do_rectify"`// True if a distinct rectified ROI should be calculated from the "raw"ROI in this message. Typically this should be False if the full imageis captured (ROI not used), and True if a subwindow is captured (ROIused).
+	XOffset uint32 `yaml:"x_offset" json:"x_offset" mapstructure:"x_offset"`// Leftmost pixel of the ROI
+	YOffset uint32 `yaml:"y_offset" json:"y_offset" mapstructure:"y_offset"`// Topmost pixel of the ROI. (0 if the ROI includes the left edge of the image)
+	Height uint32 `yaml:"height" json:"height" mapstructure:"height"`// Height of ROI. (0 if the ROI includes the top edge of the image)
+	Width uint32 `yaml:"width" json:"width" mapstructure:"width"`// Width of ROI
+	DoRectify bool `yaml:"do_rectify" json:"do_rectify" mapstructure:"do_rectify"`// True if a distinct rectified ROI should be calculated from the "raw"ROI in this message. Typically this should be False if the full imageis captured (ROI not used), and True if a subwindow is captured (ROIused).
 }
 
 // NewRegionOfInterest creates a new RegionOfInterest with default values.

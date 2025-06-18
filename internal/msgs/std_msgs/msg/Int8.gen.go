@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,7 +31,7 @@ func init() {
 }
 
 type Int8 struct {
-	Data int8 `yaml:"data"`
+	Data int8 `yaml:"data" json:"data" mapstructure:"data"`
 }
 
 // NewInt8 creates a new Int8 with default values.

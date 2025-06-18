@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,7 +31,7 @@ func init() {
 }
 
 type Polygon struct {
-	Points []Point32 `yaml:"points"`
+	Points []Point32 `yaml:"points" json:"points" mapstructure:"points"`
 }
 
 // NewPolygon creates a new Polygon with default values.

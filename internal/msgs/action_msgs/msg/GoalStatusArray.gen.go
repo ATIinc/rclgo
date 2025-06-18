@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,7 +31,7 @@ func init() {
 }
 
 type GoalStatusArray struct {
-	StatusList []GoalStatus `yaml:"status_list"`// An array of goal statuses.
+	StatusList []GoalStatus `yaml:"status_list" json:"status_list" mapstructure:"status_list"`// An array of goal statuses.
 }
 
 // NewGoalStatusArray creates a new GoalStatusArray with default values.

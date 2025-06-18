@@ -18,7 +18,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -34,9 +33,9 @@ func init() {
 }
 
 type CompressedImage struct {
-	Header std_msgs_msg.Header `yaml:"header"`// Header timestamp should be acquisition time of image
-	Format string `yaml:"format"`// Specifies the format of the data
-	Data []uint8 `yaml:"data"`// Compressed image buffer
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`// Header timestamp should be acquisition time of image
+	Format string `yaml:"format" json:"format" mapstructure:"format"`// Specifies the format of the data
+	Data []uint8 `yaml:"data" json:"data" mapstructure:"data"`// Compressed image buffer
 }
 
 // NewCompressedImage creates a new CompressedImage with default values.

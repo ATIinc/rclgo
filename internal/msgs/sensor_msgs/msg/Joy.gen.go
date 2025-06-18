@@ -18,7 +18,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -34,9 +33,9 @@ func init() {
 }
 
 type Joy struct {
-	Header std_msgs_msg.Header `yaml:"header"`// The timestamp is the time at which data is received from the joystick.
-	Axes []float32 `yaml:"axes"`// The axes measurements from a joystick.
-	Buttons []int32 `yaml:"buttons"`// The buttons measurements from a joystick.
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`// The timestamp is the time at which data is received from the joystick.
+	Axes []float32 `yaml:"axes" json:"axes" mapstructure:"axes"`// The axes measurements from a joystick.
+	Buttons []int32 `yaml:"buttons" json:"buttons" mapstructure:"buttons"`// The buttons measurements from a joystick.
 }
 
 // NewJoy creates a new Joy with default values.

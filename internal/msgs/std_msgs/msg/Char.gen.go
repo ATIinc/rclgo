@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,7 +31,7 @@ func init() {
 }
 
 type Char struct {
-	Data byte `yaml:"data"`
+	Data byte `yaml:"data" json:"data" mapstructure:"data"`
 }
 
 // NewChar creates a new Char with default values.

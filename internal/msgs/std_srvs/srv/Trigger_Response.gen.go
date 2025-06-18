@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -33,8 +32,8 @@ func init() {
 }
 
 type Trigger_Response struct {
-	Success bool `yaml:"success"`// indicate successful run of triggered service
-	Message string `yaml:"message"`// informational, e.g. for error messages
+	Success bool `yaml:"success" json:"success" mapstructure:"success"`// indicate successful run of triggered service
+	Message string `yaml:"message" json:"message" mapstructure:"message"`// informational, e.g. for error messages
 }
 
 // NewTrigger_Response creates a new Trigger_Response with default values.

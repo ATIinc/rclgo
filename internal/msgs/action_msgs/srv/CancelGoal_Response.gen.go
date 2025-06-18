@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	action_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/action_msgs/msg"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -39,8 +38,8 @@ const (
 )
 
 type CancelGoal_Response struct {
-	ReturnCode int8 `yaml:"return_code"`// Return code, see above definitions.
-	GoalsCanceling []action_msgs_msg.GoalInfo `yaml:"goals_canceling"`// Goals that accepted the cancel request.
+	ReturnCode int8 `yaml:"return_code" json:"return_code" mapstructure:"return_code"`// Return code, see above definitions.
+	GoalsCanceling []action_msgs_msg.GoalInfo `yaml:"goals_canceling" json:"goals_canceling" mapstructure:"goals_canceling"`// Goals that accepted the cancel request.
 }
 
 // NewCancelGoal_Response creates a new CancelGoal_Response with default values.

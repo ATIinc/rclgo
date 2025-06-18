@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -33,7 +32,7 @@ func init() {
 }
 
 type LaserEcho struct {
-	Echoes []float32 `yaml:"echoes"`// Multiple values of ranges or intensities.
+	Echoes []float32 `yaml:"echoes" json:"echoes" mapstructure:"echoes"`// Multiple values of ranges or intensities.
 }
 
 // NewLaserEcho creates a new LaserEcho with default values.

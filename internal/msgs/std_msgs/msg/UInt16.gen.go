@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,7 +31,7 @@ func init() {
 }
 
 type UInt16 struct {
-	Data uint16 `yaml:"data"`
+	Data uint16 `yaml:"data" json:"data" mapstructure:"data"`
 }
 
 // NewUInt16 creates a new UInt16 with default values.

@@ -18,7 +18,6 @@ package test
 #cgo CFLAGS: "-I/usr/include/rosidl_typesupport_interface"
 #cgo CFLAGS: "-I/usr/include/sensor_msgs"
 #cgo CFLAGS: "-I/usr/include/std_msgs"
-#cgo CFLAGS: "-I/usr/include/test_msgs"
 
 #cgo LDFLAGS: "-L/opt/ros/jazzy/lib" "-Wl,-rpath=/opt/ros/jazzy/lib"
 #cgo CFLAGS: "-I/opt/ros/jazzy/include/builtin_interfaces"
@@ -26,12 +25,10 @@ package test
 #cgo CFLAGS: "-I/opt/ros/jazzy/include/rosidl_typesupport_interface"
 #cgo CFLAGS: "-I/opt/ros/jazzy/include/sensor_msgs"
 #cgo CFLAGS: "-I/opt/ros/jazzy/include/std_msgs"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/test_msgs"
 
 #cgo LDFLAGS: -lrcl -lrcl_interfaces__rosidl_typesupport_c -lrcutils
 #cgo LDFLAGS: -lrmw_implementation -lrosidl_runtime_c -lrosidl_typesupport_c
 #cgo LDFLAGS: -lsensor_msgs__rosidl_generator_c -lsensor_msgs__rosidl_typesupport_c
 #cgo LDFLAGS: -lstd_msgs__rosidl_generator_c -lstd_msgs__rosidl_typesupport_c
-#cgo LDFLAGS: -ltest_msgs__rosidl_generator_c -ltest_msgs__rosidl_typesupport_c
 */
 import "C"

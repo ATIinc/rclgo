@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -33,8 +32,8 @@ func init() {
 }
 
 type Int16MultiArray struct {
-	Layout MultiArrayLayout `yaml:"layout"`// specification of data layout
-	Data []int16 `yaml:"data"`// array of data
+	Layout MultiArrayLayout `yaml:"layout" json:"layout" mapstructure:"layout"`// specification of data layout
+	Data []int16 `yaml:"data" json:"data" mapstructure:"data"`// array of data
 }
 
 // NewInt16MultiArray creates a new Int16MultiArray with default values.

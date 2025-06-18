@@ -18,7 +18,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -59,22 +58,22 @@ const (
 )
 
 type BatteryState struct {
-	Header std_msgs_msg.Header `yaml:"header"`
-	Voltage float32 `yaml:"voltage"`// Voltage in Volts (Mandatory)
-	Temperature float32 `yaml:"temperature"`// Temperature in Degrees Celsius (If unmeasured NaN)
-	Current float32 `yaml:"current"`// Negative when discharging (A)  (If unmeasured NaN)
-	Charge float32 `yaml:"charge"`// Current charge in Ah  (If unmeasured NaN)
-	Capacity float32 `yaml:"capacity"`// Capacity in Ah (last full capacity)  (If unmeasured NaN)
-	DesignCapacity float32 `yaml:"design_capacity"`// Capacity in Ah (design capacity)  (If unmeasured NaN)
-	Percentage float32 `yaml:"percentage"`// Charge percentage on 0 to 1 range  (If unmeasured NaN)
-	PowerSupplyStatus uint8 `yaml:"power_supply_status"`// The charging status as reported. Values defined above
-	PowerSupplyHealth uint8 `yaml:"power_supply_health"`// The battery health metric. Values defined above
-	PowerSupplyTechnology uint8 `yaml:"power_supply_technology"`// The battery chemistry. Values defined above
-	Present bool `yaml:"present"`// True if the battery is present
-	CellVoltage []float32 `yaml:"cell_voltage"`// An array of individual cell voltages for each cell in the pack
-	CellTemperature []float32 `yaml:"cell_temperature"`// An array of individual cell temperatures for each cell in the pack. If individual voltages unknown but number of cells known set each to NaN
-	Location string `yaml:"location"`// The location into which the battery is inserted. (slot number or plug). If individual temperatures unknown but number of cells known set each to NaN
-	SerialNumber string `yaml:"serial_number"`// The best approximation of the battery serial number
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Voltage float32 `yaml:"voltage" json:"voltage" mapstructure:"voltage"`// Voltage in Volts (Mandatory)
+	Temperature float32 `yaml:"temperature" json:"temperature" mapstructure:"temperature"`// Temperature in Degrees Celsius (If unmeasured NaN)
+	Current float32 `yaml:"current" json:"current" mapstructure:"current"`// Negative when discharging (A)  (If unmeasured NaN)
+	Charge float32 `yaml:"charge" json:"charge" mapstructure:"charge"`// Current charge in Ah  (If unmeasured NaN)
+	Capacity float32 `yaml:"capacity" json:"capacity" mapstructure:"capacity"`// Capacity in Ah (last full capacity)  (If unmeasured NaN)
+	DesignCapacity float32 `yaml:"design_capacity" json:"design_capacity" mapstructure:"design_capacity"`// Capacity in Ah (design capacity)  (If unmeasured NaN)
+	Percentage float32 `yaml:"percentage" json:"percentage" mapstructure:"percentage"`// Charge percentage on 0 to 1 range  (If unmeasured NaN)
+	PowerSupplyStatus uint8 `yaml:"power_supply_status" json:"power_supply_status" mapstructure:"power_supply_status"`// The charging status as reported. Values defined above
+	PowerSupplyHealth uint8 `yaml:"power_supply_health" json:"power_supply_health" mapstructure:"power_supply_health"`// The battery health metric. Values defined above
+	PowerSupplyTechnology uint8 `yaml:"power_supply_technology" json:"power_supply_technology" mapstructure:"power_supply_technology"`// The battery chemistry. Values defined above
+	Present bool `yaml:"present" json:"present" mapstructure:"present"`// True if the battery is present
+	CellVoltage []float32 `yaml:"cell_voltage" json:"cell_voltage" mapstructure:"cell_voltage"`// An array of individual cell voltages for each cell in the pack
+	CellTemperature []float32 `yaml:"cell_temperature" json:"cell_temperature" mapstructure:"cell_temperature"`// An array of individual cell temperatures for each cell in the pack. If individual voltages unknown but number of cells known set each to NaN
+	Location string `yaml:"location" json:"location" mapstructure:"location"`// The location into which the battery is inserted. (slot number or plug). If individual temperatures unknown but number of cells known set each to NaN
+	SerialNumber string `yaml:"serial_number" json:"serial_number" mapstructure:"serial_number"`// The best approximation of the battery serial number
 }
 
 // NewBatteryState creates a new BatteryState with default values.

@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -33,9 +32,9 @@ func init() {
 }
 
 type Temperature struct {
-	Header std_msgs_msg.Header `yaml:"header"`// timestamp is the time the temperature was measured
-	Temperature float64 `yaml:"temperature"`// Measurement of the Temperature in Degrees Celsius.
-	Variance float64 `yaml:"variance"`// 0 is interpreted as variance unknown.
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`// timestamp is the time the temperature was measured
+	Temperature float64 `yaml:"temperature" json:"temperature" mapstructure:"temperature"`// Measurement of the Temperature in Degrees Celsius.
+	Variance float64 `yaml:"variance" json:"variance" mapstructure:"variance"`// 0 is interpreted as variance unknown.
 }
 
 // NewTemperature creates a new Temperature with default values.

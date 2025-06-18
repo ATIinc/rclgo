@@ -17,7 +17,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	sensor_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/sensor_msgs/msg"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -33,7 +32,7 @@ func init() {
 }
 
 type SetCameraInfo_Request struct {
-	CameraInfo sensor_msgs_msg.CameraInfo `yaml:"camera_info"`// The camera_info to store
+	CameraInfo sensor_msgs_msg.CameraInfo `yaml:"camera_info" json:"camera_info" mapstructure:"camera_info"`// The camera_info to store
 }
 
 // NewSetCameraInfo_Request creates a new SetCameraInfo_Request with default values.

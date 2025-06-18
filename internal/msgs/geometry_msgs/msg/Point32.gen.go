@@ -16,7 +16,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -32,9 +31,9 @@ func init() {
 }
 
 type Point32 struct {
-	X float32 `yaml:"x"`
-	Y float32 `yaml:"y"`
-	Z float32 `yaml:"z"`
+	X float32 `yaml:"x" json:"x" mapstructure:"x"`
+	Y float32 `yaml:"y" json:"y" mapstructure:"y"`
+	Z float32 `yaml:"z" json:"z" mapstructure:"z"`
 }
 
 // NewPoint32 creates a new Point32 with default values.

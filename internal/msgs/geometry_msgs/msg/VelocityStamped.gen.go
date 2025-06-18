@@ -18,7 +18,6 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
 	primitives "github.com/ATIinc/rclgo/pkg/rclgo/primitives"
-
 )
 /*
 #include <rosidl_runtime_c/message_type_support_struct.h>
@@ -34,10 +33,10 @@ func init() {
 }
 
 type VelocityStamped struct {
-	Header std_msgs_msg.Header `yaml:"header"`
-	BodyFrameId string `yaml:"body_frame_id"`
-	ReferenceFrameId string `yaml:"reference_frame_id"`
-	Velocity Twist `yaml:"velocity"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	BodyFrameId string `yaml:"body_frame_id" json:"body_frame_id" mapstructure:"body_frame_id"`
+	ReferenceFrameId string `yaml:"reference_frame_id" json:"reference_frame_id" mapstructure:"reference_frame_id"`
+	Velocity Twist `yaml:"velocity" json:"velocity" mapstructure:"velocity"`
 }
 
 // NewVelocityStamped creates a new VelocityStamped with default values.
