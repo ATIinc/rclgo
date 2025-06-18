@@ -32,8 +32,8 @@ func init() {
 }
 
 type ByteMultiArray struct {
-	Layout MultiArrayLayout `yaml:"layout" json:"layout"`// specification of data layout
-	Data []byte `yaml:"data" json:"data"`// array of data
+	Layout MultiArrayLayout `yaml:"layout" json:"layout" mapstructure:"layout"`// specification of data layout
+	Data []byte `yaml:"data" json:"data" mapstructure:"data"`// array of data
 }
 
 // NewByteMultiArray creates a new ByteMultiArray with default values.

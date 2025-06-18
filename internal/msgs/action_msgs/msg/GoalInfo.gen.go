@@ -33,8 +33,8 @@ func init() {
 }
 
 type GoalInfo struct {
-	GoalId unique_identifier_msgs_msg.UUID `yaml:"goal_id" json:"goal_id"`// Goal ID
-	Stamp builtin_interfaces_msg.Time `yaml:"stamp" json:"stamp"`// Time when the goal was accepted
+	GoalId unique_identifier_msgs_msg.UUID `yaml:"goal_id" json:"goal_id" mapstructure:"goal_id"`// Goal ID
+	Stamp builtin_interfaces_msg.Time `yaml:"stamp" json:"stamp" mapstructure:"stamp"`// Time when the goal was accepted
 }
 
 // NewGoalInfo creates a new GoalInfo with default values.

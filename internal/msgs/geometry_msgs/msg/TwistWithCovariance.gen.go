@@ -32,8 +32,8 @@ func init() {
 }
 
 type TwistWithCovariance struct {
-	Twist Twist `yaml:"twist" json:"twist"`
-	Covariance [36]float64 `yaml:"covariance" json:"covariance"`// Row-major representation of the 6x6 covariance matrixThe orientation parameters use a fixed-axis representation.In order, the parameters are:(x, y, z, rotation about X axis, rotation about Y axis, rotation about Z axis)
+	Twist Twist `yaml:"twist" json:"twist" mapstructure:"twist"`
+	Covariance [36]float64 `yaml:"covariance" json:"covariance" mapstructure:"covariance"`// Row-major representation of the 6x6 covariance matrixThe orientation parameters use a fixed-axis representation.In order, the parameters are:(x, y, z, rotation about X axis, rotation about Y axis, rotation about Z axis)
 }
 
 // NewTwistWithCovariance creates a new TwistWithCovariance with default values.

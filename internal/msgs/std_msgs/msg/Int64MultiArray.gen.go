@@ -32,8 +32,8 @@ func init() {
 }
 
 type Int64MultiArray struct {
-	Layout MultiArrayLayout `yaml:"layout" json:"layout"`// specification of data layout
-	Data []int64 `yaml:"data" json:"data"`// array of data
+	Layout MultiArrayLayout `yaml:"layout" json:"layout" mapstructure:"layout"`// specification of data layout
+	Data []int64 `yaml:"data" json:"data" mapstructure:"data"`// array of data
 }
 
 // NewInt64MultiArray creates a new Int64MultiArray with default values.

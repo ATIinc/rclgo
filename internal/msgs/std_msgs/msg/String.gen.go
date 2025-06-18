@@ -32,7 +32,7 @@ func init() {
 }
 
 type String struct {
-	Data string `yaml:"data" json:"data"`
+	Data string `yaml:"data" json:"data" mapstructure:"data"`
 }
 
 // NewString creates a new String with default values.

@@ -34,9 +34,9 @@ func init() {
 }
 
 type MagneticField struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`// timestamp is the time the
-	MagneticField geometry_msgs_msg.Vector3 `yaml:"magnetic_field" json:"magnetic_field"`// x, y, and z components of the
-	MagneticFieldCovariance [9]float64 `yaml:"magnetic_field_covariance" json:"magnetic_field_covariance"`// Row major about x, y, z axes
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`// timestamp is the time the
+	MagneticField geometry_msgs_msg.Vector3 `yaml:"magnetic_field" json:"magnetic_field" mapstructure:"magnetic_field"`// x, y, and z components of the
+	MagneticFieldCovariance [9]float64 `yaml:"magnetic_field_covariance" json:"magnetic_field_covariance" mapstructure:"magnetic_field_covariance"`// Row major about x, y, z axes
 }
 
 // NewMagneticField creates a new MagneticField with default values.

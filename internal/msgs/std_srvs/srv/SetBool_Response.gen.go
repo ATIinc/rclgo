@@ -32,8 +32,8 @@ func init() {
 }
 
 type SetBool_Response struct {
-	Success bool `yaml:"success" json:"success"`// indicate successful run of triggered service
-	Message string `yaml:"message" json:"message"`// informational, e.g. for error messages
+	Success bool `yaml:"success" json:"success" mapstructure:"success"`// indicate successful run of triggered service
+	Message string `yaml:"message" json:"message" mapstructure:"message"`// informational, e.g. for error messages
 }
 
 // NewSetBool_Response creates a new SetBool_Response with default values.

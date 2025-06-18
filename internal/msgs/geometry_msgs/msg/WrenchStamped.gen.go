@@ -32,8 +32,8 @@ func init() {
 }
 
 type WrenchStamped struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`
-	Wrench Wrench `yaml:"wrench" json:"wrench"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Wrench Wrench `yaml:"wrench" json:"wrench" mapstructure:"wrench"`
 }
 
 // NewWrenchStamped creates a new WrenchStamped with default values.

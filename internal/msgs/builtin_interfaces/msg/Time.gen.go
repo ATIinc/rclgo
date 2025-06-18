@@ -31,8 +31,8 @@ func init() {
 }
 
 type Time struct {
-	Sec int32 `yaml:"sec" json:"sec"`// The seconds component, valid over all int32 values.
-	Nanosec uint32 `yaml:"nanosec" json:"nanosec"`// The nanoseconds component, valid in the range [0, 1e9).
+	Sec int32 `yaml:"sec" json:"sec" mapstructure:"sec"`// The seconds component, valid over all int32 values.
+	Nanosec uint32 `yaml:"nanosec" json:"nanosec" mapstructure:"nanosec"`// The nanoseconds component, valid in the range [0, 1e9).
 }
 
 // NewTime creates a new Time with default values.

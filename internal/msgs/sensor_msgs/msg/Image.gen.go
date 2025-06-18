@@ -33,13 +33,13 @@ func init() {
 }
 
 type Image struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`// Header timestamp should be acquisition time of image
-	Height uint32 `yaml:"height" json:"height"`// image height, that is, number of rows
-	Width uint32 `yaml:"width" json:"width"`// image width, that is, number of columns
-	Encoding string `yaml:"encoding" json:"encoding"`// Encoding of pixels -- channel meaning, ordering, size
-	IsBigendian uint8 `yaml:"is_bigendian" json:"is_bigendian"`// is this data bigendian?
-	Step uint32 `yaml:"step" json:"step"`// Full row length in bytes
-	Data []uint8 `yaml:"data" json:"data"`// actual matrix data, size is (step * rows)
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`// Header timestamp should be acquisition time of image
+	Height uint32 `yaml:"height" json:"height" mapstructure:"height"`// image height, that is, number of rows
+	Width uint32 `yaml:"width" json:"width" mapstructure:"width"`// image width, that is, number of columns
+	Encoding string `yaml:"encoding" json:"encoding" mapstructure:"encoding"`// Encoding of pixels -- channel meaning, ordering, size
+	IsBigendian uint8 `yaml:"is_bigendian" json:"is_bigendian" mapstructure:"is_bigendian"`// is this data bigendian?
+	Step uint32 `yaml:"step" json:"step" mapstructure:"step"`// Full row length in bytes
+	Data []uint8 `yaml:"data" json:"data" mapstructure:"data"`// actual matrix data, size is (step * rows)
 }
 
 // NewImage creates a new Image with default values.

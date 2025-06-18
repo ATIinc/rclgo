@@ -31,9 +31,9 @@ func init() {
 }
 
 type Pose2D struct {
-	X float64 `yaml:"x" json:"x"`
-	Y float64 `yaml:"y" json:"y"`
-	Theta float64 `yaml:"theta" json:"theta"`
+	X float64 `yaml:"x" json:"x" mapstructure:"x"`
+	Y float64 `yaml:"y" json:"y" mapstructure:"y"`
+	Theta float64 `yaml:"theta" json:"theta" mapstructure:"theta"`
 }
 
 // NewPose2D creates a new Pose2D with default values.

@@ -31,7 +31,7 @@ func init() {
 }
 
 type Polygon struct {
-	Points []Point32 `yaml:"points" json:"points"`
+	Points []Point32 `yaml:"points" json:"points" mapstructure:"points"`
 }
 
 // NewPolygon creates a new Polygon with default values.

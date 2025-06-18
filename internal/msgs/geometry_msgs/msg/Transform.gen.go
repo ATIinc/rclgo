@@ -31,8 +31,8 @@ func init() {
 }
 
 type Transform struct {
-	Translation Vector3 `yaml:"translation" json:"translation"`
-	Rotation Quaternion `yaml:"rotation" json:"rotation"`
+	Translation Vector3 `yaml:"translation" json:"translation" mapstructure:"translation"`
+	Rotation Quaternion `yaml:"rotation" json:"rotation" mapstructure:"rotation"`
 }
 
 // NewTransform creates a new Transform with default values.

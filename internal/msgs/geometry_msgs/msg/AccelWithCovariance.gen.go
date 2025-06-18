@@ -32,8 +32,8 @@ func init() {
 }
 
 type AccelWithCovariance struct {
-	Accel Accel `yaml:"accel" json:"accel"`
-	Covariance [36]float64 `yaml:"covariance" json:"covariance"`// Row-major representation of the 6x6 covariance matrixThe orientation parameters use a fixed-axis representation.In order, the parameters are:(x, y, z, rotation about X axis, rotation about Y axis, rotation about Z axis)
+	Accel Accel `yaml:"accel" json:"accel" mapstructure:"accel"`
+	Covariance [36]float64 `yaml:"covariance" json:"covariance" mapstructure:"covariance"`// Row-major representation of the 6x6 covariance matrixThe orientation parameters use a fixed-axis representation.In order, the parameters are:(x, y, z, rotation about X axis, rotation about Y axis, rotation about Z axis)
 }
 
 // NewAccelWithCovariance creates a new AccelWithCovariance with default values.

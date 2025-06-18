@@ -31,7 +31,7 @@ func init() {
 }
 
 type JoyFeedbackArray struct {
-	Array []JoyFeedback `yaml:"array" json:"array"`// This message publishes values for multiple feedback at once.
+	Array []JoyFeedback `yaml:"array" json:"array" mapstructure:"array"`// This message publishes values for multiple feedback at once.
 }
 
 // NewJoyFeedbackArray creates a new JoyFeedbackArray with default values.

@@ -31,10 +31,10 @@ func init() {
 }
 
 type Quaternion struct {
-	X float64 `yaml:"x" json:"x"`
-	Y float64 `yaml:"y" json:"y"`
-	Z float64 `yaml:"z" json:"z"`
-	W float64 `yaml:"w" json:"w"`
+	X float64 `yaml:"x" json:"x" mapstructure:"x"`
+	Y float64 `yaml:"y" json:"y" mapstructure:"y"`
+	Z float64 `yaml:"z" json:"z" mapstructure:"z"`
+	W float64 `yaml:"w" json:"w" mapstructure:"w"`
 }
 
 // NewQuaternion creates a new Quaternion with default values.

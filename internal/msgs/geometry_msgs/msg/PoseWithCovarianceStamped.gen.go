@@ -32,8 +32,8 @@ func init() {
 }
 
 type PoseWithCovarianceStamped struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`
-	Pose PoseWithCovariance `yaml:"pose" json:"pose"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Pose PoseWithCovariance `yaml:"pose" json:"pose" mapstructure:"pose"`
 }
 
 // NewPoseWithCovarianceStamped creates a new PoseWithCovarianceStamped with default values.

@@ -32,7 +32,7 @@ func init() {
 }
 
 type UUID struct {
-	Uuid [16]uint8 `yaml:"uuid" json:"uuid"`
+	Uuid [16]uint8 `yaml:"uuid" json:"uuid" mapstructure:"uuid"`
 }
 
 // NewUUID creates a new UUID with default values.

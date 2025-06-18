@@ -33,8 +33,8 @@ func init() {
 }
 
 type Header struct {
-	Stamp builtin_interfaces_msg.Time `yaml:"stamp" json:"stamp"`// Two-integer timestamp that is expressed as seconds and nanoseconds.
-	FrameId string `yaml:"frame_id" json:"frame_id"`// Transform frame with which this data is associated.
+	Stamp builtin_interfaces_msg.Time `yaml:"stamp" json:"stamp" mapstructure:"stamp"`// Two-integer timestamp that is expressed as seconds and nanoseconds.
+	FrameId string `yaml:"frame_id" json:"frame_id" mapstructure:"frame_id"`// Transform frame with which this data is associated.
 }
 
 // NewHeader creates a new Header with default values.

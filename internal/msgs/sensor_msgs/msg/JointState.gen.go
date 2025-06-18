@@ -33,11 +33,11 @@ func init() {
 }
 
 type JointState struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`
-	Name []string `yaml:"name" json:"name"`
-	Position []float64 `yaml:"position" json:"position"`
-	Velocity []float64 `yaml:"velocity" json:"velocity"`
-	Effort []float64 `yaml:"effort" json:"effort"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Name []string `yaml:"name" json:"name" mapstructure:"name"`
+	Position []float64 `yaml:"position" json:"position" mapstructure:"position"`
+	Velocity []float64 `yaml:"velocity" json:"velocity" mapstructure:"velocity"`
+	Effort []float64 `yaml:"effort" json:"effort" mapstructure:"effort"`
 }
 
 // NewJointState creates a new JointState with default values.

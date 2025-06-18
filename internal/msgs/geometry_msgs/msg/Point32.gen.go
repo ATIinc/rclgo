@@ -31,9 +31,9 @@ func init() {
 }
 
 type Point32 struct {
-	X float32 `yaml:"x" json:"x"`
-	Y float32 `yaml:"y" json:"y"`
-	Z float32 `yaml:"z" json:"z"`
+	X float32 `yaml:"x" json:"x" mapstructure:"x"`
+	Y float32 `yaml:"y" json:"y" mapstructure:"y"`
+	Z float32 `yaml:"z" json:"z" mapstructure:"z"`
 }
 
 // NewPoint32 creates a new Point32 with default values.

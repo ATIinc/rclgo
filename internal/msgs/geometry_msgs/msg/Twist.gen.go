@@ -31,8 +31,8 @@ func init() {
 }
 
 type Twist struct {
-	Linear Vector3 `yaml:"linear" json:"linear"`
-	Angular Vector3 `yaml:"angular" json:"angular"`
+	Linear Vector3 `yaml:"linear" json:"linear" mapstructure:"linear"`
+	Angular Vector3 `yaml:"angular" json:"angular" mapstructure:"angular"`
 }
 
 // NewTwist creates a new Twist with default values.

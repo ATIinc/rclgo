@@ -32,8 +32,8 @@ func init() {
 }
 
 type AccelStamped struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`// An accel with reference coordinate frame and timestamp
-	Accel Accel `yaml:"accel" json:"accel"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`// An accel with reference coordinate frame and timestamp
+	Accel Accel `yaml:"accel" json:"accel" mapstructure:"accel"`
 }
 
 // NewAccelStamped creates a new AccelStamped with default values.

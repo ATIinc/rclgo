@@ -31,7 +31,7 @@ func init() {
 }
 
 type UInt64 struct {
-	Data uint64 `yaml:"data" json:"data"`
+	Data uint64 `yaml:"data" json:"data" mapstructure:"data"`
 }
 
 // NewUInt64 creates a new UInt64 with default values.

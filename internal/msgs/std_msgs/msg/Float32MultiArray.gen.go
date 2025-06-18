@@ -32,8 +32,8 @@ func init() {
 }
 
 type Float32MultiArray struct {
-	Layout MultiArrayLayout `yaml:"layout" json:"layout"`// specification of data layout
-	Data []float32 `yaml:"data" json:"data"`// array of data
+	Layout MultiArrayLayout `yaml:"layout" json:"layout" mapstructure:"layout"`// specification of data layout
+	Data []float32 `yaml:"data" json:"data" mapstructure:"data"`// array of data
 }
 
 // NewFloat32MultiArray creates a new Float32MultiArray with default values.

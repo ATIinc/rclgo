@@ -32,7 +32,7 @@ func init() {
 }
 
 type SetCameraInfo_Request struct {
-	CameraInfo sensor_msgs_msg.CameraInfo `yaml:"camera_info" json:"camera_info"`// The camera_info to store
+	CameraInfo sensor_msgs_msg.CameraInfo `yaml:"camera_info" json:"camera_info" mapstructure:"camera_info"`// The camera_info to store
 }
 
 // NewSetCameraInfo_Request creates a new SetCameraInfo_Request with default values.

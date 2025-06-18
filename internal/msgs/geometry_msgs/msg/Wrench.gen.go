@@ -31,8 +31,8 @@ func init() {
 }
 
 type Wrench struct {
-	Force Vector3 `yaml:"force" json:"force"`
-	Torque Vector3 `yaml:"torque" json:"torque"`
+	Force Vector3 `yaml:"force" json:"force" mapstructure:"force"`
+	Torque Vector3 `yaml:"torque" json:"torque" mapstructure:"torque"`
 }
 
 // NewWrench creates a new Wrench with default values.

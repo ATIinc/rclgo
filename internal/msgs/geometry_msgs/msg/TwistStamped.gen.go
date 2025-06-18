@@ -32,8 +32,8 @@ func init() {
 }
 
 type TwistStamped struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`
-	Twist Twist `yaml:"twist" json:"twist"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Twist Twist `yaml:"twist" json:"twist" mapstructure:"twist"`
 }
 
 // NewTwistStamped creates a new TwistStamped with default values.

@@ -32,9 +32,9 @@ func init() {
 }
 
 type RelativeHumidity struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`// timestamp of the measurement
-	RelativeHumidity float64 `yaml:"relative_humidity" json:"relative_humidity"`// Expression of the relative humidity
-	Variance float64 `yaml:"variance" json:"variance"`// 0 is interpreted as variance unknown
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`// timestamp of the measurement
+	RelativeHumidity float64 `yaml:"relative_humidity" json:"relative_humidity" mapstructure:"relative_humidity"`// Expression of the relative humidity
+	Variance float64 `yaml:"variance" json:"variance" mapstructure:"variance"`// 0 is interpreted as variance unknown
 }
 
 // NewRelativeHumidity creates a new RelativeHumidity with default values.

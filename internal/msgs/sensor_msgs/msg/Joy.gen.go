@@ -33,9 +33,9 @@ func init() {
 }
 
 type Joy struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`// The timestamp is the time at which data is received from the joystick.
-	Axes []float32 `yaml:"axes" json:"axes"`// The axes measurements from a joystick.
-	Buttons []int32 `yaml:"buttons" json:"buttons"`// The buttons measurements from a joystick.
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`// The timestamp is the time at which data is received from the joystick.
+	Axes []float32 `yaml:"axes" json:"axes" mapstructure:"axes"`// The axes measurements from a joystick.
+	Buttons []int32 `yaml:"buttons" json:"buttons" mapstructure:"buttons"`// The buttons measurements from a joystick.
 }
 
 // NewJoy creates a new Joy with default values.

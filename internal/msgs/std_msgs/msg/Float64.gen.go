@@ -31,7 +31,7 @@ func init() {
 }
 
 type Float64 struct {
-	Data float64 `yaml:"data" json:"data"`
+	Data float64 `yaml:"data" json:"data" mapstructure:"data"`
 }
 
 // NewFloat64 creates a new Float64 with default values.

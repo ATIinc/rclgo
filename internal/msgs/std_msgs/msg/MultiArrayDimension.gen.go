@@ -32,9 +32,9 @@ func init() {
 }
 
 type MultiArrayDimension struct {
-	Label string `yaml:"label" json:"label"`// label of given dimension
-	Size uint32 `yaml:"size" json:"size"`// size of given dimension (in type units)
-	Stride uint32 `yaml:"stride" json:"stride"`// stride of given dimension
+	Label string `yaml:"label" json:"label" mapstructure:"label"`// label of given dimension
+	Size uint32 `yaml:"size" json:"size" mapstructure:"size"`// size of given dimension (in type units)
+	Stride uint32 `yaml:"stride" json:"stride" mapstructure:"stride"`// stride of given dimension
 }
 
 // NewMultiArrayDimension creates a new MultiArrayDimension with default values.

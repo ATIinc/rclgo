@@ -31,7 +31,7 @@ func init() {
 }
 
 type Char struct {
-	Data byte `yaml:"data" json:"data"`
+	Data byte `yaml:"data" json:"data" mapstructure:"data"`
 }
 
 // NewChar creates a new Char with default values.

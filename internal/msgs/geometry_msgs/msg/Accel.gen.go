@@ -31,8 +31,8 @@ func init() {
 }
 
 type Accel struct {
-	Linear Vector3 `yaml:"linear" json:"linear"`// This expresses acceleration in free space broken into its linear and angular parts.
-	Angular Vector3 `yaml:"angular" json:"angular"`
+	Linear Vector3 `yaml:"linear" json:"linear" mapstructure:"linear"`// This expresses acceleration in free space broken into its linear and angular parts.
+	Angular Vector3 `yaml:"angular" json:"angular" mapstructure:"angular"`
 }
 
 // NewAccel creates a new Accel with default values.

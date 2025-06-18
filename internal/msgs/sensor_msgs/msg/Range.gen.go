@@ -36,13 +36,13 @@ const (
 )
 
 type Range struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`// timestamp in the header is the time the ranger
-	RadiationType uint8 `yaml:"radiation_type" json:"radiation_type"`// the type of radiation used by the sensor
-	FieldOfView float32 `yaml:"field_of_view" json:"field_of_view"`// the size of the arc that the distance reading is
-	MinRange float32 `yaml:"min_range" json:"min_range"`// minimum range value [m]
-	MaxRange float32 `yaml:"max_range" json:"max_range"`// maximum range value [m]
-	Range float32 `yaml:"range" json:"range"`// range data [m]
-	Variance float32 `yaml:"variance" json:"variance"`// variance of the range sensor
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`// timestamp in the header is the time the ranger
+	RadiationType uint8 `yaml:"radiation_type" json:"radiation_type" mapstructure:"radiation_type"`// the type of radiation used by the sensor
+	FieldOfView float32 `yaml:"field_of_view" json:"field_of_view" mapstructure:"field_of_view"`// the size of the arc that the distance reading is
+	MinRange float32 `yaml:"min_range" json:"min_range" mapstructure:"min_range"`// minimum range value [m]
+	MaxRange float32 `yaml:"max_range" json:"max_range" mapstructure:"max_range"`// maximum range value [m]
+	Range float32 `yaml:"range" json:"range" mapstructure:"range"`// range data [m]
+	Variance float32 `yaml:"variance" json:"variance" mapstructure:"variance"`// variance of the range sensor
 }
 
 // NewRange creates a new Range with default values.

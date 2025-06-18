@@ -31,10 +31,10 @@ func init() {
 }
 
 type ColorRGBA struct {
-	R float32 `yaml:"r" json:"r"`
-	G float32 `yaml:"g" json:"g"`
-	B float32 `yaml:"b" json:"b"`
-	A float32 `yaml:"a" json:"a"`
+	R float32 `yaml:"r" json:"r" mapstructure:"r"`
+	G float32 `yaml:"g" json:"g" mapstructure:"g"`
+	B float32 `yaml:"b" json:"b" mapstructure:"b"`
+	A float32 `yaml:"a" json:"a" mapstructure:"a"`
 }
 
 // NewColorRGBA creates a new ColorRGBA with default values.

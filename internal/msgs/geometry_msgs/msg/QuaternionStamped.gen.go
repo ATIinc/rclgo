@@ -32,8 +32,8 @@ func init() {
 }
 
 type QuaternionStamped struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`
-	Quaternion Quaternion `yaml:"quaternion" json:"quaternion"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Quaternion Quaternion `yaml:"quaternion" json:"quaternion" mapstructure:"quaternion"`
 }
 
 // NewQuaternionStamped creates a new QuaternionStamped with default values.

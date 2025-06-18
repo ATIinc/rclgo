@@ -32,8 +32,8 @@ func init() {
 }
 
 type Vector3Stamped struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`
-	Vector Vector3 `yaml:"vector" json:"vector"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Vector Vector3 `yaml:"vector" json:"vector" mapstructure:"vector"`
 }
 
 // NewVector3Stamped creates a new Vector3Stamped with default values.

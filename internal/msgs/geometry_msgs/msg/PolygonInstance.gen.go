@@ -31,8 +31,8 @@ func init() {
 }
 
 type PolygonInstance struct {
-	Polygon Polygon `yaml:"polygon" json:"polygon"`
-	Id int64 `yaml:"id" json:"id"`
+	Polygon Polygon `yaml:"polygon" json:"polygon" mapstructure:"polygon"`
+	Id int64 `yaml:"id" json:"id" mapstructure:"id"`
 }
 
 // NewPolygonInstance creates a new PolygonInstance with default values.

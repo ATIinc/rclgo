@@ -31,7 +31,7 @@ func init() {
 }
 
 type Byte struct {
-	Data byte `yaml:"data" json:"data"`
+	Data byte `yaml:"data" json:"data" mapstructure:"data"`
 }
 
 // NewByte creates a new Byte with default values.

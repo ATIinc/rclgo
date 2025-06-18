@@ -32,8 +32,8 @@ func init() {
 }
 
 type PoseStamped struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`
-	Pose Pose `yaml:"pose" json:"pose"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Pose Pose `yaml:"pose" json:"pose" mapstructure:"pose"`
 }
 
 // NewPoseStamped creates a new PoseStamped with default values.

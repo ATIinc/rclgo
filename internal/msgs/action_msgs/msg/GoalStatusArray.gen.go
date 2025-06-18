@@ -31,7 +31,7 @@ func init() {
 }
 
 type GoalStatusArray struct {
-	StatusList []GoalStatus `yaml:"status_list" json:"status_list"`// An array of goal statuses.
+	StatusList []GoalStatus `yaml:"status_list" json:"status_list" mapstructure:"status_list"`// An array of goal statuses.
 }
 
 // NewGoalStatusArray creates a new GoalStatusArray with default values.

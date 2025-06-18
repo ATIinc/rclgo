@@ -32,7 +32,7 @@ func init() {
 }
 
 type LaserEcho struct {
-	Echoes []float32 `yaml:"echoes" json:"echoes"`// Multiple values of ranges or intensities.
+	Echoes []float32 `yaml:"echoes" json:"echoes" mapstructure:"echoes"`// Multiple values of ranges or intensities.
 }
 
 // NewLaserEcho creates a new LaserEcho with default values.

@@ -34,11 +34,11 @@ func init() {
 }
 
 type MultiDOFJointState struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`
-	JointNames []string `yaml:"joint_names" json:"joint_names"`
-	Transforms []geometry_msgs_msg.Transform `yaml:"transforms" json:"transforms"`
-	Twist []geometry_msgs_msg.Twist `yaml:"twist" json:"twist"`
-	Wrench []geometry_msgs_msg.Wrench `yaml:"wrench" json:"wrench"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	JointNames []string `yaml:"joint_names" json:"joint_names" mapstructure:"joint_names"`
+	Transforms []geometry_msgs_msg.Transform `yaml:"transforms" json:"transforms" mapstructure:"transforms"`
+	Twist []geometry_msgs_msg.Twist `yaml:"twist" json:"twist" mapstructure:"twist"`
+	Wrench []geometry_msgs_msg.Wrench `yaml:"wrench" json:"wrench" mapstructure:"wrench"`
 }
 
 // NewMultiDOFJointState creates a new MultiDOFJointState with default values.

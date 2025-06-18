@@ -117,7 +117,7 @@ const (
 type {{$Md.Name}} struct {
 	{{- range $k, $v := $Md.Fields }}
 	{{$v.GoName }} {{$v.TypeArray}}{{$v.GoPkgReference}}{{$v.GoType}}` +
-			"{{\"\"}} `yaml:\"{{$v.RosName}}\" json:\"{{$v.RosName}}\"`" + `{{if .Comment -}} // {{.Comment}}{{- end}}
+			"{{\"\"}} `yaml:\"{{$v.RosName}}\" json:\"{{$v.RosName}}\" mapstructure:\"{{$v.RosName}}\"`" + `{{if .Comment -}} // {{.Comment}}{{- end}}
 	{{- end }}
 }
 

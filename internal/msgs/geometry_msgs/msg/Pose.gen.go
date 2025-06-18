@@ -31,8 +31,8 @@ func init() {
 }
 
 type Pose struct {
-	Position Point `yaml:"position" json:"position"`
-	Orientation Quaternion `yaml:"orientation" json:"orientation"`
+	Position Point `yaml:"position" json:"position" mapstructure:"position"`
+	Orientation Quaternion `yaml:"orientation" json:"orientation" mapstructure:"orientation"`
 }
 
 // NewPose creates a new Pose with default values.

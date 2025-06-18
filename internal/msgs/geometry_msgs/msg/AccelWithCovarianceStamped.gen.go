@@ -32,8 +32,8 @@ func init() {
 }
 
 type AccelWithCovarianceStamped struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`// This represents an estimated accel with reference coordinate frame and timestamp.
-	Accel AccelWithCovariance `yaml:"accel" json:"accel"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`// This represents an estimated accel with reference coordinate frame and timestamp.
+	Accel AccelWithCovariance `yaml:"accel" json:"accel" mapstructure:"accel"`
 }
 
 // NewAccelWithCovarianceStamped creates a new AccelWithCovarianceStamped with default values.

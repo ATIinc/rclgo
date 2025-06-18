@@ -32,7 +32,7 @@ func init() {
 }
 
 type CancelGoal_Request struct {
-	GoalInfo action_msgs_msg.GoalInfo `yaml:"goal_info" json:"goal_info"`// Goal info describing the goals to cancel, see above.
+	GoalInfo action_msgs_msg.GoalInfo `yaml:"goal_info" json:"goal_info" mapstructure:"goal_info"`// Goal info describing the goals to cancel, see above.
 }
 
 // NewCancelGoal_Request creates a new CancelGoal_Request with default values.

@@ -33,15 +33,15 @@ func init() {
 }
 
 type PointCloud2 struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`// Time of sensor data acquisition, and the coordinate frame ID (for 3d points).
-	Height uint32 `yaml:"height" json:"height"`// 2D structure of the point cloud. If the cloud is unordered, height is1 and width is the length of the point cloud.
-	Width uint32 `yaml:"width" json:"width"`
-	Fields []PointField `yaml:"fields" json:"fields"`// Describes the channels and their layout in the binary data blob.
-	IsBigendian bool `yaml:"is_bigendian" json:"is_bigendian"`// Is this data bigendian?
-	PointStep uint32 `yaml:"point_step" json:"point_step"`// Length of a point in bytes
-	RowStep uint32 `yaml:"row_step" json:"row_step"`// Length of a row in bytes
-	Data []uint8 `yaml:"data" json:"data"`// Actual point data, size is (row_step*height)
-	IsDense bool `yaml:"is_dense" json:"is_dense"`// True if there are no invalid points
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`// Time of sensor data acquisition, and the coordinate frame ID (for 3d points).
+	Height uint32 `yaml:"height" json:"height" mapstructure:"height"`// 2D structure of the point cloud. If the cloud is unordered, height is1 and width is the length of the point cloud.
+	Width uint32 `yaml:"width" json:"width" mapstructure:"width"`
+	Fields []PointField `yaml:"fields" json:"fields" mapstructure:"fields"`// Describes the channels and their layout in the binary data blob.
+	IsBigendian bool `yaml:"is_bigendian" json:"is_bigendian" mapstructure:"is_bigendian"`// Is this data bigendian?
+	PointStep uint32 `yaml:"point_step" json:"point_step" mapstructure:"point_step"`// Length of a point in bytes
+	RowStep uint32 `yaml:"row_step" json:"row_step" mapstructure:"row_step"`// Length of a row in bytes
+	Data []uint8 `yaml:"data" json:"data" mapstructure:"data"`// Actual point data, size is (row_step*height)
+	IsDense bool `yaml:"is_dense" json:"is_dense" mapstructure:"is_dense"`// True if there are no invalid points
 }
 
 // NewPointCloud2 creates a new PointCloud2 with default values.

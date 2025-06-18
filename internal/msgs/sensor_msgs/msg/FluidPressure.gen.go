@@ -32,9 +32,9 @@ func init() {
 }
 
 type FluidPressure struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`// timestamp of the measurement
-	FluidPressure float64 `yaml:"fluid_pressure" json:"fluid_pressure"`// Absolute pressure reading in Pascals.
-	Variance float64 `yaml:"variance" json:"variance"`// 0 is interpreted as variance unknown
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`// timestamp of the measurement
+	FluidPressure float64 `yaml:"fluid_pressure" json:"fluid_pressure" mapstructure:"fluid_pressure"`// Absolute pressure reading in Pascals.
+	Variance float64 `yaml:"variance" json:"variance" mapstructure:"variance"`// 0 is interpreted as variance unknown
 }
 
 // NewFluidPressure creates a new FluidPressure with default values.

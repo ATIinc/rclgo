@@ -31,7 +31,7 @@ func init() {
 }
 
 type Bool struct {
-	Data bool `yaml:"data" json:"data"`
+	Data bool `yaml:"data" json:"data" mapstructure:"data"`
 }
 
 // NewBool creates a new Bool with default values.

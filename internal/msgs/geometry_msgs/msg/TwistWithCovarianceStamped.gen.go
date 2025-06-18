@@ -32,8 +32,8 @@ func init() {
 }
 
 type TwistWithCovarianceStamped struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`
-	Twist TwistWithCovariance `yaml:"twist" json:"twist"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Twist TwistWithCovariance `yaml:"twist" json:"twist" mapstructure:"twist"`
 }
 
 // NewTwistWithCovarianceStamped creates a new TwistWithCovarianceStamped with default values.

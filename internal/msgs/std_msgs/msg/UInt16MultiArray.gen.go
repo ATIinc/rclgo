@@ -32,8 +32,8 @@ func init() {
 }
 
 type UInt16MultiArray struct {
-	Layout MultiArrayLayout `yaml:"layout" json:"layout"`// specification of data layout
-	Data []uint16 `yaml:"data" json:"data"`// array of data
+	Layout MultiArrayLayout `yaml:"layout" json:"layout" mapstructure:"layout"`// specification of data layout
+	Data []uint16 `yaml:"data" json:"data" mapstructure:"data"`// array of data
 }
 
 // NewUInt16MultiArray creates a new UInt16MultiArray with default values.

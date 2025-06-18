@@ -31,7 +31,7 @@ func init() {
 }
 
 type SetBool_Request struct {
-	Data bool `yaml:"data" json:"data"`// e.g. for hardware enabling / disabling
+	Data bool `yaml:"data" json:"data" mapstructure:"data"`// e.g. for hardware enabling / disabling
 }
 
 // NewSetBool_Request creates a new SetBool_Request with default values.

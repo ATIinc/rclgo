@@ -34,9 +34,9 @@ func init() {
 }
 
 type TimeReference struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`// stamp is system time for which measurement was valid
-	TimeRef builtin_interfaces_msg.Time `yaml:"time_ref" json:"time_ref"`// corresponding time from this external source
-	Source string `yaml:"source" json:"source"`// (optional) name of time source
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`// stamp is system time for which measurement was valid
+	TimeRef builtin_interfaces_msg.Time `yaml:"time_ref" json:"time_ref" mapstructure:"time_ref"`// corresponding time from this external source
+	Source string `yaml:"source" json:"source" mapstructure:"source"`// (optional) name of time source
 }
 
 // NewTimeReference creates a new TimeReference with default values.

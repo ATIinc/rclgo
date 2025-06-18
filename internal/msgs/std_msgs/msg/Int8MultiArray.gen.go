@@ -32,8 +32,8 @@ func init() {
 }
 
 type Int8MultiArray struct {
-	Layout MultiArrayLayout `yaml:"layout" json:"layout"`// specification of data layout
-	Data []int8 `yaml:"data" json:"data"`// array of data
+	Layout MultiArrayLayout `yaml:"layout" json:"layout" mapstructure:"layout"`// specification of data layout
+	Data []int8 `yaml:"data" json:"data" mapstructure:"data"`// array of data
 }
 
 // NewInt8MultiArray creates a new Int8MultiArray with default values.

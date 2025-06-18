@@ -32,8 +32,8 @@ func init() {
 }
 
 type SetCameraInfo_Response struct {
-	Success bool `yaml:"success" json:"success"`// True if the call succeeded
-	StatusMessage string `yaml:"status_message" json:"status_message"`// Used to give details about success
+	Success bool `yaml:"success" json:"success" mapstructure:"success"`// True if the call succeeded
+	StatusMessage string `yaml:"status_message" json:"status_message" mapstructure:"status_message"`// Used to give details about success
 }
 
 // NewSetCameraInfo_Response creates a new SetCameraInfo_Response with default values.

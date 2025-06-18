@@ -32,8 +32,8 @@ func init() {
 }
 
 type PolygonStamped struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`
-	Polygon Polygon `yaml:"polygon" json:"polygon"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Polygon Polygon `yaml:"polygon" json:"polygon" mapstructure:"polygon"`
 }
 
 // NewPolygonStamped creates a new PolygonStamped with default values.

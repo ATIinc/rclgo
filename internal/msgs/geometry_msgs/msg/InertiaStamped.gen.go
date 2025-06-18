@@ -32,8 +32,8 @@ func init() {
 }
 
 type InertiaStamped struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`
-	Inertia Inertia `yaml:"inertia" json:"inertia"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Inertia Inertia `yaml:"inertia" json:"inertia" mapstructure:"inertia"`
 }
 
 // NewInertiaStamped creates a new InertiaStamped with default values.

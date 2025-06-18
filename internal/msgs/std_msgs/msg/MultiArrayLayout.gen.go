@@ -31,8 +31,8 @@ func init() {
 }
 
 type MultiArrayLayout struct {
-	Dim []MultiArrayDimension `yaml:"dim" json:"dim"`// Array of dimension properties
-	DataOffset uint32 `yaml:"data_offset" json:"data_offset"`// padding bytes at front of data
+	Dim []MultiArrayDimension `yaml:"dim" json:"dim" mapstructure:"dim"`// Array of dimension properties
+	DataOffset uint32 `yaml:"data_offset" json:"data_offset" mapstructure:"data_offset"`// padding bytes at front of data
 }
 
 // NewMultiArrayLayout creates a new MultiArrayLayout with default values.

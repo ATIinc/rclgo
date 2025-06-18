@@ -43,8 +43,8 @@ const (
 )
 
 type NavSatStatus struct {
-	Status int8 `yaml:"status" json:"status"`// STATUS_UNKNOWN
-	Service uint16 `yaml:"service" json:"service"`
+	Status int8 `yaml:"status" json:"status" mapstructure:"status"`// STATUS_UNKNOWN
+	Service uint16 `yaml:"service" json:"service" mapstructure:"service"`
 }
 
 // NewNavSatStatus creates a new NavSatStatus with default values.

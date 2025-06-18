@@ -31,7 +31,7 @@ func init() {
 }
 
 type Int16 struct {
-	Data int16 `yaml:"data" json:"data"`
+	Data int16 `yaml:"data" json:"data" mapstructure:"data"`
 }
 
 // NewInt16 creates a new Int16 with default values.

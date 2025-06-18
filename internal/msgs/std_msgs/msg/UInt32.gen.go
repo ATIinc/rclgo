@@ -31,7 +31,7 @@ func init() {
 }
 
 type UInt32 struct {
-	Data uint32 `yaml:"data" json:"data"`
+	Data uint32 `yaml:"data" json:"data" mapstructure:"data"`
 }
 
 // NewUInt32 creates a new UInt32 with default values.

@@ -32,9 +32,9 @@ func init() {
 }
 
 type Illuminance struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`// timestamp is the time the illuminance was measured
-	Illuminance float64 `yaml:"illuminance" json:"illuminance"`// Measurement of the Photometric Illuminance in Lux.
-	Variance float64 `yaml:"variance" json:"variance"`// 0 is interpreted as variance unknown
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`// timestamp is the time the illuminance was measured
+	Illuminance float64 `yaml:"illuminance" json:"illuminance" mapstructure:"illuminance"`// Measurement of the Photometric Illuminance in Lux.
+	Variance float64 `yaml:"variance" json:"variance" mapstructure:"variance"`// 0 is interpreted as variance unknown
 }
 
 // NewIlluminance creates a new Illuminance with default values.

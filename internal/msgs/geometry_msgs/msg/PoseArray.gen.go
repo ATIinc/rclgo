@@ -32,8 +32,8 @@ func init() {
 }
 
 type PoseArray struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`
-	Poses []Pose `yaml:"poses" json:"poses"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Poses []Pose `yaml:"poses" json:"poses" mapstructure:"poses"`
 }
 
 // NewPoseArray creates a new PoseArray with default values.

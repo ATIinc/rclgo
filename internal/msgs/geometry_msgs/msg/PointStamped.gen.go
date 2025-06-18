@@ -32,8 +32,8 @@ func init() {
 }
 
 type PointStamped struct {
-	Header std_msgs_msg.Header `yaml:"header" json:"header"`
-	Point Point `yaml:"point" json:"point"`
+	Header std_msgs_msg.Header `yaml:"header" json:"header" mapstructure:"header"`
+	Point Point `yaml:"point" json:"point" mapstructure:"point"`
 }
 
 // NewPointStamped creates a new PointStamped with default values.
