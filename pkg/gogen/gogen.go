@@ -351,30 +351,48 @@ func (g *Generator) generateInterface(meta Metadata, ifacePath string) {
 	}
 }
 
+func (g *Generator) walkDir(rootPath string, depth int) {
+	root := os.DirFS(rootPath)
+	fs.WalkDir(root, ".", func(cpath string, ent fs.DirEntry, err error) error { //nolint:errcheck
+		path := filepath.Join(rootPath, cpath)
+		skip, blacklistEntry := blacklisted(path)
+		if skip {
+			PrintErrf("Blacklisted: %s, matched regex '%s'\n", path, blacklistEntry)
+			return nil
+		}
+		if re.M(filepath.ToSlash(path), `m!/(msg/.+\.msg)|(srv/.+\.srv)|(action/.+\.action)$!`) {
+			meta, err := parseMetadataFromPath(path)
+			if err != nil {
+				PrintErrf("Failed to parse metadata from path %s: %v\n", path, err)
+			} else {
+				ref := g.allPkgs[meta.Package]
+				if ref == nil {
+					ref = &rosPkgRef{Interfaces: map[Metadata]string{}}
+					g.allPkgs[meta.Package] = ref
+				}
+				ref.Interfaces[*meta] = path
+			}
+			return nil
+		}
+		if link, err := os.Readlink(path); err == nil {
+			if depth > 10 {
+				PrintErrf("Symlink depth exceeded (symlink loop?), refusing to following symlink: %v\n", path)
+				return nil
+			}
+
+			g.walkDir(link, depth+1)
+
+			return nil
+		}
+
+		return nil
+	})
+}
+
 func (g *Generator) findPackages() {
 	g.allPkgs = map[string]*rosPkgRef{}
 	for i := len(g.config.RootPaths) - 1; i >= 0; i-- {
-		filepath.Walk(g.config.RootPaths[i], func(path string, info fs.FileInfo, err error) error { //nolint:errcheck
-			skip, blacklistEntry := blacklisted(path)
-			if skip {
-				PrintErrf("Blacklisted: %s, matched regex '%s'\n", path, blacklistEntry)
-				return nil
-			}
-			if re.M(filepath.ToSlash(path), `m!/(msg/.+\.msg)|(srv/.+\.srv)|(action/.+\.action)$!`) {
-				meta, err := parseMetadataFromPath(path)
-				if err != nil {
-					PrintErrf("Failed to parse metadata from path %s: %v\n", path, err)
-				} else {
-					ref := g.allPkgs[meta.Package]
-					if ref == nil {
-						ref = &rosPkgRef{Interfaces: map[Metadata]string{}}
-						g.allPkgs[meta.Package] = ref
-					}
-					ref.Interfaces[*meta] = path
-				}
-			}
-			return nil
-		})
+		g.walkDir(g.config.RootPaths[i], 0)
 	}
 }
 
@@ -410,7 +428,7 @@ func parseMetadataFromPath(p string) (*Metadata, error) {
 	}
 	dirs := strings.Split(p, string(filepath.Separator))
 
-	if len(dirs) >= 2 {
+	if len(dirs) > 2 {
 		m.Package = dirs[len(dirs)-3]
 	} else {
 		return nil, fmt.Errorf("Path '%s' cannot be parsed for ROS2 package name!", p)
