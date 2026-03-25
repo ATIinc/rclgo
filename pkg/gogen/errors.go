@@ -28,7 +28,7 @@ func (g *Generator) GenerateROS2ErrorTypes() error {
 	var errorTypes []*ROS2ErrorType
 
 	for _, includeLookupDir := range g.config.RootPaths {
-		for tries := 0; tries < 10; tries++ {
+		for range 10 {
 			PrintErrf("Looking for rcl C include files to parse error definitions from '%s'\n", includeLookupDir)
 
 			filepath.Walk(includeLookupDir, func(path string, info os.FileInfo, err error) error { //nolint:errcheck
@@ -75,7 +75,7 @@ func generateGolangErrorTypesFromROS2ErrorDefinitionsPath(errorTypes []*ROS2Erro
 		return nil, err
 	}
 
-	for _, line := range strings.Split(string(content), "\n") {
+	for line := range strings.SplitSeq(string(content), "\n") {
 		errType := parseROS2ErrorType(line)
 		if errType != nil {
 			errorTypes = append(errorTypes, errType)

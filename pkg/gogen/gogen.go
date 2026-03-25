@@ -489,7 +489,7 @@ func (g *Generator) generateAction(srcPath string) (*ROS2Action, error) {
 	return action, nil
 }
 
-type templateData = map[string]interface{}
+type templateData = map[string]any
 
 func (g *Generator) generateGoFile(destPath string, tmpl *template.Template, data templateData) error {
 	f, err := mkdir_p(destPath)

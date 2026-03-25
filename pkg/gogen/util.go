@@ -62,7 +62,7 @@ func camelToSnake(in string) string {
 
 	ucSequenceLength := 0 //Special semantics for consecutive UC characters
 
-	for i := 0; i < len(tmp); i++ {
+	for i := range tmp {
 		if unicode.IsUpper(tmp[i]) || (ucSequenceLength > 0 && unicode.IsNumber(tmp[i])) {
 			ucSequenceLength++
 

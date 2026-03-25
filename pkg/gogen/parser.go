@@ -201,7 +201,7 @@ func (p *parser) parseLine(msg *ROS2Message, line string) error {
 	return nil
 }
 
-func (p *parser) parseMessageLine(testRow string, ros2msg *ROS2Message) (interface{}, error) {
+func (p *parser) parseMessageLine(testRow string, ros2msg *ROS2Message) (any, error) {
 	re.R(&testRow, `m!^#\s*(.*)$!`) // Extract comments from comment-only lines to be included in the pre-field comments
 	if re.R0.Matches > 0 {
 		if re.R0.S[1] != "" {
