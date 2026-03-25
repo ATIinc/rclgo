@@ -6,6 +6,7 @@ package rclgo
 #include <rcl_action/rcl_action.h>
 */
 import "C"
+
 import (
 	"context"
 	"crypto/rand"
@@ -764,15 +765,15 @@ type actionClientHandler = func(context.Context, types.Message)
 
 type actionClientHandlerMapEntry struct {
 	ctx     context.Context //nolint:containedctx // Used to keep track of Contexts
+	wg      sync.WaitGroup
 	handler actionClientHandler
 }
 
-type actionClientHandlerMap map[uint64]actionClientHandlerMapEntry
+type actionClientHandlerMap map[uint64]*actionClientHandlerMapEntry
 
 func (m actionClientHandlerMap) call(msg types.Message) {
 	for _, entry := range m {
-		entry := entry
-		go func() { entry.handler(entry.ctx, msg.CloneMsg()) }()
+		entry.wg.Go(func() { entry.handler(entry.ctx, msg.CloneMsg()) })
 	}
 }
 
@@ -1126,7 +1127,7 @@ func (c *ActionClient) subscribe(
 	if id == nil {
 		subID := c.nextSubscriberID
 		c.nextSubscriberID++
-		subs.allGoals[subID] = actionClientHandlerMapEntry{
+		subs.allGoals[subID] = &actionClientHandlerMapEntry{
 			ctx:     ctx,
 			handler: handler,
 		}
@@ -1144,15 +1145,23 @@ func (c *ActionClient) subscribe(
 	}
 	subID := c.nextSubscriberID
 	c.nextSubscriberID++
-	handlers[subID] = actionClientHandlerMapEntry{
+	handlers[subID] = &actionClientHandlerMapEntry{
 		ctx:     ctx,
 		handler: handler,
 	}
 	return func() {
+		var wgs []*sync.WaitGroup
+		// defer this so it happens _after_ the lock is released
+		defer func() {
+			for _, wg := range wgs {
+				wg.Wait()
+			}
+		}()
 		c.rclClientMu.Lock()
 		defer c.rclClientMu.Unlock()
 		if handlers := subs.perGoal[goalID]; handlers != nil {
-			if _, ok := handlers[subID]; ok {
+			if h, ok := handlers[subID]; ok {
+				wgs = append(wgs, &h.wg)
 				delete(handlers, subID)
 				if len(handlers) == 0 {
 					delete(subs.perGoal, goalID)
