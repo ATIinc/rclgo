@@ -192,7 +192,7 @@ func (t *{{$Md.Name}}) SetGoalID(id *types.GoalID) {
 	t.GoalInfo.GoalId.Uuid = *id
 }
 {{- else if matchMsg $Md "action_msgs_srv" "CancelGoal_Response" }}
-func (t *{{$Md.Name}}) CallForEach(f func(interface{})) {
+func (t *{{$Md.Name}}) CallForEach(f func(any)) {
 	for i := range t.GoalsCanceling {
 		f((*types.GoalID)(&t.GoalsCanceling[i].GoalId.Uuid))
 	}
@@ -206,7 +206,7 @@ func (t *{{$Md.Name}}) SetGoalID(id *types.GoalID) {
 	t.GoalInfo.GoalId.Uuid = *id
 }
 {{- else if matchMsg $Md "action_msgs_msg" "GoalStatusArray" }}
-func (t *{{$Md.Name}}) CallForEach(f func(interface{})) {
+func (t *{{$Md.Name}}) CallForEach(f func(any)) {
 	for i := range t.StatusList {
 		f(&t.StatusList[i])
 	}

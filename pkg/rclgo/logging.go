@@ -38,6 +38,7 @@ void loggingOutputHandler(
 );
 */
 import "C"
+
 import (
 	"errors"
 	"fmt"
@@ -266,67 +267,79 @@ func (l *Logger) EffectiveLevel() (LogSeverity, error) {
 	return LogSeverity(level), nil
 }
 
-func (l *Logger) Log(level LogSeverity, a ...interface{}) error {
+func (l *Logger) Log(level LogSeverity, a ...any) error {
 	return logNamed(level, l.name, fmt.Sprint(a...))
 }
 
-func (l *Logger) Debug(a ...interface{}) error {
+func (l *Logger) Debug(a ...any) error {
 	return logNamed(LogSeverityDebug, l.name, fmt.Sprint(a...))
 }
-func (l *Logger) Info(a ...interface{}) error {
+
+func (l *Logger) Info(a ...any) error {
 	return logNamed(LogSeverityInfo, l.name, fmt.Sprint(a...))
 }
-func (l *Logger) Warn(a ...interface{}) error {
+
+func (l *Logger) Warn(a ...any) error {
 	return logNamed(LogSeverityWarn, l.name, fmt.Sprint(a...))
 }
-func (l *Logger) Error(a ...interface{}) error {
+
+func (l *Logger) Error(a ...any) error {
 	return logNamed(LogSeverityError, l.name, fmt.Sprint(a...))
 }
-func (l *Logger) Fatal(a ...interface{}) error {
+
+func (l *Logger) Fatal(a ...any) error {
 	return logNamed(LogSeverityFatal, l.name, fmt.Sprint(a...))
 }
 
-func sprintln(a ...interface{}) string {
+func sprintln(a ...any) string {
 	b := fmt.Sprintln(a...)
 	return b[:len(b)-1]
 }
 
-func (l *Logger) Logln(level LogSeverity, a ...interface{}) error {
+func (l *Logger) Logln(level LogSeverity, a ...any) error {
 	return logNamed(level, l.name, sprintln(a...))
 }
 
-func (l *Logger) Debugln(a ...interface{}) error {
+func (l *Logger) Debugln(a ...any) error {
 	return logNamed(LogSeverityDebug, l.name, sprintln(a...))
 }
-func (l *Logger) Infoln(a ...interface{}) error {
+
+func (l *Logger) Infoln(a ...any) error {
 	return logNamed(LogSeverityInfo, l.name, sprintln(a...))
 }
-func (l *Logger) Warnln(a ...interface{}) error {
+
+func (l *Logger) Warnln(a ...any) error {
 	return logNamed(LogSeverityWarn, l.name, sprintln(a...))
 }
-func (l *Logger) Errorln(a ...interface{}) error {
+
+func (l *Logger) Errorln(a ...any) error {
 	return logNamed(LogSeverityError, l.name, sprintln(a...))
 }
-func (l *Logger) Fatalln(a ...interface{}) error {
+
+func (l *Logger) Fatalln(a ...any) error {
 	return logNamed(LogSeverityFatal, l.name, sprintln(a...))
 }
 
-func (l *Logger) Logf(level LogSeverity, format string, a ...interface{}) error {
+func (l *Logger) Logf(level LogSeverity, format string, a ...any) error {
 	return logNamed(level, l.name, fmt.Sprintf(format, a...))
 }
 
-func (l *Logger) Debugf(format string, a ...interface{}) error {
+func (l *Logger) Debugf(format string, a ...any) error {
 	return logNamed(LogSeverityDebug, l.name, fmt.Sprintf(format, a...))
 }
-func (l *Logger) Infof(format string, a ...interface{}) error {
+
+func (l *Logger) Infof(format string, a ...any) error {
 	return logNamed(LogSeverityInfo, l.name, fmt.Sprintf(format, a...))
 }
-func (l *Logger) Warnf(format string, a ...interface{}) error {
+
+func (l *Logger) Warnf(format string, a ...any) error {
 	return logNamed(LogSeverityWarn, l.name, fmt.Sprintf(format, a...))
 }
-func (l *Logger) Errorf(format string, a ...interface{}) error {
+
+func (l *Logger) Errorf(format string, a ...any) error {
 	return logNamed(LogSeverityError, l.name, fmt.Sprintf(format, a...))
 }
-func (l *Logger) Fatalf(format string, a ...interface{}) error {
+
+func (l *Logger) Fatalf(format string, a ...any) error {
 	return logNamed(LogSeverityFatal, l.name, fmt.Sprintf(format, a...))
 }

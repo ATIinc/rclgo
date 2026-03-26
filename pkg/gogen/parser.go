@@ -291,7 +291,7 @@ func (p *parser) ParseROS2MessageField(capture map[string]string, ros2msg *ROS2M
 		return nil, err
 	}
 	if capture["boundedString"] != "" &&
-		!(capture["package"] == "" && capture["type"] == "string") {
+		(capture["package"] != "" || capture["type"] != "string") {
 		return nil, errors.New("the only base type that supports an upper boundary is string")
 	}
 	if capture["bounded"] != "" {
@@ -377,7 +377,6 @@ func (p *parser) cSerializationCode(f *ROS2Field, m *ROS2Message) string {
 	if f.TypeArray != "" && f.ArraySize > 0 && f.PkgName != "" && f.PkgIsLocal {
 		// Complex value Array local package reference
 		return ucFirst(f.RosType) + `__Array_to_C(mem.` + f.CName + `[:], m.` + f.GoName + `[:])`
-
 	} else if f.TypeArray != "" && f.ArraySize > 0 && f.PkgName != "" && !f.PkgIsLocal {
 		// Complex value Array remote package reference
 		return `cSlice_` + f.RosName + ` := mem.` + f.CName + `[:]
@@ -385,15 +384,12 @@ func (p *parser) cSerializationCode(f *ROS2Field, m *ROS2Message) string {
 	} else if f.TypeArray != "" && f.ArraySize == 0 && f.PkgName != "" && f.PkgIsLocal {
 		// Complex value Slice local package reference
 		return ucFirst(f.RosType) + `__Sequence_to_C(&mem.` + f.CName + `, m.` + f.GoName + `)`
-
 	} else if f.TypeArray != "" && f.ArraySize == 0 && f.PkgName != "" && !f.PkgIsLocal {
 		// Complex value Slice remote package reference
 		return f.GoPkgReference() + ucFirst(f.RosType) + `__Sequence_to_C((*` + f.GoPkgReference() + `C` + ucFirst(f.RosType) + `__Sequence)(unsafe.Pointer(&mem.` + f.CName + `)), m.` + f.GoName + `)`
-
 	} else if f.TypeArray == "" && f.PkgName != "" {
 		// Complex value single
 		return f.GoPkgReference() + f.GoType + "TypeSupport.AsCStruct(unsafe.Pointer(&mem." + f.CName + "), &m." + f.GoName + ")"
-
 	} else if f.TypeArray != "" && f.ArraySize > 0 && f.PkgName == "" {
 		// Primitive value Array
 		m.GoImports[p.config.RclgoImportPath+"/pkg/rclgo/primitives"] = "primitives"
@@ -411,10 +407,11 @@ func (p *parser) cSerializationCode(f *ROS2Field, m *ROS2Message) string {
 		// string and U16String are special cases because they have custom
 		// serialization implementations but still use a non-generated type in
 		// generated message fields.
-		if f.RosType == "string" {
+		switch f.RosType {
+		case "string":
 			m.GoImports[p.config.RclgoImportPath+"/pkg/rclgo/primitives"] = "primitives"
 			return "primitives.StringAsCStruct(unsafe.Pointer(&mem." + f.CName + "), m." + f.GoName + ")"
-		} else if f.RosType == "U16String" {
+		case "U16String":
 			m.GoImports[p.config.RclgoImportPath+"/pkg/rclgo/primitives"] = "primitives"
 			return "primitives.U16StringAsCStruct(unsafe.Pointer(&mem." + f.CName + "), m." + f.GoName + ")"
 		}
@@ -424,28 +421,22 @@ func (p *parser) cSerializationCode(f *ROS2Field, m *ROS2Message) string {
 }
 
 func (p *parser) goSerializationCode(f *ROS2Field, m *ROS2Message) string {
-
 	if f.TypeArray != "" && f.ArraySize > 0 && f.PkgName != "" && f.PkgIsLocal {
 		// Complex value Array local package reference
 		return ucFirst(f.RosType) + `__Array_to_Go(m.` + f.GoName + `[:], mem.` + f.CName + `[:])`
-
 	} else if f.TypeArray != "" && f.ArraySize > 0 && f.PkgName != "" {
 		// Complex value Array remote package reference
 		return `cSlice_` + f.RosName + ` := mem.` + f.CName + `[:]
 	` + f.GoPkgReference() + ucFirst(f.RosType) + `__Array_to_Go(m.` + f.GoName + `[:], *(*[]` + f.GoPkgReference() + `C` + ucFirst(f.RosType) + `)(unsafe.Pointer(&cSlice_` + f.RosName + `)))`
-
 	} else if f.TypeArray != "" && f.ArraySize == 0 && f.PkgName != "" && f.PkgIsLocal {
 		// Complex value Slice local package reference
 		return ucFirst(f.RosType) + `__Sequence_to_Go(&m.` + f.GoName + `, mem.` + f.CName + `)`
-
 	} else if f.TypeArray != "" && f.ArraySize == 0 && f.PkgName != "" && !f.PkgIsLocal {
 		// Complex value Slice remote package reference
 		return f.GoPkgReference() + ucFirst(f.RosType) + `__Sequence_to_Go(&m.` + f.GoName + `, *(*` + f.GoPkgReference() + `C` + ucFirst(f.RosType) + `__Sequence)(unsafe.Pointer(&mem.` + f.CName + `)))`
-
 	} else if f.TypeArray == "" && f.PkgName != "" {
 		// Complex value single
 		return f.GoPkgReference() + f.GoType + "TypeSupport.AsGoStruct(&m." + f.GoName + ", unsafe.Pointer(&mem." + f.CName + "))"
-
 	} else if f.TypeArray != "" && f.ArraySize > 0 && f.PkgName == "" {
 		// Primitive value Array
 		m.GoImports[p.config.RclgoImportPath+"/pkg/rclgo/primitives"] = "primitives"
@@ -463,10 +454,11 @@ func (p *parser) goSerializationCode(f *ROS2Field, m *ROS2Message) string {
 		// string and U16String are special cases because they have custom
 		// serialization implementations but still use a non-generated type in
 		// generated message fields.
-		if f.RosType == "string" {
+		switch f.RosType {
+		case "string":
 			m.GoImports[p.config.RclgoImportPath+"/pkg/rclgo/primitives"] = "primitives"
 			return "primitives.StringAsGoStruct(&m." + f.GoName + ", unsafe.Pointer(&mem." + f.CName + "))"
-		} else if f.RosType == "U16String" {
+		case "U16String":
 			m.GoImports[p.config.RclgoImportPath+"/pkg/rclgo/primitives"] = "primitives"
 			return "primitives.U16StringAsGoStruct(&m." + f.GoName + ", unsafe.Pointer(&mem." + f.CName + "))"
 		}
@@ -504,7 +496,6 @@ func defaultCode(f *ROS2Field) string {
 	} else if f.PkgName != "" && f.TypeArray == "" {
 		// Complex value single
 		return `t.` + f.GoName + ".SetDefaults()"
-
 	} else if f.DefaultValue != "" && f.TypeArray != "" {
 		// Primitive value array and slice
 		defaultValues := splitMsgDefaultArrayValues(f.RosType, f.DefaultValue)
@@ -523,7 +514,6 @@ func defaultCode(f *ROS2Field) string {
 	} else if f.DefaultValue != "" {
 		// Primitive value single
 		return `t.` + f.GoName + ` = ` + defaultValueSanitizer(f.RosType, f.DefaultValue)
-
 	} else if f.DefaultValue == "" {
 		// Primitive value single common default
 		return "t." + f.GoName + " = " + primitiveCommonDefault(f)

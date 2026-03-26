@@ -14,6 +14,7 @@ package primitives
 #include "rosidl_runtime_c/primitives_sequence.h"
 */
 import "C"
+
 import (
 	"unsafe"
 )
@@ -21,8 +22,10 @@ import (
 /*
 Char has some strange naming conventions under the ROS2 IDL hood, so it is easier to define the Char type manually, than refactor the whole generator templating.
 */
-type CChar = C.schar
-type CChar__Sequence = C.rosidl_runtime_c__char__Sequence
+type (
+	CChar           = C.schar
+	CChar__Sequence = C.rosidl_runtime_c__char__Sequence
+)
 
 func Char__Sequence_to_Go(goSlice *[]byte, cSlice CChar__Sequence) {
 	if cSlice.size == 0 {
@@ -32,6 +35,7 @@ func Char__Sequence_to_Go(goSlice *[]byte, cSlice CChar__Sequence) {
 	src := unsafe.Slice((*byte)(unsafe.Pointer(cSlice.data)), cSlice.size)
 	copy(*goSlice, src)
 }
+
 func Char__Sequence_to_C(cSlice *CChar__Sequence, goSlice []byte) {
 	if len(goSlice) == 0 {
 		cSlice.data = nil
@@ -45,13 +49,15 @@ func Char__Sequence_to_C(cSlice *CChar__Sequence, goSlice []byte) {
 	dst := unsafe.Slice((*byte)(unsafe.Pointer(cSlice.data)), cSlice.size)
 	copy(dst, goSlice)
 }
+
 func Char__Array_to_Go(goSlice []byte, cSlice []CChar) {
-	for i := 0; i < len(cSlice); i++ {
+	for i := range cSlice {
 		goSlice[i] = byte(cSlice[i])
 	}
 }
+
 func Char__Array_to_C(cSlice []CChar, goSlice []byte) {
-	for i := 0; i < len(goSlice); i++ {
+	for i := range goSlice {
 		cSlice[i] = C.schar(goSlice[i])
 	}
 }

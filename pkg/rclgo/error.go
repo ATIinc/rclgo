@@ -45,7 +45,7 @@ func errorString() string {
 	// Because the C string is null-terminated, we need to find the NULL-character to know where the string ends.
 	// Otherwise we create a Go string of length 1024 of NULLs and gibberish
 	bytes := make([]byte, len(rcutils_error_string_str))
-	for i := 0; i < len(rcutils_error_string_str); i++ {
+	for i := range rcutils_error_string_str {
 		if byte(rcutils_error_string_str[i]) == 0x00 {
 			return string(bytes[:i]) // ending slice offset is exclusive
 		}

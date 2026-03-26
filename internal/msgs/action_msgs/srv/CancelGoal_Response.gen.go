@@ -71,7 +71,7 @@ func (t *CancelGoal_Response) SetDefaults() {
 func (t *CancelGoal_Response) GetTypeSupport() types.MessageTypeSupport {
 	return CancelGoal_ResponseTypeSupport
 }
-func (t *CancelGoal_Response) CallForEach(f func(interface{})) {
+func (t *CancelGoal_Response) CallForEach(f func(any)) {
 	for i := range t.GoalsCanceling {
 		f((*types.GoalID)(&t.GoalsCanceling[i].GoalId.Uuid))
 	}

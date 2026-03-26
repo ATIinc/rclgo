@@ -16,7 +16,7 @@ import (
 // If demangle is true, topic names will be in the format used by the underlying
 // middleware.
 func (n *Node) GetTopicNamesAndTypes(demangle bool) (map[string][]string, error) {
-	return n.getNamesAndTypes("", "", func(node, namespace *C.char, namesAndTypes *C.rmw_names_and_types_t) C.int {
+	return n.getNamesAndTypes("", "", func(_, _ *C.char, namesAndTypes *C.rmw_names_and_types_t) C.int {
 		return C.rcl_get_topic_names_and_types(
 			n.rcl_node_t,
 			n.context.rcl_allocator_t,
@@ -194,7 +194,8 @@ func (n *Node) getInfoByTopic(kind, topic string, mangle bool, get func(
 	topic *C.char,
 	noMangle C.bool,
 	infoArray *C.rmw_topic_endpoint_info_array_t,
-) C.int) ([]TopicEndpointInfo, error) {
+) C.int,
+) ([]TopicEndpointInfo, error) {
 	ctopic := C.CString(topic)
 	defer C.free(unsafe.Pointer(ctopic))
 	infoArray := C.rmw_get_zero_initialized_topic_endpoint_info_array()

@@ -14,16 +14,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
 	"github.com/kivilahtio/go-re/v0"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -60,7 +60,7 @@ func camelToSnake(in string) string {
 	sb := strings.Builder{}
 	sb.Grow(len(tmp))
 
-	ucSequenceLength := 0 //Special semantics for consecutive UC characters
+	ucSequenceLength := 0 // Special semantics for consecutive UC characters
 
 	for i := range tmp {
 		if unicode.IsUpper(tmp[i]) || (ucSequenceLength > 0 && unicode.IsNumber(tmp[i])) {
@@ -104,7 +104,7 @@ The simple linux mkdir -p without all the Go-fuzz
 func mkdir_p(destFilePath string) (*os.File, error) {
 	_, err := os.Stat(destFilePath)
 	if errors.Is(err, os.ErrNotExist) {
-		err = os.MkdirAll(filepath.Dir(destFilePath), os.ModePerm)
+		err = os.MkdirAll(filepath.Dir(destFilePath), 0o755) //nolint:gosec // 0755 is fine here
 		if err != nil {
 			return nil, err
 		}
@@ -202,7 +202,7 @@ func (s stringSet) AddFrom(s2 stringSet) {
 	}
 }
 
-func (s stringSet) ToSlice() []string { return maps.Keys(s) }
+func (s stringSet) ToSlice() []string { return slices.Collect(maps.Keys(s)) }
 
 func (s stringSet) ToSortedSlice() []string {
 	vals := s.ToSlice()

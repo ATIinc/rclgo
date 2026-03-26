@@ -15,5 +15,10 @@
         "LD_LIBRARY_PATH": "/opt/ros/galactic/opt/yaml_cpp_vendor/lib:/opt/ros/galactic/lib/x86_64-linux-gnu:/opt/ros/galactic/lib",
     },
     "go.lintTool": "golint",
-    "go.lintOnSave": "off"
+    "go.lintOnSave": "off",
+    "cSpell.words": [
+        "nolint",
+        "rclgo",
+        "stretchr"
+    ]
 }

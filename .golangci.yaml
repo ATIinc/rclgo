@@ -4,15 +4,20 @@ linters:
   disable:
     - cyclop
     - depguard
+    - embeddedstructfieldcheck
+    - err113
+    - exhaustive
     - exhaustruct
     - forbidigo
     - forcetypeassert
+    - funcorder
     - funlen
     - gochecknoglobals
     - gochecknoinits
     - gocognit
     - goconst
     - gocyclo
+    - godoclint
     - godot
     - godox
     - interfacebloat
@@ -22,8 +27,10 @@ linters:
     - nestif
     - nilnil
     - nlreturn
+    - noinlineerr
     - nonamedreturns
     - paralleltest
+    - perfsprint
     - tagliatelle
     - testableexamples
     - testpackage
@@ -31,6 +38,7 @@ linters:
     - whitespace
     - wrapcheck
     - wsl
+    - wsl_v5
   settings:
     errcheck:
       exclude-functions:

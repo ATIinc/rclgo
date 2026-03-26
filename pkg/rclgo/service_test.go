@@ -6,10 +6,11 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/smartystreets/goconvey/convey" //nolint:revive
+
 	example_interfaces_srv "github.com/ATIinc/rclgo/internal/msgs/example_interfaces/srv"
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
-	. "github.com/smartystreets/goconvey/convey" //nolint:revive
 )
 
 func TestServiceAndClient(t *testing.T) {
@@ -66,7 +67,7 @@ func TestServiceAndClient(t *testing.T) {
 				"add",
 				example_interfaces_srv.AddTwoIntsTypeSupport,
 				&rclgo.ServiceOptions{Qos: qosProfile},
-				func(rsi *rclgo.ServiceInfo, rm types.Message, srs rclgo.ServiceResponseSender) {
+				func(_ *rclgo.ServiceInfo, rm types.Message, srs rclgo.ServiceResponseSender) {
 					req := rm.(*example_interfaces_srv.AddTwoInts_Request)
 					requestReceivedChan <- req
 					resp := example_interfaces_srv.NewAddTwoInts_Response()
@@ -114,11 +115,11 @@ func TestServiceAndClient(t *testing.T) {
 				reqCount,
 			)
 			responseSentErrChan = make(chan error, reqCount)
-			for i := 0; i < reqCount; i++ {
+			for range reqCount {
 				a, b := randGen.Int63(), randGen.Int63()
 				go func() { testResults <- sendReq(a, b) }()
 			}
-			for i := 0; i < reqCount; i++ {
+			for range reqCount {
 				res := <-testResults
 				So(res, ShouldNotBeNil)
 				So(res.err, ShouldBeNil)

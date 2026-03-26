@@ -61,7 +61,7 @@ func (t *GoalStatusArray) SetDefaults() {
 func (t *GoalStatusArray) GetTypeSupport() types.MessageTypeSupport {
 	return GoalStatusArrayTypeSupport
 }
-func (t *GoalStatusArray) CallForEach(f func(interface{})) {
+func (t *GoalStatusArray) CallForEach(f func(any)) {
 	for i := range t.StatusList {
 		f(&t.StatusList[i])
 	}

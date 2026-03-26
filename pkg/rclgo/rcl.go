@@ -29,7 +29,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 	"runtime"
 	"sync"
 	"time"
@@ -111,8 +110,7 @@ func (a *Args) argc() C.int {
 }
 
 func (a *Args) argv() **C.char {
-	s := (*reflect.SliceHeader)(unsafe.Pointer(&a.unparsed))
-	return (**C.char)(unsafe.Pointer(s.Data))
+	return unsafe.SliceData(a.unparsed)
 }
 
 func (a *Args) String() string {
@@ -610,7 +608,7 @@ func (c *Context) NewTimer(timeout time.Duration, timer_callback func(*Timer)) (
 		C.int64_t(timeout),
 		nil,
 		*c.rcl_allocator_t,
-        true,
+		true,
 	)
 	if rc != C.RCL_RET_OK {
 		return nil, errorsCast(rc)
@@ -1082,7 +1080,7 @@ func (c *Client) sendRequest(req unsafe.Pointer) (C.int64_t, error) {
 	return seqNum, nil
 }
 
-func (c *Client) takeResponse(resp unsafe.Pointer) (C.int64_t, interface{}, error) {
+func (c *Client) takeResponse(resp unsafe.Pointer) (C.int64_t, any, error) {
 	var header C.rmw_service_info_t
 	switch rc := C.rcl_take_response_with_info(c.rclClient, &header, resp); rc {
 	case C.RCL_RET_OK:
@@ -1102,12 +1100,12 @@ var errTakeFailed = errors.New("take failed")
 
 type sendResult struct {
 	resp      types.Message
-	otherData interface{}
+	otherData any
 }
 
 type requestSenderTransport struct {
 	SendRequest  func(unsafe.Pointer) (C.int64_t, error)
-	TakeResponse func(unsafe.Pointer) (C.int64_t, interface{}, error)
+	TakeResponse func(unsafe.Pointer) (C.int64_t, any, error)
 	TypeSupport  types.ServiceTypeSupport
 	Logger       *Logger
 }
@@ -1135,7 +1133,7 @@ func (s *requestSender) Close() error {
 	return nil
 }
 
-func (s *requestSender) Send(ctx context.Context, req types.Message) (types.Message, interface{}, error) {
+func (s *requestSender) Send(ctx context.Context, req types.Message) (types.Message, any, error) {
 	resultChan, seqNum, err := s.addPendingRequest(req)
 	if err != nil {
 		return nil, nil, err
@@ -1176,7 +1174,7 @@ func (s *requestSender) HandleResponse() {
 	ts := s.transport.TypeSupport.Response()
 	buf := ts.PrepareMemory()
 	defer ts.ReleaseMemory(buf)
-	respChan, otherData := func() (chan *sendResult, interface{}) {
+	respChan, otherData := func() (chan *sendResult, any) {
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
 		seqNum, otherData, err := s.transport.TakeResponse(buf)

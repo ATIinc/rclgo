@@ -31,7 +31,7 @@ func (g *Generator) GenerateROS2ErrorTypes() error {
 		for range 10 {
 			PrintErrf("Looking for rcl C include files to parse error definitions from '%s'\n", includeLookupDir)
 
-			filepath.Walk(includeLookupDir, func(path string, info os.FileInfo, err error) error { //nolint:errcheck
+			filepath.Walk(includeLookupDir, func(path string, _ os.FileInfo, err error) error { //nolint:errcheck
 				if err == nil && re.M(path, errorTypesCFileMatchingRegexp) {
 					PrintErrf("Analyzing: %s\n", path)
 					errorTypes, err = generateGolangErrorTypesFromROS2ErrorDefinitionsPath(errorTypes, path)
@@ -85,9 +85,11 @@ func generateGolangErrorTypesFromROS2ErrorDefinitionsPath(errorTypes []*ROS2Erro
 	return errorTypes, nil
 }
 
-var ros2errorTypesCommentsBuffer = strings.Builder{}                  // Collect pre-field comments here to be included in the comments. Flushed on empty lines.
-var ros2errorTypesDeduplicationMap = make(map[string]string, 1024)    // Some RMW and RCL error codes overlap, so we need to deduplicate them from the dynamic type casting switch-case
-var ros2errorTypesDeduplicationFilter = make(map[string]string, 1024) // Entries ending up here actually filter template entries
+var (
+	ros2errorTypesCommentsBuffer      = strings.Builder{}             // Collect pre-field comments here to be included in the comments. Flushed on empty lines.
+	ros2errorTypesDeduplicationMap    = make(map[string]string, 1024) // Some RMW and RCL error codes overlap, so we need to deduplicate them from the dynamic type casting switch-case
+	ros2errorTypesDeduplicationFilter = make(map[string]string, 1024) // Entries ending up here actually filter template entries
+)
 
 func parseROS2ErrorType(row string) *ROS2ErrorType {
 	if re.M(row, `m!

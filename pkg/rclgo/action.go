@@ -51,7 +51,7 @@ type goalResponseMessage interface {
 }
 
 type forEach interface {
-	CallForEach(f func(interface{}))
+	CallForEach(f func(any))
 }
 
 type GoalStatus int8
@@ -651,7 +651,7 @@ func (s *ActionServer) handleCancelRequest() {
 		func() {
 			s.goalsMu.RLock()
 			defer s.goalsMu.RUnlock()
-			resp.(forEach).CallForEach(func(toCancel interface{}) {
+			resp.(forEach).CallForEach(func(toCancel any) {
 				goal := s.getGoal(toCancel.(*types.GoalID), false)
 				if goal != nil {
 					goal.startCancel()
@@ -732,7 +732,7 @@ func (s *ActionServer) handleReadyEntities(ctx context.Context, ws *WaitSet) {
 	}
 }
 
-func (s *ActionServer) logGoalError(goal *GoalHandle, a ...interface{}) {
+func (s *ActionServer) logGoalError(goal *GoalHandle, a ...any) {
 	var b strings.Builder
 	fmt.Fprint(&b, "goal: ", goal.ID.String(), ": ")
 	fmt.Fprint(&b, a...)
@@ -1005,7 +1005,7 @@ func (c *ActionClient) sendGoalRequest(req unsafe.Pointer) (C.int64_t, error) {
 	return seqNum, nil
 }
 
-func (c *ActionClient) takeGoalResponse(resp unsafe.Pointer) (C.int64_t, interface{}, error) {
+func (c *ActionClient) takeGoalResponse(resp unsafe.Pointer) (C.int64_t, any, error) {
 	var header C.rmw_request_id_t
 	switch rc := C.rcl_action_take_goal_response(&c.rclClient, &header, resp); rc {
 	case C.RCL_RET_OK:
@@ -1039,7 +1039,7 @@ func (c *ActionClient) sendResultRequest(req unsafe.Pointer) (C.int64_t, error) 
 	return seqNum, nil
 }
 
-func (c *ActionClient) takeResultResponse(resp unsafe.Pointer) (C.int64_t, interface{}, error) {
+func (c *ActionClient) takeResultResponse(resp unsafe.Pointer) (C.int64_t, any, error) {
 	var header C.rmw_request_id_t
 	switch rc := C.rcl_action_take_result_response(&c.rclClient, &header, resp); rc {
 	case C.RCL_RET_OK:
@@ -1082,7 +1082,7 @@ func (c *ActionClient) sendCancelRequest(req unsafe.Pointer) (C.int64_t, error) 
 	return seqNum, nil
 }
 
-func (c *ActionClient) takeCancelResponse(resp unsafe.Pointer) (C.int64_t, interface{}, error) {
+func (c *ActionClient) takeCancelResponse(resp unsafe.Pointer) (C.int64_t, any, error) {
 	var header C.rmw_request_id_t
 	switch rc := C.rcl_action_take_cancel_response(&c.rclClient, &header, resp); rc {
 	case C.RCL_RET_OK:
@@ -1216,7 +1216,7 @@ func (c *ActionClient) handleStatus() {
 	case C.RCL_RET_OK:
 		msg := ts.New()
 		ts.AsGoStruct(msg, buf)
-		msg.(forEach).CallForEach(func(info interface{}) {
+		msg.(forEach).CallForEach(func(info any) {
 			msg := info.(goalIDMessage)
 			c.statusSubs.perGoal[*msg.GetGoalID()].call(msg)
 			c.statusSubs.allGoals.call(msg)
@@ -1261,9 +1261,9 @@ func (c *ActionClient) handleReadyEntities(ws *WaitSet) {
 	}
 }
 
-func wrapErr(format string, err *error, a ...interface{}) {
+func wrapErr(format string, err *error, a ...any) {
 	if *err != nil {
-		args := make([]interface{}, 0, 1+len(a))
+		args := make([]any, 0, 1+len(a))
 		args = append(args, *err)
 		args = append(args, a...)
 		*err = fmt.Errorf(format, args...)

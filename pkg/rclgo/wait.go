@@ -203,7 +203,7 @@ func (w *WaitSet) Run(ctx context.Context) (err error) {
 
 		switch rc {
 		case C.RCL_RET_OK:
-			break
+			// fall through to handle the ready items
 		case C.RCL_RET_TIMEOUT:
 			continue
 		default:

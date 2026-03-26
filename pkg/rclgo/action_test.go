@@ -8,14 +8,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bradleyjkemp/cupaloy/v2"
+	. "github.com/smartystreets/goconvey/convey" //nolint:revive
+	"github.com/stretchr/testify/require"
+
 	action_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/action_msgs/msg"
 	action_msgs_srv "github.com/ATIinc/rclgo/internal/msgs/action_msgs/srv"
 	test_msgs_action "github.com/ATIinc/rclgo/internal/msgs/test_msgs/action"
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
-	"github.com/bradleyjkemp/cupaloy/v2"
-	. "github.com/smartystreets/goconvey/convey" //nolint:revive
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -155,7 +156,7 @@ func TestActionExecution(t *testing.T) {
 			goal.Order = 10
 			feedbacks := make(fibonacciFeedbacks, 0)
 			var feedbacksMu sync.Mutex
-			result, _, err := client.WatchGoal(ctx, goal, func(c context.Context, m types.Message) {
+			result, _, err := client.WatchGoal(ctx, goal, func(_ context.Context, m types.Message) {
 				fb := m.(*test_msgs_action.Fibonacci_FeedbackMessage)
 				feedbacksMu.Lock()
 				feedbacks = append(feedbacks, &fb.Feedback)
@@ -180,7 +181,7 @@ func TestActionExecution(t *testing.T) {
 			close(action.continueChan)
 			goal := test_msgs_action.NewFibonacci_Goal()
 			goal.Order = -1
-			resp, _, err := client.WatchGoal(ctx, goal, func(c context.Context, m types.Message) {
+			resp, _, err := client.WatchGoal(ctx, goal, func(context.Context, types.Message) {
 				panic("no feedback should be sent")
 			})
 			So(err, ShouldNotBeNil)
@@ -398,7 +399,6 @@ func TestActionStatuses(t *testing.T) {
 		Convey("Spin RCL context", func() {
 			go func() { spinErr <- rclctx.Spin(ctx) }()
 		})
-		//nolint:contextcheck // send returns an inherited context
 		Convey("Server reports correct statuses for goals", func() {
 			type testResult struct {
 				Result   types.Message
@@ -426,7 +426,7 @@ func TestActionStatuses(t *testing.T) {
 				req := test_msgs_action.NewFibonacci_SendGoal_Request()
 				req.Goal.Order = order
 				req.GoalID.Uuid = newGoalID()
-				watchErr := client.WatchStatus(ctx, req.GetGoalID(), func(c context.Context, m types.Message) {
+				watchErr := client.WatchStatus(ctx, req.GetGoalID(), func(_ context.Context, m types.Message) {
 					status := m.(*action_msgs_msg.GoalStatus)
 					statusesMu.Lock()
 					statuses = append(statuses, goalStatus{
@@ -471,22 +471,22 @@ func TestActionStatuses(t *testing.T) {
 			id, ctx, cancel := send(0) // should succeed
 			continueChan <- struct{}{}
 			waitForStatus(rclgo.GoalSucceeded)
-			addResult(ctx, id)
+			addResult(ctx, id) //nolint:contextcheck // not the type of func it thinks
 			cancel()
 
 			id, ctx, cancel = send(0) // should be canceled
-			sendCancel(ctx, id)
+			sendCancel(ctx, id)       //nolint:contextcheck // not the type of func it thinks
 			waitForStatus(rclgo.GoalCanceled)
-			addResult(ctx, id)
+			addResult(ctx, id) //nolint:contextcheck // not the type of func it thinks
 			cancel()
 
 			id, ctx, cancel = send(-1) // should be rejected
-			addResult(ctx, id)
+			addResult(ctx, id)         //nolint:contextcheck // not the type of func it thinks
 			cancel()
 
 			id, ctx, cancel = send(1) // should be aborted
 			waitForStatus(rclgo.GoalAborted)
-			addResult(ctx, id)
+			addResult(ctx, id) //nolint:contextcheck // not the type of func it thinks
 			cancel()
 
 			So(

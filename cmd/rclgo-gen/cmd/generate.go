@@ -65,7 +65,7 @@ func validateGenerateArgs(cmd *cobra.Command, _ []string) error {
 var generateCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generate Go bindings for ROS2 interface definitions under <root-path>",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		config, err := getGogenConfig(cmd)
 		if err != nil {
 			return err
@@ -89,7 +89,7 @@ var generateCmd = &cobra.Command{
 var generateRclgoCmd = &cobra.Command{
 	Use:   "generate-rclgo",
 	Short: "Generate Go code that forms a part of rclgo",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		config, err := getGogenConfig(cmd)
 		if err != nil {
 			return err
@@ -139,7 +139,7 @@ func getPrefix(cmd *cobra.Command) string {
 	for c := cmd; c != c.Root(); c = c.Parent() {
 		parts = append(parts, c.Name())
 	}
-	for i := 0; i < len(parts)/2; i++ {
+	for i := range len(parts) / 2 {
 		parts[i], parts[len(parts)-i-1] = parts[len(parts)-i-1], parts[i]
 	}
 	prefix := strings.Join(parts, ".")

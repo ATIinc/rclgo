@@ -354,7 +354,7 @@ func (g *Generator) generateInterface(meta Metadata, ifacePath string) {
 func (g *Generator) findPackages() {
 	g.allPkgs = map[string]*rosPkgRef{}
 	for i := len(g.config.RootPaths) - 1; i >= 0; i-- {
-		filepath.Walk(g.config.RootPaths[i], func(path string, info fs.FileInfo, err error) error { //nolint:errcheck
+		filepath.Walk(g.config.RootPaths[i], func(path string, _ fs.FileInfo, _ error) error { //nolint:errcheck
 			skip, blacklistEntry := blacklisted(path)
 			if skip {
 				PrintErrf("Blacklisted: %s, matched regex '%s'\n", path, blacklistEntry)

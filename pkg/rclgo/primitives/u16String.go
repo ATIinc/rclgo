@@ -11,6 +11,7 @@ package primitives
 
 //#include "rosidl_runtime_c/u16string.h"
 import "C"
+
 import (
 	"unicode/utf16"
 	"unsafe"
@@ -34,8 +35,10 @@ func U16StringAsGoStruct(msg *string, ros2_message_buffer unsafe.Pointer) {
 	*msg = string(utf16.Decode(unsafe.Slice((*uint16)(mem.data), mem.size)))
 }
 
-type CU16String = C.rosidl_runtime_c__U16String
-type CU16String__Sequence = C.rosidl_runtime_c__U16String__Sequence
+type (
+	CU16String           = C.rosidl_runtime_c__U16String
+	CU16String__Sequence = C.rosidl_runtime_c__U16String__Sequence
+)
 
 func U16String__Sequence_to_Go(goSlice *[]string, cSlice CU16String__Sequence) {
 	if cSlice.size == 0 {
@@ -43,7 +46,7 @@ func U16String__Sequence_to_Go(goSlice *[]string, cSlice CU16String__Sequence) {
 	}
 	*goSlice = make([]string, int64(cSlice.size))
 	src := unsafe.Slice(cSlice.data, cSlice.size)
-	for i := 0; i < int(cSlice.size); i++ {
+	for i := range int(cSlice.size) {
 		U16StringAsGoStruct(&(*goSlice)[i], unsafe.Pointer(&src[i]))
 	}
 }
@@ -65,13 +68,13 @@ func U16String__Sequence_to_C(cSlice *CU16String__Sequence, goSlice []string) {
 }
 
 func U16String__Array_to_Go(goSlice []string, cSlice []CU16String) {
-	for i := 0; i < len(cSlice); i++ {
+	for i := range cSlice {
 		U16StringAsGoStruct(&goSlice[i], unsafe.Pointer(&cSlice[i]))
 	}
 }
 
 func U16String__Array_to_C(cSlice []CU16String, goSlice []string) {
-	for i := 0; i < len(goSlice); i++ {
+	for i := range goSlice {
 		U16StringAsCStruct(unsafe.Pointer(&cSlice[i]), goSlice[i])
 	}
 }

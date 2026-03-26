@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey" //nolint:revive
+
 	std_srvs_srv "github.com/ATIinc/rclgo/internal/msgs/std_srvs/srv"
 	"github.com/ATIinc/rclgo/pkg/rclgo/typemap"
 )

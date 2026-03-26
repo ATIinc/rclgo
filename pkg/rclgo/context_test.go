@@ -14,12 +14,13 @@ import (
 	"errors"
 	"testing"
 
+	. "github.com/smartystreets/goconvey/convey" //nolint:revive
+
 	example_interfaces_action "github.com/ATIinc/rclgo/internal/msgs/example_interfaces/action"
 	std_msgs "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
 	std_srvs_srv "github.com/ATIinc/rclgo/internal/msgs/std_srvs/srv"
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
-	. "github.com/smartystreets/goconvey/convey" //nolint:revive
 )
 
 type noOpAction struct{}
@@ -78,7 +79,7 @@ func TestContextClose(t *testing.T) {
 					"/test_topic",
 					std_msgs.StringTypeSupport,
 					nil,
-					func(s *rclgo.Subscription) {},
+					func(_ *rclgo.Subscription) {},
 				)
 				So(err, ShouldBeNil)
 				_, err = node2.NewPublisher(
@@ -91,14 +92,14 @@ func TestContextClose(t *testing.T) {
 					"service1",
 					std_srvs_srv.EmptyTypeSupport,
 					nil,
-					func(rsi *rclgo.ServiceInfo, rm types.Message, srs rclgo.ServiceResponseSender) {},
+					func(*rclgo.ServiceInfo, types.Message, rclgo.ServiceResponseSender) {},
 				)
 				So(err, ShouldBeNil)
 				_, err = node2.NewService(
 					"service2",
 					std_srvs_srv.EmptyTypeSupport,
 					nil,
-					func(rsi *rclgo.ServiceInfo, rm types.Message, srs rclgo.ServiceResponseSender) {},
+					func(*rclgo.ServiceInfo, types.Message, rclgo.ServiceResponseSender) {},
 				)
 				So(err, ShouldBeNil)
 				_, err = node2.NewActionServer(

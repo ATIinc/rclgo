@@ -14,12 +14,13 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/smartystreets/goconvey/convey" //nolint:revive
+	"gopkg.in/yaml.v3"
+
 	std_msgs "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
 	test_msgs "github.com/ATIinc/rclgo/internal/msgs/test_msgs/msg"
 	"github.com/ATIinc/rclgo/pkg/rclgo"
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
-	. "github.com/smartystreets/goconvey/convey" //nolint:revive
-	"gopkg.in/yaml.v3"
 )
 
 func TestPubSub(t *testing.T) {
@@ -251,11 +252,11 @@ func TestMultipleTimersInSingleWaitSet(t *testing.T) {
 			var err error
 			rclCtx, err = newDefaultRCLContext()
 			So(err, ShouldBeNil)
-			_, err = rclCtx.NewTimer(time.Second, func(t *rclgo.Timer) {
+			_, err = rclCtx.NewTimer(time.Second, func(*rclgo.Timer) {
 				timer1Chan <- struct{}{}
 			})
 			So(err, ShouldBeNil)
-			_, err = rclCtx.NewTimer(time.Hour, func(t *rclgo.Timer) {
+			_, err = rclCtx.NewTimer(time.Hour, func(*rclgo.Timer) {
 				timer2Chan <- struct{}{}
 			})
 			So(err, ShouldBeNil)
@@ -291,11 +292,11 @@ func TestMultipleTimersInSingleWaitSet(t *testing.T) {
 	})
 }
 
-func BenchmarkPubsubMemoryLeakAllocateInLoop(_ *testing.B) {
+func BenchmarkPubsubMemoryLeakAllocateInLoop(b *testing.B) {
 	var messagesReceived int
 	fmt.Printf(
 		"Mem from pmap(1) '%skB' messages '%d'\n",
-		getMemReading(),
+		getMemReading(b),
 		messagesReceived,
 	)
 	for {
@@ -358,17 +359,17 @@ func BenchmarkPubsubMemoryLeakAllocateInLoop(_ *testing.B) {
 		runtime.GC()
 		fmt.Printf(
 			"Mem from pmap(1) '%skB' messages '%d'\n",
-			getMemReading(),
+			getMemReading(b),
 			messagesReceived,
 		)
 	}
 }
 
-func BenchmarkPubsubMemoryLeakAllocateOutOfLoop(_ *testing.B) {
+func BenchmarkPubsubMemoryLeakAllocateOutOfLoop(b *testing.B) {
 	var messagesReceived int64
 	fmt.Printf(
 		"Mem from pmap(1) '%skB' messages '%d'\n",
-		getMemReading(),
+		getMemReading(b),
 		messagesReceived,
 	)
 	errChan := make(chan error, 2)
@@ -419,21 +420,21 @@ func BenchmarkPubsubMemoryLeakAllocateOutOfLoop(_ *testing.B) {
 			runtime.GC()
 			fmt.Printf(
 				"Mem from pmap(1) '%skB' messages '%d'\n",
-				getMemReading(),
+				getMemReading(b),
 				messagesReceived,
 			)
 		}
 	}
 }
 
-func getMemReading() string {
+func getMemReading(tb testing.TB) string { //nolint:thelper
 	cmd := fmt.Sprint(
 		`pmap `,
 		os.Getpid(),
 		` | tail -n 1 | grep -Po '\d+'`,
 	) //  total          2102728K => 2102728
 	//#nosec G204 -- Using a variable here improves clarity.
-	output, err := exec.Command("bash", "-c", cmd).Output()
+	output, err := exec.CommandContext(tb.Context(), "bash", "-c", cmd).Output()
 	if err != nil {
 		return fmt.Sprintf("Failed to execute command: %s", cmd)
 	}
@@ -499,7 +500,7 @@ func receiveString(subs <-chan receiveResult, expected string) {
 	So(m.msg.Data, ShouldEqual, expected)
 }
 
-func receiveNothing(subs interface{}) {
+func receiveNothing(subs any) {
 	i, _, _ := reflect.Select([]reflect.SelectCase{
 		{
 			Dir:  reflect.SelectRecv,
@@ -597,7 +598,7 @@ func newContextWithPublisherTimer(
 		return nil, err
 	}
 	defer onErr(&err, c.Close)
-	_, err = c.NewTimer(interval, func(t *rclgo.Timer) {
+	_, err = c.NewTimer(interval, func(*rclgo.Timer) {
 		// It would be smarter to allocate memory for the ros2msg outside the
 		// timer callback, but this way the tests can test for memory leaks too
 		// using this same codebase.
@@ -635,7 +636,7 @@ type receiveResult struct {
 	err error
 }
 
-func shouldContainError(actual interface{}, expected ...interface{}) string {
+func shouldContainError(actual any, expected ...any) string {
 	if len(expected) != 1 {
 		return fmt.Sprintf(
 			"expected exactly one argument, got %d",
