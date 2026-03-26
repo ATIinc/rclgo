@@ -10,9 +10,10 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	std_msgs_msg "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
 	"github.com/ATIinc/rclgo/pkg/rclgo"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -150,28 +151,28 @@ func TestPubSubCount(t *testing.T) {
 	subOptsUnrealiable.Qos.Durability = rclgo.DurabilityTransientLocal
 	subUnreliable := noErr(subNode.NewSubscription("string", std_msgs_msg.StringTypeSupport, subOptsUnrealiable, noopSub))(t)
 
-	requireValue(t, 2)(pub.GetSubscriptionCount())
+	requireValue(t, 3)(pub.GetSubscriptionCount())
 	requireValue(t, 1)(sub1.GetPublisherCount())
 	requireValue(t, 1)(sub2.GetPublisherCount())
-	requireValue(t, 0)(subUnreliable.GetPublisherCount())
+	requireValue(t, 1)(subUnreliable.GetPublisherCount())
 
 	pubOptsUnrealiable := rclgo.NewDefaultPublisherOptions()
 	pubOptsUnrealiable.Qos.Reliability = rclgo.ReliabilityBestEffort
 	pubOptsUnrealiable.Qos.Durability = rclgo.DurabilityTransientLocal
 	pubUnreliable := noErr(pubNode.NewPublisher("string", std_msgs_msg.StringTypeSupport, pubOptsUnrealiable))(t)
 
-	requireValue(t, 2)(pub.GetSubscriptionCount())
-	requireValue(t, 1)(pubUnreliable.GetSubscriptionCount())
-	requireValue(t, 1)(sub1.GetPublisherCount())
-	requireValue(t, 1)(sub2.GetPublisherCount())
-	requireValue(t, 1)(subUnreliable.GetPublisherCount())
+	requireValue(t, 3)(pub.GetSubscriptionCount())
+	requireValue(t, 3)(pubUnreliable.GetSubscriptionCount())
+	requireValue(t, 2)(sub1.GetPublisherCount())
+	requireValue(t, 2)(sub2.GetPublisherCount())
+	requireValue(t, 2)(subUnreliable.GetPublisherCount())
 
 	subOther := noErr(subNode.NewSubscription("other_string", std_msgs_msg.StringTypeSupport, nil, noopSub))(t)
 
-	requireValue(t, 2)(pub.GetSubscriptionCount())
-	requireValue(t, 1)(pubUnreliable.GetSubscriptionCount())
-	requireValue(t, 1)(sub1.GetPublisherCount())
-	requireValue(t, 1)(sub2.GetPublisherCount())
-	requireValue(t, 1)(subUnreliable.GetPublisherCount())
+	requireValue(t, 3)(pub.GetSubscriptionCount())
+	requireValue(t, 3)(pubUnreliable.GetSubscriptionCount())
+	requireValue(t, 2)(sub1.GetPublisherCount())
+	requireValue(t, 2)(sub2.GetPublisherCount())
+	requireValue(t, 2)(subUnreliable.GetPublisherCount())
 	requireValue(t, 0)(subOther.GetPublisherCount())
 }

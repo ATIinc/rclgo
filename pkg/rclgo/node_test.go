@@ -2,6 +2,7 @@ package rclgo_test
 
 import (
 	"context"
+	"slices"
 	"testing"
 	"time"
 
@@ -14,11 +15,19 @@ import (
 
 func requireTopicNamesAndTypes(t *testing.T, node *rclgo.Node, expected map[string][]string) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 	defer cancel()
+	// sort expected for consistency
+	for _, v := range expected {
+		slices.Sort(v)
+	}
 	for {
 		actual, err := node.GetTopicNamesAndTypes(true)
 		require.NoError(t, err)
+		// sort actual to match expected
+		for _, v := range actual {
+			slices.Sort(v)
+		}
 		if assert.ObjectsAreEqualValues(expected, actual) {
 			return
 		}
@@ -47,12 +56,14 @@ func TestNodeGetTopicNamesAndTypes(t *testing.T) {
 
 	t.Log("node1 in empty network")
 	requireTopicNamesAndTypes(t, node1, map[string][]string{
-		"/rosout": {"rcl_interfaces/msg/Log"},
+		// rosout is no longer active by default
+		// "/rosout": {"rcl_interfaces/msg/Log"},
 	})
 
 	t.Log("node2 in empty network")
 	requireTopicNamesAndTypes(t, node2, map[string][]string{
-		"/rosout": {"rcl_interfaces/msg/Log"},
+		// rosout is no longer active by default
+		// "/rosout": {"rcl_interfaces/msg/Log"},
 	})
 
 	t.Log("new publisher")
@@ -61,13 +72,15 @@ func TestNodeGetTopicNamesAndTypes(t *testing.T) {
 
 	t.Log("node1 after publisher")
 	requireTopicNamesAndTypes(t, node1, map[string][]string{
-		"/rosout":                                {"rcl_interfaces/msg/Log"},
+		// rosout is no longer active by default
+		// "/rosout":                                {"rcl_interfaces/msg/Log"},
 		"/topic_names_and_types_test/test_topic": {"std_msgs/msg/Bool"},
 	})
 
 	t.Log("node2 after publisher")
 	requireTopicNamesAndTypes(t, node2, map[string][]string{
-		"/rosout":                                {"rcl_interfaces/msg/Log"},
+		// rosout is no longer active by default
+		// "/rosout":                                {"rcl_interfaces/msg/Log"},
 		"/topic_names_and_types_test/test_topic": {"std_msgs/msg/Bool"},
 	})
 
@@ -77,14 +90,16 @@ func TestNodeGetTopicNamesAndTypes(t *testing.T) {
 
 	t.Log("node1 after creating int publisher")
 	requireTopicNamesAndTypes(t, node1, map[string][]string{
-		"/rosout":                                 {"rcl_interfaces/msg/Log"},
+		// rosout is no longer active by default
+		// "/rosout":                                 {"rcl_interfaces/msg/Log"},
 		"/topic_names_and_types_test/test_topic":  {"std_msgs/msg/Bool"},
 		"/topic_names_and_types_test/test_topic2": {"std_msgs/msg/Int64"},
 	})
 
 	t.Log("node2 after creating int publisher")
 	requireTopicNamesAndTypes(t, node2, map[string][]string{
-		"/rosout":                                 {"rcl_interfaces/msg/Log"},
+		// rosout is no longer active by default
+		// "/rosout":                                 {"rcl_interfaces/msg/Log"},
 		"/topic_names_and_types_test/test_topic":  {"std_msgs/msg/Bool"},
 		"/topic_names_and_types_test/test_topic2": {"std_msgs/msg/Int64"},
 	})
@@ -95,14 +110,16 @@ func TestNodeGetTopicNamesAndTypes(t *testing.T) {
 
 	t.Log("node1 after publishing int")
 	requireTopicNamesAndTypes(t, node1, map[string][]string{
-		"/rosout":                                 {"rcl_interfaces/msg/Log"},
+		// rosout is no longer active by default
+		// "/rosout":                                 {"rcl_interfaces/msg/Log"},
 		"/topic_names_and_types_test/test_topic":  {"std_msgs/msg/Bool"},
 		"/topic_names_and_types_test/test_topic2": {"std_msgs/msg/Int64"},
 	})
 
 	t.Log("node2 after publishing int")
 	requireTopicNamesAndTypes(t, node2, map[string][]string{
-		"/rosout":                                 {"rcl_interfaces/msg/Log"},
+		// rosout is no longer active by default
+		// "/rosout":                                 {"rcl_interfaces/msg/Log"},
 		"/topic_names_and_types_test/test_topic":  {"std_msgs/msg/Bool"},
 		"/topic_names_and_types_test/test_topic2": {"std_msgs/msg/Int64"},
 	})
@@ -113,14 +130,16 @@ func TestNodeGetTopicNamesAndTypes(t *testing.T) {
 
 	t.Log("node1 after second publisher")
 	requireTopicNamesAndTypes(t, node1, map[string][]string{
-		"/rosout":                                 {"rcl_interfaces/msg/Log"},
+		// rosout is no longer active by default
+		// "/rosout":                                 {"rcl_interfaces/msg/Log"},
 		"/topic_names_and_types_test/test_topic":  {"std_msgs/msg/Bool", "std_msgs/msg/String"},
 		"/topic_names_and_types_test/test_topic2": {"std_msgs/msg/Int64"},
 	})
 
 	t.Log("node2 after second publisher")
 	requireTopicNamesAndTypes(t, node2, map[string][]string{
-		"/rosout":                                 {"rcl_interfaces/msg/Log"},
+		// rosout is no longer active by default
+		// "/rosout":                                 {"rcl_interfaces/msg/Log"},
 		"/topic_names_and_types_test/test_topic":  {"std_msgs/msg/Bool", "std_msgs/msg/String"},
 		"/topic_names_and_types_test/test_topic2": {"std_msgs/msg/Int64"},
 	})
