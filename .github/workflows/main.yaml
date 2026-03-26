@@ -57,4 +57,4 @@ jobs:
             ros-kilted-test-msgs
           env > "$GITHUB_ENV"
 
-      - uses: golangci/golangci-lint-action@v3
+      - uses: golangci/golangci-lint-action@v9
