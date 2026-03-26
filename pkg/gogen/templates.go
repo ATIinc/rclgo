@@ -812,7 +812,8 @@ import (
 
 func errorsCastC(rcl_ret_t C.rcl_ret_t, context string) error {
 	stackTraceBuffer := make([]byte, 2048)
-	runtime.Stack(stackTraceBuffer, false) // Get stack trace of the current running thread only
+	stLen := runtime.Stack(stackTraceBuffer, false) // Get stack trace of the current running thread only
+	stackTraceBuffer = stackTraceBuffer[:stLen] // Trim the buffer to the actual size of the stack trace
 
 	// https://stackoverflow.com/questions/9928221/table-of-functions-vs-switch-in-golang
 	// switch-case is faster thanks to compiler optimization than a dispatcher?
