@@ -282,7 +282,7 @@ func TestBlacklist(t *testing.T) {
 	SetDefaultFailureMode(FailureContinues)
 	distro := os.Getenv("ROS_DISTRO")
 	if distro == "" {
-		distro = "jazzy"
+		distro = "kilted"
 	}
 
 	Convey("Blacklist", t, func() {

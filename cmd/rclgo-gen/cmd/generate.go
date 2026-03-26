@@ -17,14 +17,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ATIinc/rclgo/pkg/gogen"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.org/x/tools/go/packages"
+
+	"github.com/ATIinc/rclgo/pkg/gogen"
 )
 
-const defaultDistro = "jazzy"
+const defaultDistro = "kilted"
 
 func validateGenerateArgs(cmd *cobra.Command, _ []string) error {
 	rootPaths := getRootPaths(cmd)
@@ -52,7 +53,7 @@ func validateGenerateArgs(cmd *cobra.Command, _ []string) error {
 	_, err := os.Stat(destPath)
 	if errors.Is(err, os.ErrNotExist) {
 		//#nosec G301 -- The generated directory doesn't contain secrets.
-		err = os.MkdirAll(destPath, 0755)
+		err = os.MkdirAll(destPath, 0o755)
 	}
 	if err != nil {
 		return fmt.Errorf("dest-path error: %v", err)

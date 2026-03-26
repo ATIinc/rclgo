@@ -23,7 +23,8 @@ import (
 
 func errorsCastC(rcl_ret_t C.rcl_ret_t, context string) error {
 	stackTraceBuffer := make([]byte, 2048)
-	runtime.Stack(stackTraceBuffer, false) // Get stack trace of the current running thread only
+	stLen := runtime.Stack(stackTraceBuffer, false) // Get stack trace of the current running thread only
+	stackTraceBuffer = stackTraceBuffer[:stLen] // Trim the buffer to the actual size of the stack trace
 
 	// https://stackoverflow.com/questions/9928221/table-of-functions-vs-switch-in-golang
 	// switch-case is faster thanks to compiler optimization than a dispatcher?
@@ -94,22 +95,26 @@ func errorsCastC(rcl_ret_t C.rcl_ret_t, context string) error {
 		return &LifecycleStateRegistered{rclError: rclError{rclRetCode: 3000, trace: string(stackTraceBuffer), context: errorsBuildContext(&LifecycleStateRegistered{}, context, string(stackTraceBuffer))}}
 	case C.RCL_RET_LIFECYCLE_STATE_NOT_REGISTERED:
 		return &LifecycleStateNotRegistered{rclError: rclError{rclRetCode: 3001, trace: string(stackTraceBuffer), context: errorsBuildContext(&LifecycleStateNotRegistered{}, context, string(stackTraceBuffer))}}
+	case C.RCL_RET_ACTION_NAME_INVALID:
+		return &ActionNameInvalid{rclError: rclError{rclRetCode: 4000, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionNameInvalid{}, context, string(stackTraceBuffer))}}
+	case C.RCL_RET_ACTION_NOT_TERMINATED_YET:
+		return &ActionNotTerminatedYet{rclError: rclError{rclRetCode: 4001, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionNotTerminatedYet{}, context, string(stackTraceBuffer))}}
 	case C.RCL_RET_ACTION_GOAL_ACCEPTED:
-		return &ActionGoalAccepted{rclError: rclError{rclRetCode: 2100, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionGoalAccepted{}, context, string(stackTraceBuffer))}}
+		return &ActionGoalAccepted{rclError: rclError{rclRetCode: 4100, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionGoalAccepted{}, context, string(stackTraceBuffer))}}
 	case C.RCL_RET_ACTION_GOAL_REJECTED:
-		return &ActionGoalRejected{rclError: rclError{rclRetCode: 2101, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionGoalRejected{}, context, string(stackTraceBuffer))}}
+		return &ActionGoalRejected{rclError: rclError{rclRetCode: 4101, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionGoalRejected{}, context, string(stackTraceBuffer))}}
 	case C.RCL_RET_ACTION_CLIENT_INVALID:
-		return &ActionClientInvalid{rclError: rclError{rclRetCode: 2102, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionClientInvalid{}, context, string(stackTraceBuffer))}}
+		return &ActionClientInvalid{rclError: rclError{rclRetCode: 4102, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionClientInvalid{}, context, string(stackTraceBuffer))}}
 	case C.RCL_RET_ACTION_CLIENT_TAKE_FAILED:
-		return &ActionClientTakeFailed{rclError: rclError{rclRetCode: 2103, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionClientTakeFailed{}, context, string(stackTraceBuffer))}}
+		return &ActionClientTakeFailed{rclError: rclError{rclRetCode: 4103, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionClientTakeFailed{}, context, string(stackTraceBuffer))}}
 	case C.RCL_RET_ACTION_SERVER_INVALID:
-		return &ActionServerInvalid{rclError: rclError{rclRetCode: 2200, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionServerInvalid{}, context, string(stackTraceBuffer))}}
+		return &ActionServerInvalid{rclError: rclError{rclRetCode: 4200, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionServerInvalid{}, context, string(stackTraceBuffer))}}
 	case C.RCL_RET_ACTION_SERVER_TAKE_FAILED:
-		return &ActionServerTakeFailed{rclError: rclError{rclRetCode: 2201, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionServerTakeFailed{}, context, string(stackTraceBuffer))}}
+		return &ActionServerTakeFailed{rclError: rclError{rclRetCode: 4201, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionServerTakeFailed{}, context, string(stackTraceBuffer))}}
 	case C.RCL_RET_ACTION_GOAL_HANDLE_INVALID:
-		return &ActionGoalHandleInvalid{rclError: rclError{rclRetCode: 2300, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionGoalHandleInvalid{}, context, string(stackTraceBuffer))}}
+		return &ActionGoalHandleInvalid{rclError: rclError{rclRetCode: 4300, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionGoalHandleInvalid{}, context, string(stackTraceBuffer))}}
 	case C.RCL_RET_ACTION_GOAL_EVENT_INVALID:
-		return &ActionGoalEventInvalid{rclError: rclError{rclRetCode: 2301, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionGoalEventInvalid{}, context, string(stackTraceBuffer))}}
+		return &ActionGoalEventInvalid{rclError: rclError{rclRetCode: 4301, trace: string(stackTraceBuffer), context: errorsBuildContext(&ActionGoalEventInvalid{}, context, string(stackTraceBuffer))}}
 	case C.RMW_RET_OK:
 		return &RmwOk{rclError: rclError{rclRetCode: 0, trace: string(stackTraceBuffer), context: errorsBuildContext(&RmwOk{}, context, string(stackTraceBuffer))}}
 	case C.RMW_RET_ERROR:
@@ -300,8 +305,13 @@ type LifecycleStateNotRegistered struct {
 	rclError
 }
 
-// ActionNameInvalid rcl action specific ret codes in 2XXXAction name does not pass validation return code.
+// ActionNameInvalid rcl action specific ret codes in 40XXAction name does not pass validation return code.
 type ActionNameInvalid struct {
+	rclError
+}
+
+// ActionNotTerminatedYet No terminal timestamp for the goal as it has not reached a terminal state.
+type ActionNotTerminatedYet struct {
 	rclError
 }
 

@@ -19,12 +19,12 @@ package test
 #cgo CFLAGS: "-I/usr/include/sensor_msgs"
 #cgo CFLAGS: "-I/usr/include/std_msgs"
 
-#cgo LDFLAGS: "-L/opt/ros/jazzy/lib" "-Wl,-rpath=/opt/ros/jazzy/lib"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/builtin_interfaces"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/rosidl_runtime_c"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/rosidl_typesupport_interface"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/sensor_msgs"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/std_msgs"
+#cgo LDFLAGS: "-L/opt/ros/kilted/lib" "-Wl,-rpath=/opt/ros/kilted/lib"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/builtin_interfaces"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/rosidl_runtime_c"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/rosidl_typesupport_interface"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/sensor_msgs"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/std_msgs"
 
 #cgo LDFLAGS: -lrcl -lrcl_interfaces__rosidl_typesupport_c -lrcutils
 #cgo LDFLAGS: -lrmw_implementation -lrosidl_runtime_c -lrosidl_typesupport_c

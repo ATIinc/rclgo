@@ -13,7 +13,7 @@ package action_msgs_msg
 
 /*
 #cgo LDFLAGS: "-L/usr/lib" "-Wl,-rpath=/usr/lib"
-#cgo LDFLAGS: "-L/opt/ros/jazzy/lib" "-Wl,-rpath=/opt/ros/jazzy/lib"
+#cgo LDFLAGS: "-L/opt/ros/kilted/lib" "-Wl,-rpath=/opt/ros/kilted/lib"
 
 #cgo LDFLAGS: -lrcl -lrosidl_runtime_c -lrosidl_typesupport_c -lrcutils -lrmw_implementation
 #cgo LDFLAGS: -laction_msgs__rosidl_typesupport_c -laction_msgs__rosidl_generator_c
@@ -40,24 +40,24 @@ package action_msgs_msg
 
 #cgo CFLAGS: "-I/usr/include/action_msgs"
 
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/action_msgs"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/builtin_interfaces"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/example_interfaces"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/geometry_msgs"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/rcutils"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/rosidl_dynamic_typesupport"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/rosidl_runtime_c"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/rosidl_typesupport_interface"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/sensor_msgs"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/service_msgs"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/std_msgs"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/std_srvs"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/type_description_interfaces"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/unique_identifier_msgs"
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/builtin_interfaces"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/action_msgs"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/builtin_interfaces"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/example_interfaces"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/geometry_msgs"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/rcutils"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/rosidl_dynamic_typesupport"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/rosidl_runtime_c"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/rosidl_typesupport_interface"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/sensor_msgs"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/service_msgs"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/std_msgs"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/std_srvs"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/type_description_interfaces"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/unique_identifier_msgs"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/builtin_interfaces"
 
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/unique_identifier_msgs"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/unique_identifier_msgs"
 
-#cgo CFLAGS: "-I/opt/ros/jazzy/include/action_msgs"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/action_msgs"
 */
 import "C"
