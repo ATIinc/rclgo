@@ -884,6 +884,7 @@ package test
 #cgo CFLAGS: "-I{{$rootPath}}/include/rosidl_typesupport_interface"
 #cgo CFLAGS: "-I{{$rootPath}}/include/sensor_msgs"
 #cgo CFLAGS: "-I{{$rootPath}}/include/std_msgs"
+#cgo CFLAGS: "-I{{$rootPath}}/include/test_msgs"
 
 {{end -}}
 #cgo LDFLAGS: -lrcl -lrcl_interfaces__rosidl_typesupport_c -lrcutils

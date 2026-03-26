@@ -1,6 +1,6 @@
 module github.com/ATIinc/rclgo/examples/publisher_subscriber
 
-go 1.24
+go 1.26
 
 // This is needed to keep the version of rclgo automatically in sync with the
 // rest of the repository. It is in general not needed for modules outside
