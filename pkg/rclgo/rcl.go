@@ -18,6 +18,7 @@ package rclgo
 #include <rcl/rcl.h>
 #include <rcl/client.h>
 #include <rcl/service.h>
+#include <rcl/graph.h>
 #include <rcl/timer.h>
 #include <rcl/expand_topic_name.h>
 #include <rcl_action/wait.h>
@@ -1060,6 +1061,15 @@ func (c *Client) Close() error {
 // Node returns the node c belongs to.
 func (c *Client) Node() *Node {
 	return c.node
+}
+
+func (c *Client) IsServerAvailable() (bool, error) {
+	var isAvailable C.bool
+	rc := C.rcl_service_server_is_available(c.node.rcl_node_t, c.rclClient, &isAvailable)
+	if rc != C.RCL_RET_OK {
+		return false, errorsCastC(rc, "failed to check if server is available")
+	}
+	return bool(isAvailable), nil
 }
 
 func (c *Client) Send(ctx context.Context, req types.Message) (types.Message, *ServiceInfo, error) {
