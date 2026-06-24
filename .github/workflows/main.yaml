@@ -31,10 +31,16 @@ jobs:
             make \
             ros-kilted-action-msgs \
             ros-kilted-example-interfaces \
-            ros-kilted-test-msgs
+            ros-kilted-test-msgs \
+            ros-kilted-rmw-zenoh-cpp
 
       - name: Run tests
         shell: bash
+        env:
+          # Use the Zenoh middleware. Unlike the default Fast DDS, it matches
+          # endpoints across the durability QoS levels exercised by the
+          # pub/sub count tests.
+          RMW_IMPLEMENTATION: rmw_zenoh_cpp
         run: |
           # Source the ROS environment so LD_LIBRARY_PATH, AMENT_PREFIX_PATH,
           # CMAKE_PREFIX_PATH, etc. are set. GitHub Actions runs steps without
@@ -48,6 +54,13 @@ jobs:
             CGO_CFLAGS="${CGO_CFLAGS} -I${d%/}"
           done
           export CGO_CFLAGS
+          # rmw_zenoh_cpp needs a running Zenoh router for node discovery.
+          # Start it in the background and ensure it is stopped when the step
+          # finishes (including on test failure).
+          ros2 run rmw_zenoh_cpp rmw_zenohd &
+          zenohd_pid=$!
+          trap 'kill "${zenohd_pid}" 2>/dev/null || true' EXIT
+          sleep 3
           make test
 
   run-linter:
