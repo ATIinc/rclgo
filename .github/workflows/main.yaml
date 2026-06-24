@@ -34,7 +34,21 @@ jobs:
             ros-kilted-test-msgs
 
       - name: Run tests
-        run: make test
+        shell: bash
+        run: |
+          # Source the ROS environment so LD_LIBRARY_PATH, AMENT_PREFIX_PATH,
+          # CMAKE_PREFIX_PATH, etc. are set. GitHub Actions runs steps without
+          # the image's ros_entrypoint.sh, so this is not set automatically.
+          source /opt/ros/${ROS_DISTRO}/setup.bash
+          # ROS installs headers under per-package include dirs
+          # (/opt/ros/<distro>/include/<pkg>/<pkg>/...). cgo needs all of them on
+          # the include path so transitive includes (e.g. rcutils/allocator.h
+          # pulled in by rosidl_runtime_c/type_hash.h) resolve.
+          for d in /opt/ros/${ROS_DISTRO}/include/*/; do
+            CGO_CFLAGS="${CGO_CFLAGS} -I${d%/}"
+          done
+          export CGO_CFLAGS
+          make test
 
   run-linter:
     runs-on: ubuntu-latest
@@ -55,6 +69,23 @@ jobs:
             ros-kilted-action-msgs \
             ros-kilted-example-interfaces \
             ros-kilted-test-msgs
-          env > "$GITHUB_ENV"
+          # Source ROS and build CGO_CFLAGS so golangci-lint can compile the cgo
+          # packages (it runs the C compiler but not the binaries). See the
+          # run-tests job for why both are needed.
+          source /opt/ros/${ROS_DISTRO}/setup.bash
+          for d in /opt/ros/${ROS_DISTRO}/include/*/; do
+            CGO_CFLAGS="${CGO_CFLAGS} -I${d%/}"
+          done
+          # Export the variables the linter needs to subsequent steps. Listed
+          # explicitly rather than dumping all of env, which would corrupt
+          # $GITHUB_ENV with the multi-line shell functions sourcing ROS exports.
+          {
+            echo "CGO_CFLAGS=${CGO_CFLAGS}"
+            echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
+            echo "AMENT_PREFIX_PATH=${AMENT_PREFIX_PATH}"
+            echo "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
+            echo "PYTHONPATH=${PYTHONPATH}"
+            echo "PATH=${PATH}"
+          } >> "$GITHUB_ENV"
 
       - uses: golangci/golangci-lint-action@v9
