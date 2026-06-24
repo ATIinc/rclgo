@@ -960,6 +960,7 @@ func (n *Node) NewService(
 		rclService:          (*C.rcl_service_t)(C.malloc(C.sizeof_rcl_service_t)),
 		name:                C.CString(name),
 		handler:             handler,
+		introspectionState:  options.Introspection,
 	}
 	*s.rclService = C.rcl_get_zero_initialized_service()
 	defer onErr(&err, s.Close)
@@ -1004,6 +1005,7 @@ func (s *Service) ConfigureIntrospection(state ServiceIntrospectionState) error 
 		return closeErr("service")
 	}
 	pubOpts := C.rcl_publisher_get_default_options()
+	pubOpts.allocator = *s.node.context.rcl_allocator_t
 	rc := C.rcl_service_configure_service_introspection(
 		s.rclService,
 		s.node.rcl_node_t,
@@ -1128,9 +1130,10 @@ func (n *Node) NewClient(
 		options = NewDefaultClientOptions()
 	}
 	c = &Client{
-		node:        n,
-		rclClient:   (*C.rcl_client_t)(C.malloc(C.sizeof_rcl_client_t)),
-		typeSupport: typeSupport,
+		node:               n,
+		rclClient:          (*C.rcl_client_t)(C.malloc(C.sizeof_rcl_client_t)),
+		typeSupport:        typeSupport,
+		introspectionState: options.Introspection,
 	}
 	c.sender = newRequestSender(requestSenderTransport{
 		SendRequest:  c.sendRequest,
@@ -1183,6 +1186,7 @@ func (c *Client) ConfigureIntrospection(state ServiceIntrospectionState) error {
 		return closeErr("client")
 	}
 	pubOpts := C.rcl_publisher_get_default_options()
+	pubOpts.allocator = *c.node.context.rcl_allocator_t
 	rc := C.rcl_client_configure_service_introspection(
 		c.rclClient,
 		c.node.rcl_node_t,
