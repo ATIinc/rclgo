@@ -461,11 +461,18 @@ func TestActionStatuses(t *testing.T) {
 			var testResults []testResult
 			addResult := func(ctx context.Context, id *types.GoalID) {
 				resp, err := client.GetResult(ctx, id)
+				statusesMu.Lock()
+				// Status messages can be delivered out of order (e.g. under
+				// rmw_zenoh), so sort by status to make the snapshot
+				// deterministic. sort.Sort is a no-op on a nil slice, so
+				// goals with no observed statuses stay nil.
+				sort.Sort(statuses)
 				testResults = append(testResults, testResult{
 					Result:   resp,
 					Statuses: statuses,
 					Err:      err,
 				})
+				statusesMu.Unlock()
 			}
 
 			id, ctx, cancel := send(0) // should succeed
