@@ -1,0 +1,40 @@
+{
+  "name": "rclgo (ROS 2 Kilted)",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".",
+    "args": {
+      "ROS_DISTRO": "kilted"
+    }
+  },
+  // rclgo's cgo bindings need cgocheck disabled; keep it set in the running
+  // container as well as at build time.
+  "containerEnv": {
+    "GODEBUG": "cgocheck=0",
+    "GOFLAGS": "-buildvcs=false",
+    "CGO_CFLAGS": "-I/opt/ros/kilted/include/rcutils -I/usr/include/rcutils",
+    "RMW_IMPLEMENTATION": "rmw_zenoh_cpp"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "ms-vscode.cpptools",
+        "ms-iot.vscode-ros"
+      ],
+      "settings": {
+        "go.toolsManagement.checkForUpdates": "off",
+        "go.lintTool": "golangci-lint",
+        "go.lintOnSave": "package",
+        "go.testEnvVars": {
+          "GODEBUG": "cgocheck=0"
+        },
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  // Warm the module cache after the container is built. Run `make test` to
+  // exercise the full suite against the installed ROS interfaces.
+  "postCreateCommand": "go mod download",
+  "remoteUser": "root"
+}
