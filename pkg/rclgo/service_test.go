@@ -150,3 +150,70 @@ func TestServiceAndClient(t *testing.T) {
 		})
 	})
 }
+
+func TestServiceIntrospection(t *testing.T) {
+	var (
+		rclCtx *rclgo.Context
+		err    error
+	)
+	defer func() {
+		if rclCtx != nil {
+			rclCtx.Close()
+		}
+	}()
+	Convey("Scenario: configuring service introspection", t, func() {
+		rclCtx, err = newDefaultRCLContext()
+		So(err, ShouldBeNil)
+		node, err := rclCtx.NewNode("introspection_node", "/test")
+		So(err, ShouldBeNil)
+
+		Convey("A service defaults to introspection off", func() {
+			service, err := node.NewService(
+				"introspect_add",
+				example_interfaces_srv.AddTwoIntsTypeSupport,
+				nil,
+				func(_ *rclgo.ServiceInfo, _ types.Message, _ rclgo.ServiceResponseSender) {},
+			)
+			So(err, ShouldBeNil)
+			So(service.IntrospectionState(), ShouldEqual, rclgo.ServiceIntrospectionOff)
+
+			Convey("Its introspection state can be changed at runtime", func() {
+				So(service.ConfigureIntrospection(rclgo.ServiceIntrospectionContents), ShouldBeNil)
+				So(service.IntrospectionState(), ShouldEqual, rclgo.ServiceIntrospectionContents)
+
+				So(service.ConfigureIntrospection(rclgo.ServiceIntrospectionMetadata), ShouldBeNil)
+				So(service.IntrospectionState(), ShouldEqual, rclgo.ServiceIntrospectionMetadata)
+
+				So(service.ConfigureIntrospection(rclgo.ServiceIntrospectionOff), ShouldBeNil)
+				So(service.IntrospectionState(), ShouldEqual, rclgo.ServiceIntrospectionOff)
+			})
+		})
+
+		Convey("A client can enable introspection via options", func() {
+			client, err := node.NewClient(
+				"introspect_add",
+				example_interfaces_srv.AddTwoIntsTypeSupport,
+				&rclgo.ClientOptions{
+					Qos:           rclgo.NewDefaultServiceQosProfile(),
+					Introspection: rclgo.ServiceIntrospectionMetadata,
+				},
+			)
+			So(err, ShouldBeNil)
+			So(client.IntrospectionState(), ShouldEqual, rclgo.ServiceIntrospectionMetadata)
+
+			So(client.ConfigureIntrospection(rclgo.ServiceIntrospectionOff), ShouldBeNil)
+			So(client.IntrospectionState(), ShouldEqual, rclgo.ServiceIntrospectionOff)
+		})
+	})
+}
+
+func TestServiceIntrospectionStateZeroValue(t *testing.T) {
+	Convey("The zero value of ServiceIntrospectionState is ServiceIntrospectionOff", t, func() {
+		// Guards against the (unlikely) possibility that the underlying RCL
+		// enum value RCL_SERVICE_INTROSPECTION_OFF is not zero. Callers rely on
+		// the zero value being "off" so that the default ServiceOptions /
+		// ClientOptions disable introspection.
+		var state rclgo.ServiceIntrospectionState
+		So(state, ShouldEqual, rclgo.ServiceIntrospectionOff)
+	})
+}

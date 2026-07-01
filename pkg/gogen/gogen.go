@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strings"
 	"text/template"
 
@@ -353,7 +354,7 @@ func (g *Generator) generateInterface(meta Metadata, ifacePath string) {
 
 func (g *Generator) findPackages() {
 	g.allPkgs = map[string]*rosPkgRef{}
-	for i := len(g.config.RootPaths) - 1; i >= 0; i-- {
+	for i := range slices.Backward(g.config.RootPaths) {
 		filepath.Walk(g.config.RootPaths[i], func(path string, _ fs.FileInfo, _ error) error { //nolint:errcheck
 			skip, blacklistEntry := blacklisted(path)
 			if skip {
