@@ -78,7 +78,7 @@ func (n *Node) GetSubscriberNamesAndTypesByNode(demangle bool, node, namespace s
 }
 
 func (n *Node) GetServiceNamesAndTypes() (map[string][]string, error) {
-	return n.getNamesAndTypes("", "", func(node, namespace *C.char, namesAndTypes *C.rmw_names_and_types_t) C.int {
+	return n.getNamesAndTypes("", "", func(_, _ *C.char, namesAndTypes *C.rmw_names_and_types_t) C.int {
 		return C.rcl_get_service_names_and_types(
 			n.rcl_node_t,
 			n.context.rcl_allocator_t,

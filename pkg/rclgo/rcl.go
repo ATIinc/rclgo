@@ -858,12 +858,54 @@ type ServiceInfo struct {
 	RequestID         RequestID
 }
 
+// ServiceIntrospectionTopicPostfix is the suffix appended to a service name to
+// form the hidden topic on which service introspection events are published. It
+// mirrors RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX.
+const ServiceIntrospectionTopicPostfix = "/_service_event"
+
+// ServiceIntrospectionState describes whether and how a service or client
+// publishes service introspection events. It mirrors the C enum
+// rcl_service_introspection_state_t.
+type ServiceIntrospectionState int
+
+const (
+	// ServiceIntrospectionOff disables service introspection.
+	ServiceIntrospectionOff ServiceIntrospectionState = C.RCL_SERVICE_INTROSPECTION_OFF
+	// ServiceIntrospectionMetadata publishes only request/response metadata
+	// (no message contents).
+	ServiceIntrospectionMetadata ServiceIntrospectionState = C.RCL_SERVICE_INTROSPECTION_METADATA
+	// ServiceIntrospectionContents publishes both metadata and the request and
+	// response message contents.
+	ServiceIntrospectionContents ServiceIntrospectionState = C.RCL_SERVICE_INTROSPECTION_CONTENTS
+)
+
+func (s ServiceIntrospectionState) String() string {
+	switch s {
+	case ServiceIntrospectionOff:
+		return "off"
+	case ServiceIntrospectionMetadata:
+		return "metadata"
+	case ServiceIntrospectionContents:
+		return "contents"
+	default:
+		return fmt.Sprintf("ServiceIntrospectionState(%d)", int(s))
+	}
+}
+
 type ServiceOptions struct {
 	Qos QosProfile
+
+	// Introspection sets the initial service introspection state used when the
+	// service is created. It defaults to ServiceIntrospectionOff. The state can
+	// also be changed at runtime with Service.ConfigureIntrospection.
+	Introspection ServiceIntrospectionState
 }
 
 func NewDefaultServiceOptions() *ServiceOptions {
-	return &ServiceOptions{Qos: NewDefaultServiceQosProfile()}
+	return &ServiceOptions{
+		Qos:           NewDefaultServiceQosProfile(),
+		Introspection: ServiceIntrospectionOff,
+	}
 }
 
 type ServiceResponseSender interface {
@@ -885,8 +927,16 @@ type Service struct {
 	rclService          *C.rcl_service_t
 	name                *C.char
 	handler             ServiceRequestHandler
+	typeSupport         types.ServiceTypeSupport
 	requestTypeSupport  types.MessageTypeSupport
 	responseTypeSupport types.MessageTypeSupport
+
+	// introspectionMu serializes calls to ConfigureIntrospection, which maps to
+	// rcl_service_configure_service_introspection. That rcl call is documented
+	// as not thread-safe, so we guard it here to make runtime reconfiguration
+	// safe across goroutines. introspectionState caches the last applied state.
+	introspectionMu    sync.Mutex
+	introspectionState ServiceIntrospectionState
 }
 
 // NewService creates a new service.
@@ -903,12 +953,14 @@ func (n *Node) NewService(
 		options = NewDefaultServiceOptions()
 	}
 	s = &Service{
+		typeSupport:         typeSupport,
 		requestTypeSupport:  typeSupport.Request(),
 		responseTypeSupport: typeSupport.Response(),
 		node:                n,
 		rclService:          (*C.rcl_service_t)(C.malloc(C.sizeof_rcl_service_t)),
 		name:                C.CString(name),
 		handler:             handler,
+		introspectionState:  options.Introspection,
 	}
 	*s.rclService = C.rcl_get_zero_initialized_service()
 	defer onErr(&err, s.Close)
@@ -924,8 +976,57 @@ func (n *Node) NewService(
 	if retCode != C.RCL_RET_OK {
 		return nil, errorsCastC(retCode, "failed to create service")
 	}
+	if options.Introspection != ServiceIntrospectionOff {
+		if err = s.ConfigureIntrospection(options.Introspection); err != nil {
+			return nil, err
+		}
+	}
 	n.addResource(s)
 	return s, nil
+}
+
+// ConfigureIntrospection enables, disables or reconfigures service
+// introspection for s.
+//
+// When state is ServiceIntrospectionMetadata or ServiceIntrospectionContents,
+// rcl creates a hidden publisher that emits service event messages on the
+// "<service_name>/_service_event" topic (see ServiceIntrospectionTopicPostfix).
+// ServiceIntrospectionMetadata publishes only request/response metadata, while
+// ServiceIntrospectionContents additionally publishes the message contents.
+// ServiceIntrospectionOff disables introspection and tears the publisher down.
+//
+// Timestamps for the published events are generated using the clock of the
+// node's context. ConfigureIntrospection is safe to call concurrently; calls
+// are serialized internally because the underlying rcl call is not thread-safe.
+func (s *Service) ConfigureIntrospection(state ServiceIntrospectionState) error {
+	s.introspectionMu.Lock()
+	defer s.introspectionMu.Unlock()
+	if s.name == nil {
+		return closeErr("service")
+	}
+	pubOpts := C.rcl_publisher_get_default_options()
+	pubOpts.allocator = *s.node.context.rcl_allocator_t
+	rc := C.rcl_service_configure_service_introspection(
+		s.rclService,
+		s.node.rcl_node_t,
+		s.node.context.Clock().rcl_clock_t,
+		(*C.struct_rosidl_service_type_support_t)(s.typeSupport.TypeSupport()),
+		pubOpts,
+		C.rcl_service_introspection_state_t(state),
+	)
+	if rc != C.RCL_RET_OK {
+		return errorsCastC(rc, "failed to configure service introspection")
+	}
+	s.introspectionState = state
+	return nil
+}
+
+// IntrospectionState returns the introspection state most recently applied to
+// s, defaulting to ServiceIntrospectionOff.
+func (s *Service) IntrospectionState() ServiceIntrospectionState {
+	s.introspectionMu.Lock()
+	defer s.introspectionMu.Unlock()
+	return s.introspectionState
 }
 
 func (s *Service) Close() (err error) {
@@ -983,10 +1084,18 @@ func (s *Service) handleRequest() {
 
 type ClientOptions struct {
 	Qos QosProfile
+
+	// Introspection sets the initial service introspection state used when the
+	// client is created. It defaults to ServiceIntrospectionOff. The state can
+	// also be changed at runtime with Client.ConfigureIntrospection.
+	Introspection ServiceIntrospectionState
 }
 
 func NewDefaultClientOptions() *ClientOptions {
-	return &ClientOptions{Qos: NewDefaultServiceQosProfile()}
+	return &ClientOptions{
+		Qos:           NewDefaultServiceQosProfile(),
+		Introspection: ServiceIntrospectionOff,
+	}
 }
 
 // Client is used to send requests to and receive responses from a service.
@@ -994,10 +1103,18 @@ func NewDefaultClientOptions() *ClientOptions {
 // Calling Send and Close is thread-safe. Creating clients is not thread-safe.
 type Client struct {
 	rosID
-	waitable  singleUse
-	node      *Node
-	rclClient *C.rcl_client_t
-	sender    requestSender
+	waitable    singleUse
+	node        *Node
+	rclClient   *C.rcl_client_t
+	sender      requestSender
+	typeSupport types.ServiceTypeSupport
+
+	// introspectionMu serializes calls to ConfigureIntrospection, which maps to
+	// rcl_client_configure_service_introspection. That rcl call is documented as
+	// not thread-safe, so we guard it here to make runtime reconfiguration safe
+	// across goroutines. introspectionState caches the last applied state.
+	introspectionMu    sync.Mutex
+	introspectionState ServiceIntrospectionState
 }
 
 // NewClient creates a new client.
@@ -1013,8 +1130,10 @@ func (n *Node) NewClient(
 		options = NewDefaultClientOptions()
 	}
 	c = &Client{
-		node:      n,
-		rclClient: (*C.rcl_client_t)(C.malloc(C.sizeof_rcl_client_t)),
+		node:               n,
+		rclClient:          (*C.rcl_client_t)(C.malloc(C.sizeof_rcl_client_t)),
+		typeSupport:        typeSupport,
+		introspectionState: options.Introspection,
 	}
 	c.sender = newRequestSender(requestSenderTransport{
 		SendRequest:  c.sendRequest,
@@ -1038,8 +1157,57 @@ func (n *Node) NewClient(
 	if rc != C.RCL_RET_OK {
 		return nil, errorsCastC(rc, "failed to create client")
 	}
+	if options.Introspection != ServiceIntrospectionOff {
+		if err = c.ConfigureIntrospection(options.Introspection); err != nil {
+			return nil, err
+		}
+	}
 	n.addResource(c)
 	return c, nil
+}
+
+// ConfigureIntrospection enables, disables or reconfigures service
+// introspection for c.
+//
+// When state is ServiceIntrospectionMetadata or ServiceIntrospectionContents,
+// rcl creates a hidden publisher that emits service event messages on the
+// "<service_name>/_service_event" topic (see ServiceIntrospectionTopicPostfix).
+// ServiceIntrospectionMetadata publishes only request/response metadata, while
+// ServiceIntrospectionContents additionally publishes the message contents.
+// ServiceIntrospectionOff disables introspection and tears the publisher down.
+//
+// Timestamps for the published events are generated using the clock of the
+// node's context. ConfigureIntrospection is safe to call concurrently; calls
+// are serialized internally because the underlying rcl call is not thread-safe.
+func (c *Client) ConfigureIntrospection(state ServiceIntrospectionState) error {
+	c.introspectionMu.Lock()
+	defer c.introspectionMu.Unlock()
+	if c.rclClient == nil {
+		return closeErr("client")
+	}
+	pubOpts := C.rcl_publisher_get_default_options()
+	pubOpts.allocator = *c.node.context.rcl_allocator_t
+	rc := C.rcl_client_configure_service_introspection(
+		c.rclClient,
+		c.node.rcl_node_t,
+		c.node.context.Clock().rcl_clock_t,
+		(*C.struct_rosidl_service_type_support_t)(c.typeSupport.TypeSupport()),
+		pubOpts,
+		C.rcl_service_introspection_state_t(state),
+	)
+	if rc != C.RCL_RET_OK {
+		return errorsCastC(rc, "failed to configure service introspection")
+	}
+	c.introspectionState = state
+	return nil
+}
+
+// IntrospectionState returns the introspection state most recently applied to
+// c, defaulting to ServiceIntrospectionOff.
+func (c *Client) IntrospectionState() ServiceIntrospectionState {
+	c.introspectionMu.Lock()
+	defer c.introspectionMu.Unlock()
+	return c.introspectionState
 }
 
 func (c *Client) Close() error {
