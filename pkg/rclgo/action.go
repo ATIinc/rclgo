@@ -422,7 +422,7 @@ func (s *ActionServer) Node() *Node {
 //
 // When state is ServiceIntrospectionMetadata or ServiceIntrospectionContents,
 // rcl creates hidden publishers that emit service event messages on the
-// "<service_name>/_service_event" topic (see ServiceIntrospectionTopicPostfix)
+// "<service_name>/_service_event" topic
 // for each of the goal, cancel and result services. ServiceIntrospectionMetadata
 // publishes only request/response metadata, while ServiceIntrospectionContents
 // additionally publishes the message contents. ServiceIntrospectionOff disables
@@ -994,7 +994,7 @@ func (c *ActionClient) Node() *Node {
 //
 // When state is ServiceIntrospectionMetadata or ServiceIntrospectionContents,
 // rcl creates hidden publishers that emit service event messages on the
-// "<service_name>/_service_event" topic (see ServiceIntrospectionTopicPostfix)
+// "<service_name>/_service_event"
 // for each of the goal, cancel and result clients. ServiceIntrospectionMetadata
 // publishes only request/response metadata, while ServiceIntrospectionContents
 // additionally publishes the message contents. ServiceIntrospectionOff disables

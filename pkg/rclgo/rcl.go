@@ -858,11 +858,6 @@ type ServiceInfo struct {
 	RequestID         RequestID
 }
 
-// ServiceIntrospectionTopicPostfix is the suffix appended to a service name to
-// form the hidden topic on which service introspection events are published. It
-// mirrors RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX.
-const ServiceIntrospectionTopicPostfix = "/_service_event"
-
 // ServiceIntrospectionState describes whether and how a service or client
 // publishes service introspection events. It mirrors the C enum
 // rcl_service_introspection_state_t.
@@ -990,7 +985,7 @@ func (n *Node) NewService(
 //
 // When state is ServiceIntrospectionMetadata or ServiceIntrospectionContents,
 // rcl creates a hidden publisher that emits service event messages on the
-// "<service_name>/_service_event" topic (see ServiceIntrospectionTopicPostfix).
+// "<service_name>/_service_event".
 // ServiceIntrospectionMetadata publishes only request/response metadata, while
 // ServiceIntrospectionContents additionally publishes the message contents.
 // ServiceIntrospectionOff disables introspection and tears the publisher down.
@@ -1171,7 +1166,7 @@ func (n *Node) NewClient(
 //
 // When state is ServiceIntrospectionMetadata or ServiceIntrospectionContents,
 // rcl creates a hidden publisher that emits service event messages on the
-// "<service_name>/_service_event" topic (see ServiceIntrospectionTopicPostfix).
+// "<service_name>/_service_event" topic.
 // ServiceIntrospectionMetadata publishes only request/response metadata, while
 // ServiceIntrospectionContents additionally publishes the message contents.
 // ServiceIntrospectionOff disables introspection and tears the publisher down.
