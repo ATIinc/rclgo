@@ -341,11 +341,11 @@ func (n *Node) NewActionServer(
 	name string,
 	action Action,
 	opts *ActionServerOptions,
-) (*ActionServer, error) {
+) (s *ActionServer, err error) {
 	if opts == nil {
 		opts = NewDefaultActionServerOptions()
 	}
-	s := &ActionServer{
+	s = &ActionServer{
 		node:          n,
 		action:        action,
 		typeSupport:   action.TypeSupport(),
@@ -358,6 +358,7 @@ func (n *Node) NewActionServer(
 
 		introspectionState: opts.Introspection,
 	}
+	defer onErr(&err, s.Close)
 	if s.clock == nil {
 		s.clock = n.context.Clock()
 	}
@@ -386,7 +387,7 @@ func (n *Node) NewActionServer(
 		return nil, errorsCastC(rc, "failed to create action server")
 	}
 	if opts.Introspection != ServiceIntrospectionOff {
-		if err := s.ConfigureIntrospection(opts.Introspection); err != nil {
+		if err = s.ConfigureIntrospection(opts.Introspection); err != nil {
 			return nil, err
 		}
 	}
@@ -899,11 +900,11 @@ func (n *Node) NewActionClient(
 	name string,
 	ts types.ActionTypeSupport,
 	opts *ActionClientOptions,
-) (*ActionClient, error) {
+) (c *ActionClient, err error) {
 	if opts == nil {
 		opts = NewDefaultActionClientOptions()
 	}
-	c := &ActionClient{
+	c = &ActionClient{
 		node: n,
 
 		typeSupport: ts,
@@ -932,6 +933,7 @@ func (n *Node) NewActionClient(
 		TypeSupport:  ts.CancelGoal(),
 		Logger:       n.Logger(),
 	})
+	defer onErr(&err, c.Close)
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	rclOpts := C.rcl_action_client_options_t{
@@ -953,7 +955,7 @@ func (n *Node) NewActionClient(
 		return nil, errorsCastC(rc, "failed to create action client")
 	}
 	if opts.Introspection != ServiceIntrospectionOff {
-		if err := c.ConfigureIntrospection(opts.Introspection); err != nil {
+		if err = c.ConfigureIntrospection(opts.Introspection); err != nil {
 			return nil, err
 		}
 	}
