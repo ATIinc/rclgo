@@ -294,6 +294,73 @@ func TestActionCanceling(t *testing.T) {
 	})
 }
 
+func TestActionIntrospection(t *testing.T) {
+	_, introspectAction := newWaitAction()
+	var (
+		rclCtx *rclgo.Context
+		err    error
+	)
+	defer func() {
+		if rclCtx != nil {
+			rclCtx.Close()
+		}
+	}()
+	Convey("Scenario: configuring action introspection", t, func() {
+		rclCtx, err = newDefaultRCLContext()
+		So(err, ShouldBeNil)
+		node, err := rclCtx.NewNode("introspection_node", "actions_test")
+		So(err, ShouldBeNil)
+
+		Convey("An ActionServer can enable introspection via options", func() {
+			opts := rclgo.NewDefaultActionServerOptions()
+			opts.Introspection = rclgo.ServiceIntrospectionContents
+			server, err := node.NewActionServer(
+				"introspect_fibonacci",
+				introspectAction,
+				opts,
+			)
+			So(err, ShouldBeNil)
+			So(server.IntrospectionState(), ShouldEqual, rclgo.ServiceIntrospectionContents)
+		})
+
+		Convey("An ActionServer defaults to introspection off", func() {
+			server, err := node.NewActionServer(
+				"introspect_fibonacci",
+				introspectAction,
+				actionServerOpts,
+			)
+			So(err, ShouldBeNil)
+			So(server.IntrospectionState(), ShouldEqual, rclgo.ServiceIntrospectionOff)
+
+			Convey("Its introspection state can be changed at runtime", func() {
+				So(server.ConfigureIntrospection(rclgo.ServiceIntrospectionContents), ShouldBeNil)
+				So(server.IntrospectionState(), ShouldEqual, rclgo.ServiceIntrospectionContents)
+
+				So(server.ConfigureIntrospection(rclgo.ServiceIntrospectionMetadata), ShouldBeNil)
+				So(server.IntrospectionState(), ShouldEqual, rclgo.ServiceIntrospectionMetadata)
+
+				So(server.ConfigureIntrospection(rclgo.ServiceIntrospectionOff), ShouldBeNil)
+				So(server.IntrospectionState(), ShouldEqual, rclgo.ServiceIntrospectionOff)
+			})
+		})
+
+		Convey("An ActionClient can enable introspection via options", func() {
+			opts := rclgo.NewDefaultActionClientOptions()
+			opts.Introspection = rclgo.ServiceIntrospectionMetadata
+			client, err := node.NewActionClient(
+				"introspect_fibonacci",
+				test_msgs_action.FibonacciTypeSupport,
+				opts,
+			)
+			So(err, ShouldBeNil)
+			So(client.IntrospectionState(), ShouldEqual, rclgo.ServiceIntrospectionMetadata)
+
+			So(client.ConfigureIntrospection(rclgo.ServiceIntrospectionOff), ShouldBeNil)
+			So(client.IntrospectionState(), ShouldEqual, rclgo.ServiceIntrospectionOff)
+		})
+	})
+}
+
 func TestWatchGoalCanceling(t *testing.T) {
 	_, cancelingAction := newWaitAction()
 	var (

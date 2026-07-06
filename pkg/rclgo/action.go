@@ -287,6 +287,12 @@ type ActionServerOptions struct {
 	StatusTopicQos   QosProfile
 	ResultTimeout    time.Duration
 	Clock            *Clock
+
+	// Introspection sets the initial service introspection state used when the
+	// action server is created. It defaults to ServiceIntrospectionOff. The
+	// state can also be changed at runtime with
+	// ActionServer.ConfigureIntrospection.
+	Introspection ServiceIntrospectionState
 }
 
 func NewDefaultActionServerOptions() *ActionServerOptions {
@@ -297,6 +303,7 @@ func NewDefaultActionServerOptions() *ActionServerOptions {
 		FeedbackTopicQos: NewDefaultQosProfile(),
 		StatusTopicQos:   NewDefaultStatusQosProfile(),
 		ResultTimeout:    15 * time.Minute,
+		Introspection:    ServiceIntrospectionOff,
 	}
 }
 
@@ -316,6 +323,14 @@ type ActionServer struct {
 
 	goals   map[types.GoalID]*GoalHandle
 	goalsMu sync.RWMutex
+
+	// introspectionMu serializes calls to ConfigureIntrospection, which maps to
+	// rcl_action_server_configure_action_introspection. That rcl call is
+	// documented as not thread-safe, so we guard it here to make runtime
+	// reconfiguration safe across goroutines. introspectionState caches the
+	// last applied state.
+	introspectionMu    sync.Mutex
+	introspectionState ServiceIntrospectionState
 }
 
 // NewActionServer creates a new action server.
@@ -326,11 +341,11 @@ func (n *Node) NewActionServer(
 	name string,
 	action Action,
 	opts *ActionServerOptions,
-) (*ActionServer, error) {
+) (s *ActionServer, err error) {
 	if opts == nil {
 		opts = NewDefaultActionServerOptions()
 	}
-	s := &ActionServer{
+	s = &ActionServer{
 		node:          n,
 		action:        action,
 		typeSupport:   action.TypeSupport(),
@@ -340,7 +355,10 @@ func (n *Node) NewActionServer(
 		rclServer: C.rcl_action_get_zero_initialized_server(),
 
 		goals: make(map[types.GoalID]*GoalHandle),
+
+		introspectionState: opts.Introspection,
 	}
+	defer onErr(&err, s.Close)
 	if s.clock == nil {
 		s.clock = n.context.Clock()
 	}
@@ -368,6 +386,11 @@ func (n *Node) NewActionServer(
 	if rc != C.RCL_RET_OK {
 		return nil, errorsCastC(rc, "failed to create action server")
 	}
+	if opts.Introspection != ServiceIntrospectionOff {
+		if err = s.ConfigureIntrospection(opts.Introspection); err != nil {
+			return nil, err
+		}
+	}
 	n.addResource(s)
 	return s, nil
 }
@@ -393,6 +416,51 @@ func (s *ActionServer) Close() (err error) {
 // Node returns the node s was created with.
 func (s *ActionServer) Node() *Node {
 	return s.node
+}
+
+// ConfigureIntrospection enables, disables or reconfigures service
+// introspection for the goal, cancel and result services underlying s.
+//
+// When state is ServiceIntrospectionMetadata or ServiceIntrospectionContents,
+// rcl creates hidden publishers that emit service event messages on the
+// "<service_name>/_service_event" topic
+// for each of the goal, cancel and result services. ServiceIntrospectionMetadata
+// publishes only request/response metadata, while ServiceIntrospectionContents
+// additionally publishes the message contents. ServiceIntrospectionOff disables
+// introspection and tears the publishers down.
+//
+// Timestamps for the published events are generated using s's clock.
+// ConfigureIntrospection is safe to call concurrently; calls are serialized
+// internally because the underlying rcl call is not thread-safe.
+func (s *ActionServer) ConfigureIntrospection(state ServiceIntrospectionState) error {
+	s.introspectionMu.Lock()
+	defer s.introspectionMu.Unlock()
+	if s.rclServer == C.rcl_action_get_zero_initialized_server() {
+		return closeErr("action")
+	}
+	pubOpts := C.rcl_publisher_get_default_options()
+	pubOpts.allocator = *s.node.context.rcl_allocator_t
+	rc := C.rcl_action_server_configure_action_introspection(
+		&s.rclServer,
+		s.node.rcl_node_t,
+		s.clock.rcl_clock_t,
+		(*C.rosidl_action_type_support_t)(s.typeSupport.TypeSupport()),
+		pubOpts,
+		C.rcl_service_introspection_state_t(state),
+	)
+	if rc != C.RCL_RET_OK {
+		return errorsCastC(rc, "failed to configure action introspection")
+	}
+	s.introspectionState = state
+	return nil
+}
+
+// IntrospectionState returns the introspection state most recently applied to
+// s, defaulting to ServiceIntrospectionOff.
+func (s *ActionServer) IntrospectionState() ServiceIntrospectionState {
+	s.introspectionMu.Lock()
+	defer s.introspectionMu.Unlock()
+	return s.introspectionState
 }
 
 func (s *ActionServer) takeGoalRequest(goal *GoalHandle) error {
@@ -749,6 +817,12 @@ type ActionClientOptions struct {
 	ResultServiceQos QosProfile
 	FeedbackTopicQos QosProfile
 	StatusTopicQos   QosProfile
+
+	// Introspection sets the initial service introspection state used when the
+	// action client is created. It defaults to ServiceIntrospectionOff. The
+	// state can also be changed at runtime with
+	// ActionClient.ConfigureIntrospection.
+	Introspection ServiceIntrospectionState
 }
 
 func NewDefaultActionClientOptions() *ActionClientOptions {
@@ -758,6 +832,7 @@ func NewDefaultActionClientOptions() *ActionClientOptions {
 		ResultServiceQos: NewDefaultServiceQosProfile(),
 		FeedbackTopicQos: NewDefaultQosProfile(),
 		StatusTopicQos:   NewDefaultQosProfile(),
+		Introspection:    ServiceIntrospectionOff,
 	}
 }
 
@@ -809,6 +884,14 @@ type ActionClient struct {
 	nextSubscriberID uint64
 	feedbackSubs     actionClientSubs
 	statusSubs       actionClientSubs
+
+	// introspectionMu serializes calls to ConfigureIntrospection, which maps to
+	// rcl_action_client_configure_action_introspection. That rcl call is
+	// documented as not thread-safe, so we guard it here to make runtime
+	// reconfiguration safe across goroutines. introspectionState caches the
+	// last applied state.
+	introspectionMu    sync.Mutex
+	introspectionState ServiceIntrospectionState
 }
 
 // NewActionClient creates an action client that communicates with an action
@@ -817,11 +900,11 @@ func (n *Node) NewActionClient(
 	name string,
 	ts types.ActionTypeSupport,
 	opts *ActionClientOptions,
-) (*ActionClient, error) {
+) (c *ActionClient, err error) {
 	if opts == nil {
 		opts = NewDefaultActionClientOptions()
 	}
-	c := &ActionClient{
+	c = &ActionClient{
 		node: n,
 
 		typeSupport: ts,
@@ -829,6 +912,8 @@ func (n *Node) NewActionClient(
 
 		feedbackSubs: newActionClientHandlers(),
 		statusSubs:   newActionClientHandlers(),
+
+		introspectionState: opts.Introspection,
 	}
 	c.goalSender = newRequestSender(requestSenderTransport{
 		SendRequest:  c.sendGoalRequest,
@@ -848,6 +933,7 @@ func (n *Node) NewActionClient(
 		TypeSupport:  ts.CancelGoal(),
 		Logger:       n.Logger(),
 	})
+	defer onErr(&err, c.Close)
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	rclOpts := C.rcl_action_client_options_t{
@@ -867,6 +953,11 @@ func (n *Node) NewActionClient(
 	)
 	if rc != C.RCL_RET_OK {
 		return nil, errorsCastC(rc, "failed to create action client")
+	}
+	if opts.Introspection != ServiceIntrospectionOff {
+		if err = c.ConfigureIntrospection(opts.Introspection); err != nil {
+			return nil, err
+		}
 	}
 	n.addResource(c)
 	return c, nil
@@ -898,6 +989,52 @@ func (c *ActionClient) Close() error {
 // Node returns the node c was created with.
 func (c *ActionClient) Node() *Node {
 	return c.node
+}
+
+// ConfigureIntrospection enables, disables or reconfigures service
+// introspection for the goal, cancel and result clients underlying c.
+//
+// When state is ServiceIntrospectionMetadata or ServiceIntrospectionContents,
+// rcl creates hidden publishers that emit service event messages on the
+// "<service_name>/_service_event"
+// for each of the goal, cancel and result clients. ServiceIntrospectionMetadata
+// publishes only request/response metadata, while ServiceIntrospectionContents
+// additionally publishes the message contents. ServiceIntrospectionOff disables
+// introspection and tears the publishers down.
+//
+// Timestamps for the published events are generated using the clock of the
+// node's context. ConfigureIntrospection is safe to call concurrently; calls
+// are serialized internally because the underlying rcl call is not
+// thread-safe.
+func (c *ActionClient) ConfigureIntrospection(state ServiceIntrospectionState) error {
+	c.introspectionMu.Lock()
+	defer c.introspectionMu.Unlock()
+	if c.typeSupport == nil {
+		return closeErr("action client")
+	}
+	pubOpts := C.rcl_publisher_get_default_options()
+	pubOpts.allocator = *c.node.context.rcl_allocator_t
+	rc := C.rcl_action_client_configure_action_introspection(
+		&c.rclClient,
+		c.node.rcl_node_t,
+		c.node.context.Clock().rcl_clock_t,
+		(*C.rosidl_action_type_support_t)(c.typeSupport.TypeSupport()),
+		pubOpts,
+		C.rcl_service_introspection_state_t(state),
+	)
+	if rc != C.RCL_RET_OK {
+		return errorsCastC(rc, "failed to configure action introspection")
+	}
+	c.introspectionState = state
+	return nil
+}
+
+// IntrospectionState returns the introspection state most recently applied to
+// c, defaulting to ServiceIntrospectionOff.
+func (c *ActionClient) IntrospectionState() ServiceIntrospectionState {
+	c.introspectionMu.Lock()
+	defer c.introspectionMu.Unlock()
+	return c.introspectionState
 }
 
 // WatchGoal combines functionality of SendGoal and WatchFeedback. It sends a
