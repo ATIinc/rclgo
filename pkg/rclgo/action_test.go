@@ -311,6 +311,18 @@ func TestActionIntrospection(t *testing.T) {
 		node, err := rclCtx.NewNode("introspection_node", "actions_test")
 		So(err, ShouldBeNil)
 
+		Convey("An ActionServer can enable introspection via options", func() {
+			opts := rclgo.NewDefaultActionServerOptions()
+			opts.Introspection = rclgo.ServiceIntrospectionContents
+			server, err := node.NewActionServer(
+				"introspect_fibonacci",
+				introspectAction,
+				opts,
+			)
+			So(err, ShouldBeNil)
+			So(server.IntrospectionState(), ShouldEqual, rclgo.ServiceIntrospectionContents)
+		})
+
 		Convey("An ActionServer defaults to introspection off", func() {
 			server, err := node.NewActionServer(
 				"introspect_fibonacci",
