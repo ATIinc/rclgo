@@ -168,12 +168,12 @@ func defaultValueSanitizer_(ros2type, defaultValue string) string {
 }
 
 func srvNameFromSrvMsgName(s string) string {
-	re.S(&s, `s/_(Request|Response)$//`)
+	re.S(&s, `s/_(Request|Response|Event)$//`)
 	return s
 }
 
 func actionNameFromActionMsgName(s string) string {
-	re.S(&s, `s/_(Goal|Result|Feedback|SendGoal_Request|SendGoal_Response|GetResult_Request|GetResult_Response|FeedbackMessage)$//`)
+	re.S(&s, `s/_(Goal|Result|Feedback|SendGoal_Request|SendGoal_Response|SendGoal_Event|GetResult_Request|GetResult_Response|GetResult_Event|FeedbackMessage)$//`)
 	return s
 }
 

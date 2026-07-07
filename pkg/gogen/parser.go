@@ -55,7 +55,57 @@ func (p *parser) ParseROS2Message(res *ROS2Message, content string) error {
 }
 
 func (p *parser) ParseService(service *ROS2Service, source string) error {
-	return p.parseSections(source, service.Request, service.Response)
+	if err := p.parseSections(source, service.Request, service.Response); err != nil {
+		return err
+	}
+	p.addServiceEventFields(service)
+	return nil
+}
+
+// addServiceEventFields synthesizes the fields of the hidden <Service>_Event
+// message that rcl publishes on the "<service>/_service_event" topic when
+// service introspection is enabled. This message isn't described by a
+// section in the .srv file; rosidl derives it for every service the same way
+// it derives the action-only messages below.
+func (p *parser) addServiceEventFields(service *ROS2Service) {
+	p.addImport(service.Event, "service_msgs")
+	service.Event.Fields = []*ROS2Field{
+		{
+			RosName: "info",
+			CName:   "info",
+			GoName:  "Info",
+
+			PkgName:   "service_msgs",
+			GoPkgName: "service_msgs_msg",
+
+			RosType: "ServiceEventInfo",
+			CType:   "ServiceEventInfo",
+			GoType:  "ServiceEventInfo",
+		},
+		p.serviceEventLocalField("request", "Request", service, service.Request),
+		p.serviceEventLocalField("response", "Response", service, service.Response),
+	}
+}
+
+// serviceEventLocalField builds the bounded (<=1) sequence field of a
+// <Service>_Event message that carries the request or response contents.
+func (p *parser) serviceEventLocalField(cname, goname string, service *ROS2Service, msg *ROS2Message) *ROS2Field {
+	return &ROS2Field{
+		RosName: cname,
+		CName:   cname,
+		GoName:  goname,
+
+		PkgName:    service.Package,
+		GoPkgName:  service.GoPackage(),
+		PkgIsLocal: true,
+
+		TypeArray:    "[]",
+		ArrayBounded: "<=1",
+
+		RosType: msg.Name,
+		CType:   msg.Name,
+		GoType:  msg.Name,
+	}
 }
 
 func (p *parser) ParseAction(action *ROS2Action, source string) error {
@@ -95,6 +145,8 @@ func (p *parser) ParseAction(action *ROS2Action, source string) error {
 		p.goalIDField(),
 		p.actionLocalField("feedback", "Feedback", action, action.Feedback),
 	}
+	p.addServiceEventFields(action.SendGoal)
+	p.addServiceEventFields(action.GetResult)
 	return nil
 }
 

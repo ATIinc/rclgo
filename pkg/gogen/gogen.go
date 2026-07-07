@@ -84,6 +84,7 @@ type Generator struct {
 	cImportsByPkgAndType map[string]stringSet
 	allPkgs              map[string]*rosPkgRef
 	actionMsgsNeeded     bool
+	serviceMsgsNeeded    bool
 }
 
 func New(config *Config) *Generator {
@@ -266,6 +267,9 @@ func (g *Generator) GenerateGolangMessageTypes() error {
 		if g.actionMsgsNeeded {
 			g.generatePkg("action_msgs", true)
 		}
+		if g.serviceMsgsNeeded {
+			g.generatePkg("service_msgs", true)
+		}
 		for _, pkg := range sortedKeys(g.allPkgs) {
 			if g.config.RegexIncludes.Includes(pkg) {
 				g.generatePkg(pkg, false)
@@ -329,22 +333,27 @@ func (g *Generator) generateInterface(meta Metadata, ifacePath string) {
 		if err != nil {
 			PrintErrf("Error converting ROS2 Service '%s' to '%s', error: %v\n", ifacePath, g.config.DestPath, err)
 		}
+		g.serviceMsgsNeeded = true
 		set := g.getCImportsForPkgAndType(result.GoPackage())
 		set.AddFrom(result.Request.CImports)
 		set.AddFrom(result.Response.CImports)
+		set.AddFrom(result.Event.CImports)
 	case "action":
 		result, err := g.generateAction(ifacePath)
 		if err != nil {
 			PrintErrf("Error converting ROS2 Action '%s' to '%s', error: %v\n", ifacePath, g.config.DestPath, err)
 		}
 		g.actionMsgsNeeded = true
+		g.serviceMsgsNeeded = true
 		set := g.getCImportsForPkgAndType(result.GoPackage())
 		set.AddFrom(result.Goal.CImports)
 		set.AddFrom(result.SendGoal.Request.CImports)
 		set.AddFrom(result.SendGoal.Response.CImports)
+		set.AddFrom(result.SendGoal.Event.CImports)
 		set.AddFrom(result.Result.CImports)
 		set.AddFrom(result.GetResult.Request.CImports)
 		set.AddFrom(result.GetResult.Response.CImports)
+		set.AddFrom(result.GetResult.Event.CImports)
 		set.AddFrom(result.Feedback.CImports)
 		set.AddFrom(result.FeedbackMessage.CImports)
 	default:
@@ -535,7 +544,11 @@ func (g *Generator) generateServiceGoFiles(parser *parser, srv *ROS2Service) err
 	if err != nil {
 		return err
 	}
-	return g.generateMessageGoFile(parser, srv.Response)
+	err = g.generateMessageGoFile(parser, srv.Response)
+	if err != nil {
+		return err
+	}
+	return g.generateMessageGoFile(parser, srv.Event)
 }
 
 func (g *Generator) generateCommonPackageGoFile(pkgAndType string, cImports stringSet) error {

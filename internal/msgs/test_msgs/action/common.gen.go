@@ -18,6 +18,7 @@ package test_msgs_action
 #cgo LDFLAGS: -lrcl -lrosidl_runtime_c -lrosidl_typesupport_c -lrcutils -lrmw_implementation
 #cgo LDFLAGS: -ltest_msgs__rosidl_typesupport_c -ltest_msgs__rosidl_generator_c
 #cgo LDFLAGS: -lbuiltin_interfaces__rosidl_typesupport_c -lbuiltin_interfaces__rosidl_generator_c
+#cgo LDFLAGS: -lservice_msgs__rosidl_typesupport_c -lservice_msgs__rosidl_generator_c
 #cgo LDFLAGS: -ltest_msgs__rosidl_typesupport_c -ltest_msgs__rosidl_generator_c
 #cgo LDFLAGS: -lunique_identifier_msgs__rosidl_typesupport_c -lunique_identifier_msgs__rosidl_generator_c
 
@@ -36,6 +37,8 @@ package test_msgs_action
 #cgo CFLAGS: "-I/usr/include/type_description_interfaces"
 #cgo CFLAGS: "-I/usr/include/unique_identifier_msgs"
 #cgo CFLAGS: "-I/usr/include/builtin_interfaces"
+
+#cgo CFLAGS: "-I/usr/include/service_msgs"
 
 #cgo CFLAGS: "-I/usr/include/test_msgs"
 
@@ -58,6 +61,8 @@ package test_msgs_action
 #cgo CFLAGS: "-I/opt/ros/kilted/include/type_description_interfaces"
 #cgo CFLAGS: "-I/opt/ros/kilted/include/unique_identifier_msgs"
 #cgo CFLAGS: "-I/opt/ros/kilted/include/builtin_interfaces"
+
+#cgo CFLAGS: "-I/opt/ros/kilted/include/service_msgs"
 
 #cgo CFLAGS: "-I/opt/ros/kilted/include/test_msgs"
 

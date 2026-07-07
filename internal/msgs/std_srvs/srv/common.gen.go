@@ -17,6 +17,7 @@ package std_srvs_srv
 
 #cgo LDFLAGS: -lrcl -lrosidl_runtime_c -lrosidl_typesupport_c -lrcutils -lrmw_implementation
 #cgo LDFLAGS: -lstd_srvs__rosidl_typesupport_c -lstd_srvs__rosidl_generator_c
+#cgo LDFLAGS: -lservice_msgs__rosidl_typesupport_c -lservice_msgs__rosidl_generator_c
 
 #cgo CFLAGS: "-I/usr/include/action_msgs"
 #cgo CFLAGS: "-I/usr/include/builtin_interfaces"
@@ -32,6 +33,8 @@ package std_srvs_srv
 #cgo CFLAGS: "-I/usr/include/std_srvs"
 #cgo CFLAGS: "-I/usr/include/type_description_interfaces"
 #cgo CFLAGS: "-I/usr/include/unique_identifier_msgs"
+#cgo CFLAGS: "-I/usr/include/service_msgs"
+
 #cgo CFLAGS: "-I/usr/include/std_srvs"
 
 #cgo CFLAGS: "-I/opt/ros/kilted/include/action_msgs"
@@ -48,6 +51,8 @@ package std_srvs_srv
 #cgo CFLAGS: "-I/opt/ros/kilted/include/std_srvs"
 #cgo CFLAGS: "-I/opt/ros/kilted/include/type_description_interfaces"
 #cgo CFLAGS: "-I/opt/ros/kilted/include/unique_identifier_msgs"
+#cgo CFLAGS: "-I/opt/ros/kilted/include/service_msgs"
+
 #cgo CFLAGS: "-I/opt/ros/kilted/include/std_srvs"
 */
 import "C"

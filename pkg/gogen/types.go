@@ -104,6 +104,7 @@ type ROS2Service struct {
 	*Metadata
 	Request  *ROS2Message
 	Response *ROS2Message
+	Event    *ROS2Message
 }
 
 func newServiceWithType(pkg, name, typ string) *ROS2Service {
@@ -115,6 +116,7 @@ func newServiceWithType(pkg, name, typ string) *ROS2Service {
 		},
 		Request:  newMessageWithType(pkg, name+"_Request", typ),
 		Response: newMessageWithType(pkg, name+"_Response", typ),
+		Event:    newMessageWithType(pkg, name+"_Event", typ),
 	}
 }
 

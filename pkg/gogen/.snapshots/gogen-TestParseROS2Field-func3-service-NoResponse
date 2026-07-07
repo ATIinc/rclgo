@@ -47,5 +47,70 @@
     },
     CImports: (gogen.stringSet) {
     }
+  }),
+  Event: (*gogen.ROS2Message)({
+    Metadata: (*gogen.Metadata)({
+      Name: (string) (len=16) "NoResponse_Event",
+      Package: (string) "",
+      Type: (string) (len=3) "srv"
+    }),
+    Fields: ([]*gogen.ROS2Field) (len=3) {
+      (*gogen.ROS2Field)({
+        TypeArray: (string) "",
+        ArrayBounded: (string) "",
+        ArraySize: (int) 0,
+        DefaultValue: (string) "",
+        PkgName: (string) (len=12) "service_msgs",
+        GoPkgName: (string) (len=16) "service_msgs_msg",
+        PkgIsLocal: (bool) false,
+        RosType: (string) (len=16) "ServiceEventInfo",
+        CType: (string) (len=16) "ServiceEventInfo",
+        GoType: (string) (len=16) "ServiceEventInfo",
+        RosName: (string) (len=4) "info",
+        CName: (string) (len=4) "info",
+        GoName: (string) (len=4) "Info",
+        Comment: (string) ""
+      }),
+      (*gogen.ROS2Field)({
+        TypeArray: (string) (len=2) "[]",
+        ArrayBounded: (string) (len=3) "<=1",
+        ArraySize: (int) 0,
+        DefaultValue: (string) "",
+        PkgName: (string) "",
+        GoPkgName: (string) (len=4) "_srv",
+        PkgIsLocal: (bool) true,
+        RosType: (string) (len=18) "NoResponse_Request",
+        CType: (string) (len=18) "NoResponse_Request",
+        GoType: (string) (len=18) "NoResponse_Request",
+        RosName: (string) (len=7) "request",
+        CName: (string) (len=7) "request",
+        GoName: (string) (len=7) "Request",
+        Comment: (string) ""
+      }),
+      (*gogen.ROS2Field)({
+        TypeArray: (string) (len=2) "[]",
+        ArrayBounded: (string) (len=3) "<=1",
+        ArraySize: (int) 0,
+        DefaultValue: (string) "",
+        PkgName: (string) "",
+        GoPkgName: (string) (len=4) "_srv",
+        PkgIsLocal: (bool) true,
+        RosType: (string) (len=19) "NoResponse_Response",
+        CType: (string) (len=19) "NoResponse_Response",
+        GoType: (string) (len=19) "NoResponse_Response",
+        RosName: (string) (len=8) "response",
+        CName: (string) (len=8) "response",
+        GoName: (string) (len=8) "Response",
+        Comment: (string) ""
+      })
+    },
+    Constants: ([]*gogen.ROS2Constant) <nil>,
+    GoImports: (map[string]string) (len=1) {
+      (string) (len=45) "github.com/ATIinc/rclgo-msgs/service_msgs/msg": (string) (len=16) "service_msgs_msg"
+    },
+    CImports: (gogen.stringSet) (len=1) {
+      (string) (len=12) "service_msgs": (struct {}) {
+      }
+    }
   })
 })
