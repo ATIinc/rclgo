@@ -27,16 +27,3 @@ events actually flow end-to-end:
 
 This is the deterministic behavioral test that the current graph-discovery
 approach can't provide reliably. See PR #13 discussion for context.
-
-## 3. Add action introspection support
-
-`rcl` exposes introspection configuration for actions as well
-(`rcl_action_*` introspection hooks, built on the underlying service
-introspection). Extend the `rclgo` action client/server API the same way the
-service `Service`/`Client` support was added:
-
-- Map the relevant `rcl_action` introspection functions through CGO.
-- Add `ConfigureIntrospection`/`IntrospectionState` (or equivalent options) to
-  the action client and server types.
-- Mirror the concurrency, lifecycle, and allocator handling used by the
-  service/client implementation.

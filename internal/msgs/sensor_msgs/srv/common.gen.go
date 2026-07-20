@@ -18,6 +18,7 @@ package sensor_msgs_srv
 #cgo LDFLAGS: -lrcl -lrosidl_runtime_c -lrosidl_typesupport_c -lrcutils -lrmw_implementation
 #cgo LDFLAGS: -lsensor_msgs__rosidl_typesupport_c -lsensor_msgs__rosidl_generator_c
 #cgo LDFLAGS: -lsensor_msgs__rosidl_typesupport_c -lsensor_msgs__rosidl_generator_c
+#cgo LDFLAGS: -lservice_msgs__rosidl_typesupport_c -lservice_msgs__rosidl_generator_c
 
 #cgo CFLAGS: "-I/usr/include/action_msgs"
 #cgo CFLAGS: "-I/usr/include/builtin_interfaces"
@@ -34,6 +35,8 @@ package sensor_msgs_srv
 #cgo CFLAGS: "-I/usr/include/type_description_interfaces"
 #cgo CFLAGS: "-I/usr/include/unique_identifier_msgs"
 #cgo CFLAGS: "-I/usr/include/sensor_msgs"
+
+#cgo CFLAGS: "-I/usr/include/service_msgs"
 
 #cgo CFLAGS: "-I/usr/include/sensor_msgs"
 
@@ -52,6 +55,8 @@ package sensor_msgs_srv
 #cgo CFLAGS: "-I/opt/ros/kilted/include/type_description_interfaces"
 #cgo CFLAGS: "-I/opt/ros/kilted/include/unique_identifier_msgs"
 #cgo CFLAGS: "-I/opt/ros/kilted/include/sensor_msgs"
+
+#cgo CFLAGS: "-I/opt/ros/kilted/include/service_msgs"
 
 #cgo CFLAGS: "-I/opt/ros/kilted/include/sensor_msgs"
 */
