@@ -12,6 +12,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"reflect"
 	"runtime"
 	"strings"
 	"sync"
@@ -172,10 +173,14 @@ func (g *GoalHandle) Accept() (s *FeedbackSender, err error) {
 	return &FeedbackSender{goal: g}, nil
 }
 
-func (g *GoalHandle) abort() {
+// abort moves g to the ABORTED state. If result is non-nil it is delivered to
+// clients requesting the goal's result; otherwise they receive a zero-valued
+// result.
+func (g *GoalHandle) abort(result types.Message) {
 	g.resultCond.L.Lock()
 	defer g.resultCond.L.Unlock()
 	g.setState(C.GOAL_EVENT_ABORT)
+	g.result = result
 	g.resultCond.Broadcast()
 }
 
@@ -234,10 +239,13 @@ type Action interface {
 	// ExecuteGoal returns a pair of (result, error). If ExecuteGoal returns a
 	// nil error, the goal is assumed to be executed successfully to completion.
 	// In this case the result must be non-nil, and its type support must be
-	// TypeSupport().Result(). If ExecuteGoal returns a non-nil error, the
-	// result is ignored. If the error is returned before accepting the goal,
-	// the goal is considered to have been rejected. If the error is returned
-	// after accepting the goal, the goal is considered to have been aborted.
+	// TypeSupport().Result(). If the error is returned before accepting the
+	// goal, the goal is considered to have been rejected and the result is
+	// ignored. If the error is returned after accepting the goal, the goal is
+	// considered to have been aborted; a non-nil result is then delivered to
+	// clients alongside the ABORTED status so that failure details (such as a
+	// message field) reach them, while a nil result yields a zero-valued one.
+	// A nil pointer of the result type is treated as a nil result.
 	//
 	// The context is used to notify cancellation of the goal. If the context is
 	// canceled, ExecuteGoal should stop all processing as soon as possible. In
@@ -555,17 +563,20 @@ func (s *ActionServer) handleGoalRequest(ctx context.Context) {
 			result, err = s.action.ExecuteGoal(ctx, goal)
 		}()
 		if ctx.Err() == nil {
+			if isNilMessage(result) {
+				result = nil
+			}
 			if err == nil {
 				if result == nil {
 					s.logGoalError(goal, "a nil result was returned even though the goal was executed successfully")
-					goal.abort()
+					goal.abort(nil)
 				} else {
 					goal.setResult(result)
 				}
 			} else if goal.status() == GoalUnknown {
 				s.sendGoalResponse(goal)
 			} else {
-				goal.abort()
+				goal.abort(result)
 			}
 		} else {
 			goal.finishCancel()
@@ -574,6 +585,19 @@ func (s *ActionServer) handleGoalRequest(ctx context.Context) {
 			s.scheduleRemoval()
 		}
 	}()
+}
+
+// isNilMessage reports whether msg is nil or a nil pointer wrapped in the
+// interface. Type-safe generated action wrappers return their typed result
+// pointer as a types.Message, so a server returning (nil, err) through one of
+// them produces a non-nil interface holding a nil pointer, which the generated
+// NewGetResultResponse would dereference.
+func isNilMessage(msg types.Message) bool {
+	if msg == nil {
+		return true
+	}
+	v := reflect.ValueOf(msg)
+	return v.Kind() == reflect.Pointer && v.IsNil()
 }
 
 func (s *ActionServer) scheduleRemoval() {
