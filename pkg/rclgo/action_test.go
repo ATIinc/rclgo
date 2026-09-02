@@ -581,3 +581,112 @@ func TestActionStatuses(t *testing.T) {
 		})
 	})
 }
+
+// abortingAction exercises every way ExecuteGoal can end a goal without
+// returning (result, nil) after accepting it. The goal order selects the case.
+const (
+	abortOrderNilResult      int32 = 1 // (nil, err)
+	abortOrderTypedNilResult int32 = 2 // ((*Fibonacci_Result)(nil), err)
+	abortOrderWithResult     int32 = 3 // (populated result, err)
+	abortOrderTypedNilNoErr  int32 = 4 // ((*Fibonacci_Result)(nil), nil)
+)
+
+func newAbortingAction() rclgo.Action {
+	return rclgo.NewAction(
+		test_msgs_action.FibonacciTypeSupport,
+		func(_ context.Context, goal *rclgo.GoalHandle) (types.Message, error) {
+			desc := goal.Description.(*test_msgs_action.Fibonacci_Goal)
+			if _, err := goal.Accept(); err != nil {
+				return nil, err
+			}
+			var typedNil *test_msgs_action.Fibonacci_Result
+			switch desc.Order {
+			case abortOrderNilResult:
+				return nil, errors.New("aborted without a result")
+			case abortOrderTypedNilResult:
+				return typedNil, errors.New("aborted with a typed nil result")
+			case abortOrderWithResult:
+				result := test_msgs_action.NewFibonacci_Result()
+				result.Sequence = []int32{desc.Order, desc.Order * 2, desc.Order * 3}
+				return result, errors.New("aborted with a result")
+			case abortOrderTypedNilNoErr:
+				return typedNil, nil
+			default:
+				return nil, errors.New("unexpected order")
+			}
+		},
+	)
+}
+
+func TestActionAbortWithResult(t *testing.T) {
+	var (
+		ctx, cancel  = context.WithCancel(context.Background())
+		rclctx       *rclgo.Context
+		node1, node2 *rclgo.Node
+		client       *rclgo.ActionClient
+		err          error
+		spinErr      = make(chan error, 2)
+	)
+	defer func() {
+		cancel()
+		if rclctx != nil {
+			rclctx.Close()
+		}
+	}()
+	getResult := func(order int32) *test_msgs_action.Fibonacci_GetResult_Response {
+		goal := test_msgs_action.NewFibonacci_Goal()
+		goal.Order = order
+		resp, id, err := client.SendGoal(ctx, goal)
+		So(err, ShouldBeNil)
+		So(id, ShouldNotBeNil)
+		So(resp.(*test_msgs_action.Fibonacci_SendGoal_Response).Accepted, ShouldBeTrue)
+		resp, err = client.GetResult(ctx, id)
+		So(err, ShouldBeNil)
+		So(resp, ShouldNotBeNil)
+		return resp.(*test_msgs_action.Fibonacci_GetResult_Response)
+	}
+	Convey("Scenario: ActionServer aborts goals with and without a result", t, func() {
+		Convey("Create an ActionServer and an ActionClient", func() {
+			rclctx, err = newDefaultRCLContext()
+			So(err, ShouldBeNil)
+			node1, err = rclctx.NewNode("aborting1", "actions_test")
+			So(err, ShouldBeNil)
+			_, err = node1.NewActionServer("aborting", newAbortingAction(), actionServerOpts)
+			So(err, ShouldBeNil)
+			node2, err = rclctx.NewNode("aborting2", "actions_test")
+			So(err, ShouldBeNil)
+			client, err = node2.NewActionClient("aborting", test_msgs_action.FibonacciTypeSupport, actionClientOpts)
+			So(err, ShouldBeNil)
+			go func() { spinErr <- node1.Spin(ctx) }()
+			go func() { spinErr <- node2.Spin(ctx) }()
+		})
+		Convey("A result returned alongside an error is delivered with ABORTED status", func() {
+			result := getResult(abortOrderWithResult)
+			So(rclgo.GoalStatus(result.Status), ShouldEqual, rclgo.GoalAborted)
+			So(result.Result.Sequence, ShouldResemble, []int32{3, 6, 9})
+		})
+		Convey("A nil result returned alongside an error yields a zero-valued result", func() {
+			result := getResult(abortOrderNilResult)
+			So(rclgo.GoalStatus(result.Status), ShouldEqual, rclgo.GoalAborted)
+			So(result.Result.Sequence, ShouldBeEmpty)
+		})
+		Convey("A typed nil result returned alongside an error yields a zero-valued result", func() {
+			result := getResult(abortOrderTypedNilResult)
+			So(rclgo.GoalStatus(result.Status), ShouldEqual, rclgo.GoalAborted)
+			So(result.Result.Sequence, ShouldBeEmpty)
+		})
+		Convey("A typed nil result returned without an error aborts the goal", func() {
+			result := getResult(abortOrderTypedNilNoErr)
+			So(rclgo.GoalStatus(result.Status), ShouldEqual, rclgo.GoalAborted)
+			So(result.Result.Sequence, ShouldBeEmpty)
+		})
+		Convey("Resources are released properly", func() {
+			cancel()
+			timeOut(1000, func() {
+				<-spinErr
+				<-spinErr
+			}, "Waiting for spinning to stop")
+			So(rclctx.Close(), ShouldBeNil)
+		})
+	})
+}
