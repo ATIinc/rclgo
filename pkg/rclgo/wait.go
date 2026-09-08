@@ -392,7 +392,13 @@ func (w *WaitSet) initEntities() error {
 		}
 	}
 	for _, client := range w.ActionClients {
+		// rcl_action_wait_set_add_action_client is not thread-safe and reads the
+		// client handle, which other goroutines may be querying through
+		// ActionClient.IsServerAvailable; hold the client's handle lock for the
+		// registration the same way the take path does.
+		client.rclClientMu.Lock()
 		rc = C.rcl_action_wait_set_add_action_client(&w.rcl_wait_set_t, &client.rclClient, nil, nil)
+		client.rclClientMu.Unlock()
 		if rc != C.RCL_RET_OK {
 			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_action_client() failed for wait_set='%v'", w))
 		}

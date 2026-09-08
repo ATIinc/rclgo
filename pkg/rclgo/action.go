@@ -1026,7 +1026,13 @@ func (c *ActionClient) Node() *Node {
 // has gone away) from "a server exists but the request or its response was
 // lost or is slow". Like the service variant, a true result is a snapshot of
 // the graph and does not guarantee that a subsequent request will be answered.
+//
+// rcl_action_server_is_available is not thread-safe, so the call is serialized
+// with the other accesses to the underlying rcl client handle (the wait set's
+// take path and registration) through rclClientMu.
 func (c *ActionClient) IsServerAvailable() (bool, error) {
+	c.rclClientMu.Lock()
+	defer c.rclClientMu.Unlock()
 	if c.typeSupport == nil {
 		return false, closeErr("action client")
 	}
