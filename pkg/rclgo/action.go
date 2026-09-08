@@ -1015,6 +1015,29 @@ func (c *ActionClient) Node() *Node {
 	return c.node
 }
 
+// IsServerAvailable reports whether an action server for c's action is
+// currently available in the ROS graph, i.e. whether the graph shows a server
+// for each of the goal, cancel and result services and the feedback and status
+// topics that make up the action.
+//
+// It is the action-client counterpart of [Client.IsServerAvailable]. Callers
+// that bound a goal request with a timeout can use it to distinguish "no
+// server exists" (a discovery or startup-ordering problem, or a server that
+// has gone away) from "a server exists but the request or its response was
+// lost or is slow". Like the service variant, a true result is a snapshot of
+// the graph and does not guarantee that a subsequent request will be answered.
+func (c *ActionClient) IsServerAvailable() (bool, error) {
+	if c.typeSupport == nil {
+		return false, closeErr("action client")
+	}
+	var isAvailable C.bool
+	rc := C.rcl_action_server_is_available(c.node.rcl_node_t, &c.rclClient, &isAvailable)
+	if rc != C.RCL_RET_OK {
+		return false, errorsCastC(rc, "failed to check if action server is available")
+	}
+	return bool(isAvailable), nil
+}
+
 // ConfigureIntrospection enables, disables or reconfigures service
 // introspection for the goal, cancel and result clients underlying c.
 //
