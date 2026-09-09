@@ -14,10 +14,14 @@ import (
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
 )
 
+// availabilityWait bounds waitForAvailability; graph discovery in-process takes
+// milliseconds, so this is a generous ceiling.
+const availabilityWait = 10 * time.Second
+
 // waitForAvailability polls client.IsServerAvailable until it reports want or
-// the timeout elapses, returning the last observed value and error.
-func waitForAvailability(client *rclgo.ActionClient, want bool, timeout time.Duration) (bool, error) {
-	deadline := time.Now().Add(timeout)
+// availabilityWait elapses, returning the last observed value and error.
+func waitForAvailability(client *rclgo.ActionClient, want bool) (bool, error) {
+	deadline := time.Now().Add(availabilityWait)
 	for {
 		avail, err := client.IsServerAvailable()
 		if err != nil || avail == want || time.Now().After(deadline) {
@@ -65,13 +69,13 @@ func TestActionClientIsServerAvailable(t *testing.T) {
 			_, action := newWaitAction()
 			server, err = serverNode.NewActionServer("availability", action, actionServerOpts)
 			So(err, ShouldBeNil)
-			avail, err := waitForAvailability(client, true, 10*time.Second)
+			avail, err := waitForAvailability(client, true)
 			So(err, ShouldBeNil)
 			So(avail, ShouldBeTrue)
 		})
 		Convey("The server is reported unavailable again after it is closed", func() {
 			So(server.Close(), ShouldBeNil)
-			avail, err := waitForAvailability(client, false, 10*time.Second)
+			avail, err := waitForAvailability(client, false)
 			So(err, ShouldBeNil)
 			So(avail, ShouldBeFalse)
 		})
@@ -127,7 +131,7 @@ func TestActionClientIsServerAvailableWhileSpinning(t *testing.T) {
 			So(err, ShouldBeNil)
 			go func() { spinErr <- serverNode.Spin(ctx) }()
 			go func() { spinErr <- clientNode.Spin(ctx) }()
-			avail, err := waitForAvailability(client, true, 10*time.Second)
+			avail, err := waitForAvailability(client, true)
 			So(err, ShouldBeNil)
 			So(avail, ShouldBeTrue)
 		})
