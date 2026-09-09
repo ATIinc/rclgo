@@ -1290,7 +1290,10 @@ func (c *ActionClient) takeCancelResponse(resp unsafe.Pointer) (C.int64_t, any, 
 //
 // WatchFeedback returns after the handler has been registered. The returned
 // channel will receive exactly one error value, which may be nil, and then the
-// channel is closed. Reading the value from the channel is not required.
+// channel is closed. The value is sent only after the handler has been
+// unregistered and every in-flight invocation of it has returned, so a caller
+// that reads it may then safely tear down anything the handler uses. Reading the
+// value from the channel is not required.
 // Watching can be stopped by canceling ctx.
 //
 // The type support of the message passed to handler is
@@ -1299,8 +1302,11 @@ func (c *ActionClient) WatchFeedback(ctx context.Context, goalID *types.GoalID, 
 	unsub := c.subscribe(ctx, &c.feedbackSubs, goalID, handler)
 	errc := make(chan error, 1)
 	go func() {
-		defer unsub()
 		<-ctx.Done()
+		// unregister first and wait for in-flight invocations, so that a value on
+		// the channel means the handler will not run again; callers rely on that
+		// to tear down whatever the handler writes to
+		unsub()
 		errc <- ctx.Err()
 	}()
 	return errc
@@ -1383,7 +1389,9 @@ func (c *ActionClient) handleFeedback() {
 //
 // WatchStatus returns after the handler has been registered. The returned
 // channel will receive exactly one error value, which may be nil, and then the
-// channel is closed. Reading the value from the channel is not required.
+// channel is closed. As for WatchFeedback, the value is sent only after the
+// handler has been unregistered and every in-flight invocation has returned.
+// Reading the value from the channel is not required.
 // Watching can be stopped by canceling ctx.
 //
 // The type of the message passed to handler will be action_msgs/msg/GoalStatus.
@@ -1391,8 +1399,9 @@ func (c *ActionClient) WatchStatus(ctx context.Context, goalID *types.GoalID, ha
 	unsub := c.subscribe(ctx, &c.statusSubs, goalID, handler)
 	errc := make(chan error, 1)
 	go func() {
-		defer unsub()
 		<-ctx.Done()
+		// see WatchFeedback: unregister and drain before signaling
+		unsub()
 		errc <- ctx.Err()
 	}()
 	return errc
