@@ -23,6 +23,13 @@ package rclgo
 #include <rcl/expand_topic_name.h>
 #include <rcl_action/wait.h>
 #include <rmw/rmw.h>
+
+// Per-subscription state for TakeSerializedMessageInto, kept in C memory so
+// rcl can write into it without cgo pointer checks against the Go struct.
+typedef struct {
+	rmw_serialized_message_t msg;
+	rmw_message_info_t info;
+} rclgo_take_state_t;
 */
 import "C"
 
@@ -42,6 +49,25 @@ type MessageInfo struct {
 	SourceTimestamp   time.Time
 	ReceivedTimestamp time.Time
 	FromIntraProcess  bool
+	// PublisherGID identifies the sending publisher and equals the
+	// EndpointGID that graph queries report for it.
+	PublisherGID GID
+	// PublicationSequenceNumber is set by the publisher and
+	// ReceptionSequenceNumber by the subscription. Either is math.MaxUint64
+	// if the middleware does not support it.
+	PublicationSequenceNumber uint64
+	ReceptionSequenceNumber   uint64
+}
+
+func (m *MessageInfo) fromCStruct(info *C.rmw_message_info_t) {
+	*m = MessageInfo{
+		SourceTimestamp:           time.Unix(0, int64(info.source_timestamp)),
+		ReceivedTimestamp:         time.Unix(0, int64(info.received_timestamp)),
+		FromIntraProcess:          bool(info.from_intra_process),
+		PublisherGID:              *(*GID)(unsafe.Pointer(&info.publisher_gid.data)),
+		PublicationSequenceNumber: uint64(info.publication_sequence_number),
+		ReceptionSequenceNumber:   uint64(info.reception_sequence_number),
+	}
 }
 
 type ClockType uint32
@@ -678,6 +704,9 @@ type Subscription struct {
 	node               *Node
 	rcl_subscription_t *C.rcl_subscription_t
 	topicName          *C.char
+
+	takeMu sync.Mutex
+	take   *C.rclgo_take_state_t // allocated on first serialized take
 }
 
 // NewSubscription creates a new subscription.
@@ -738,31 +767,58 @@ func (s *Subscription) TakeMessage(out types.Message) (*MessageInfo, error) {
 		return nil, errorsCastC(rc, fmt.Sprintf("rcl_take() failed for subscription='%+v'", s))
 	}
 	s.Ros2MsgType.AsGoStruct(out, ros2_msg_receive_buffer)
-	return &MessageInfo{
-		SourceTimestamp:   time.Unix(0, int64(rmw_message_info.source_timestamp)),
-		ReceivedTimestamp: time.Unix(0, int64(rmw_message_info.received_timestamp)),
-		FromIntraProcess:  bool(rmw_message_info.from_intra_process),
-	}, nil
+	info := &MessageInfo{}
+	info.fromCStruct(&rmw_message_info)
+	return info, nil
 }
 
 // TakeSerializedMessage takes a message without deserializing it and returns it
 // as a byte slice.
 func (s *Subscription) TakeSerializedMessage() ([]byte, *MessageInfo, error) {
-	info := C.rmw_get_zero_initialized_message_info()
-	msg, err := newSerializedMessage(0)
+	info := &MessageInfo{}
+	buf, err := s.TakeSerializedMessageInto(nil, info)
 	if err != nil {
 		return nil, nil, err
 	}
-	defer msg.Close()
-	rc := C.rcl_take_serialized_message(s.rcl_subscription_t, msg.c(), &info, nil)
-	if rc != C.RCL_RET_OK {
-		return nil, nil, errorsCastC(rc, fmt.Sprintf("rcl_take_serialied_message() failed for subscription='%+v'", s))
+	return buf, info, nil
+}
+
+/*
+TakeSerializedMessageInto takes a message without deserializing it, copies it
+into dst[:0], and returns the result. It allocates only when cap(dst) is too
+small, so a caller recycling buffers takes without per-message allocation. If
+info is non-nil it receives the message info.
+
+The name follows TakeSerializedMessage; "Into" marks that dst's contents are
+replaced, not appended to as with the standard library's Append functions.
+
+The middleware writes into a buffer kept per subscription, which grows to the
+largest message taken and is freed by Close. Concurrent takes on one
+subscription are serialized.
+*/
+func (s *Subscription) TakeSerializedMessageInto(dst []byte, info *MessageInfo) ([]byte, error) {
+	s.takeMu.Lock()
+	defer s.takeMu.Unlock()
+	if s.rcl_subscription_t == nil {
+		return nil, errorsCastC(C.RCL_RET_SUBSCRIPTION_INVALID, "take from a closed subscription")
 	}
-	return msg.ToSlice(), &MessageInfo{
-		SourceTimestamp:   time.Unix(0, int64(info.source_timestamp)),
-		ReceivedTimestamp: time.Unix(0, int64(info.received_timestamp)),
-		FromIntraProcess:  bool(info.from_intra_process),
-	}, nil
+	if s.take == nil {
+		msg, err := newSerializedMessage(0)
+		if err != nil {
+			return nil, err
+		}
+		s.take = (*C.rclgo_take_state_t)(C.malloc(C.sizeof_rclgo_take_state_t))
+		s.take.msg = C.rmw_serialized_message_t(msg)
+	}
+	s.take.info = C.rmw_message_info_t{}
+	rc := C.rcl_take_serialized_message(s.rcl_subscription_t, &s.take.msg, &s.take.info, nil)
+	if rc != C.RCL_RET_OK {
+		return nil, errorsCastC(rc, fmt.Sprintf("rcl_take_serialized_message() failed for subscription='%+v'", s))
+	}
+	if info != nil {
+		info.fromCStruct(&s.take.info)
+	}
+	return append(dst[:0], (*serializedMessage)(&s.take.msg).AsSlice()...), nil
 }
 
 // GetPublisherCount returns the number of publishers matched to s.
@@ -779,8 +835,15 @@ func (s *Subscription) GetPublisherCount() (int, error) {
 Close frees the allocated memory
 */
 func (s *Subscription) Close() (err error) {
+	s.takeMu.Lock()
+	defer s.takeMu.Unlock()
 	if s.rcl_subscription_t == nil {
 		return closeErr("subscription")
+	}
+	if s.take != nil {
+		(*serializedMessage)(&s.take.msg).Close()
+		C.free(unsafe.Pointer(s.take))
+		s.take = nil
 	}
 	s.node.removeResource(s)
 	rc := C.rcl_subscription_fini(s.rcl_subscription_t, s.node.rcl_node_t)
