@@ -7,6 +7,8 @@ package rclgo
 import "C"
 
 import (
+	"encoding/hex"
+	"fmt"
 	"unsafe"
 )
 
@@ -179,10 +181,29 @@ const (
 	EndpointSubscription
 )
 
+// TypeHash is a ROS 2 interface type hash per REP-2011 (rosidl_type_hash_t).
+// Version 0 means the hash is unset.
+type TypeHash struct {
+	Version uint8
+	Value   [32]byte
+}
+
+// String returns the hash as RIHS<version>_<64 lowercase hex digits>, the form
+// rosidl_stringify_type_hash produces for version 1, or "" when h is unset.
+func (h TypeHash) String() string {
+	if h.Version == 0 {
+		return ""
+	}
+	return fmt.Sprintf("RIHS%02d_%s", h.Version, hex.EncodeToString(h.Value[:]))
+}
+
 type TopicEndpointInfo struct {
 	NodeName      string
 	NodeNamespace string
 	TopicType     string
+	// TopicTypeHash is the hash of the endpoint's message type, unset if the
+	// middleware does not report one.
+	TopicTypeHash TypeHash
 	EndpointType  EndpointType
 	EndpointGID   GID
 	QosProfile    QosProfile
@@ -221,7 +242,11 @@ func (n *Node) getInfoByTopic(kind, topic string, mangle bool, get func(
 			NodeName:      C.GoString(info.node_name),
 			NodeNamespace: C.GoString(info.node_namespace),
 			TopicType:     C.GoString(info.topic_type),
-			EndpointType:  EndpointType(info.endpoint_type),
+			TopicTypeHash: TypeHash{
+				Version: uint8(info.topic_type_hash.version),
+				Value:   *(*[32]byte)(unsafe.Pointer(&info.topic_type_hash.value)),
+			},
+			EndpointType: EndpointType(info.endpoint_type),
 		}
 		for j := range info.endpoint_gid {
 			infos[i].EndpointGID[j] = byte(info.endpoint_gid[j])
