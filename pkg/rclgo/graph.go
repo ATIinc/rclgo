@@ -169,7 +169,9 @@ func (n *Node) getNamesAndTypes(
 	return namesAndTypes, nil
 }
 
-const GIDSize = 24
+// GIDSize is the size of an rmw GID in the ROS distribution rclgo is built
+// against.
+const GIDSize = C.RMW_GID_STORAGE_SIZE
 
 type GID [GIDSize]byte
 
