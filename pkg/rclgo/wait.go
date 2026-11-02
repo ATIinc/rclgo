@@ -10,6 +10,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"sync"
 	"sync/atomic"
 	"time"
 	"unsafe"
@@ -44,23 +46,43 @@ func (s *singleUse) release() {
 	(*atomic.Bool)(s).Store(false)
 }
 
+// ErrWaitSetClosed is returned by WaitSet.Call and WaitSet.Run after the wait
+// set has been closed.
+var ErrWaitSetClosed = errors.New("wait set is closed")
+
+// WaitSet waits on ROS entities and dispatches their callbacks from Run.
+//
+// The Add methods and Call are safe to use from any goroutine, including while
+// Run is active and from callbacks dispatched by Run.
 type WaitSet struct {
 	rosID
 	// WaitTimeout bounds each underlying rcl_wait call made by Run. Zero
 	// means DefaultWaitTimeout; a negative value waits forever, which is the
 	// historical behavior and leaves Run exposed to lost RMW wakeups.
-	WaitTimeout     time.Duration
-	Subscriptions   []*Subscription
-	Timers          []*Timer
-	Services        []*Service
-	Clients         []*Client
-	ActionClients   []*ActionClient
-	ActionServers   []*ActionServer
+	WaitTimeout time.Duration
+
+	// The entity slices are only mutated under mu, and only by the Run
+	// goroutine while running is set, so Run reads them without the lock.
+	subscriptions   []*Subscription
+	timers          []*Timer
+	services        []*Service
+	clients         []*Client
+	actionClients   []*ActionClient
+	actionServers   []*ActionServer
 	guardConditions []*guardCondition
-	rcl_wait_set_t  C.rcl_wait_set_t
-	cancelWait      *guardCondition
-	context         *Context
-	lostWakeups     atomic.Uint64
+
+	mu      sync.Mutex
+	idle    *sync.Cond // broadcast when inline drops to zero
+	running bool
+	closed  bool
+	inline  int      // Call functions executing outside Run
+	queue   []func() // work for Run to apply at the top of its next iteration
+
+	rcl_wait_set_t C.rcl_wait_set_t
+	cancelWait     *guardCondition
+	wake           *guardCondition // wakes rcl_wait to apply queued work
+	context        *Context
+	lostWakeups    atomic.Uint64
 }
 
 func NewWaitSet() (*WaitSet, error) {
@@ -81,12 +103,9 @@ func (c *Context) NewWaitSet() (ws *WaitSet, err error) {
 	)
 	ws = &WaitSet{
 		context:        c,
-		Subscriptions:  []*Subscription{},
-		Timers:         []*Timer{},
-		Services:       []*Service{},
-		Clients:        []*Client{},
 		rcl_wait_set_t: C.rcl_get_zero_initialized_wait_set(),
 	}
+	ws.idle = sync.NewCond(&ws.mu)
 	defer onErr(&err, ws.Close)
 	var rc C.rcl_ret_t = C.rcl_wait_set_init(
 		&ws.rcl_wait_set_t,
@@ -106,7 +125,11 @@ func (c *Context) NewWaitSet() (ws *WaitSet, err error) {
 	if err != nil {
 		return nil, err
 	}
-	ws.addGuardConditions(ws.cancelWait)
+	ws.wake, err = c.newGuardCondition()
+	if err != nil {
+		return nil, err
+	}
+	ws.addGuardConditions(ws.cancelWait, ws.wake)
 	c.addResource(ws)
 	return ws, nil
 }
@@ -116,32 +139,191 @@ func (w *WaitSet) Context() *Context {
 	return w.context
 }
 
+// AddSubscriptions adds subs to the wait set. While Run is active the
+// subscriptions are picked up at the start of its next iteration.
 func (w *WaitSet) AddSubscriptions(subs ...*Subscription) {
-	w.Subscriptions = append(w.Subscriptions, subs...)
+	subs = slices.Clone(subs)
+	w.add(func() { w.subscriptions = append(w.subscriptions, subs...) })
 }
 
+// AddTimers adds timers to the wait set. See AddSubscriptions.
 func (w *WaitSet) AddTimers(timers ...*Timer) {
-	w.Timers = append(w.Timers, timers...)
+	timers = slices.Clone(timers)
+	w.add(func() { w.timers = append(w.timers, timers...) })
 }
 
+// AddServices adds services to the wait set. See AddSubscriptions.
 func (w *WaitSet) AddServices(services ...*Service) {
-	w.Services = append(w.Services, services...)
+	services = slices.Clone(services)
+	w.add(func() { w.services = append(w.services, services...) })
 }
 
+// AddClients adds clients to the wait set. See AddSubscriptions.
 func (w *WaitSet) AddClients(clients ...*Client) {
-	w.Clients = append(w.Clients, clients...)
+	clients = slices.Clone(clients)
+	w.add(func() { w.clients = append(w.clients, clients...) })
 }
 
+// AddActionServers adds action servers to the wait set. See AddSubscriptions.
 func (w *WaitSet) AddActionServers(servers ...*ActionServer) {
-	w.ActionServers = append(w.ActionServers, servers...)
+	servers = slices.Clone(servers)
+	w.add(func() { w.actionServers = append(w.actionServers, servers...) })
 }
 
+// AddActionClients adds action clients to the wait set. See AddSubscriptions.
 func (w *WaitSet) AddActionClients(clients ...*ActionClient) {
-	w.ActionClients = append(w.ActionClients, clients...)
+	clients = slices.Clone(clients)
+	w.add(func() { w.actionClients = append(w.actionClients, clients...) })
 }
 
 func (w *WaitSet) addGuardConditions(guardConditions ...*guardCondition) {
 	w.guardConditions = append(w.guardConditions, guardConditions...)
+}
+
+// add applies an entity-slice mutation now if Run is not active, otherwise
+// queues it for Run. It never blocks on Run, so callbacks may use it.
+func (w *WaitSet) add(apply func()) {
+	w.mu.Lock()
+	if !w.running {
+		apply()
+		w.mu.Unlock()
+		return
+	}
+	w.queue = append(w.queue, func() {
+		w.mu.Lock()
+		apply()
+		w.mu.Unlock()
+	})
+	w.mu.Unlock()
+	// A failed trigger only delays the add to the next WaitTimeout expiry.
+	_ = w.wake.Trigger()
+}
+
+/*
+Call runs fn on the goroutine that owns the wait set's entities and returns
+fn's error.
+
+While Run is active, fn is queued, rcl_wait is woken, and Call blocks until Run
+has executed fn at the start of its next iteration (or while exiting). When Run
+is not active, fn runs inline on the calling goroutine and Run does not start
+until it returns. After Close, Call returns ErrWaitSetClosed without running
+fn.
+
+Calling Call synchronously from a callback dispatched by the same wait set
+deadlocks, because Run cannot execute fn until the callback returns. The Add
+methods do not block and are safe to use from callbacks.
+*/
+func (w *WaitSet) Call(fn func() error) error {
+	w.mu.Lock()
+	if w.closed {
+		w.mu.Unlock()
+		return ErrWaitSetClosed
+	}
+	if !w.running {
+		w.inline++
+		w.mu.Unlock()
+		defer w.endInline()
+		return fn()
+	}
+	done := make(chan error, 1)
+	w.queue = append(w.queue, func() { done <- fn() })
+	w.mu.Unlock()
+	// A failed trigger only delays fn to the next WaitTimeout expiry or Run exit.
+	_ = w.wake.Trigger()
+	return <-done
+}
+
+func (w *WaitSet) endInline() {
+	w.mu.Lock()
+	w.inline--
+	if w.inline == 0 {
+		w.idle.Broadcast()
+	}
+	w.mu.Unlock()
+}
+
+// startRunning marks Run active once no inline Call is executing.
+func (w *WaitSet) startRunning() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for w.inline > 0 {
+		w.idle.Wait()
+	}
+	switch {
+	case w.closed:
+		return ErrWaitSetClosed
+	case w.running:
+		return errors.New("wait set is already running")
+	}
+	w.running = true
+	return nil
+}
+
+// stopRunning marks Run inactive and executes work queued too late for Run,
+// so no Call blocks forever.
+func (w *WaitSet) stopRunning() {
+	w.mu.Lock()
+	w.running = false
+	pending := w.queue
+	w.queue = nil
+	w.inline++
+	w.mu.Unlock()
+	defer w.endInline()
+	for _, fn := range pending {
+		fn()
+	}
+}
+
+// applyQueued executes queued work until the queue is empty, since queued
+// functions may queue more. It reports whether anything ran.
+func (w *WaitSet) applyQueued() bool {
+	applied := false
+	for {
+		w.mu.Lock()
+		pending := w.queue
+		w.queue = nil
+		w.mu.Unlock()
+		if len(pending) == 0 {
+			return applied
+		}
+		applied = true
+		for _, fn := range pending {
+			fn()
+		}
+	}
+}
+
+// reservedEntities tracks which entities a Run has reserved so entities added
+// while running are reserved once and all are released on exit.
+type reservedEntities struct {
+	subscriptions, timers, services, clients int
+	actionClients, actionServers, guardConds int
+	reserved                                 []*singleUse
+}
+
+func reserveTail[T any](r *reservedEntities, entities []T, seen *int, waitable func(T) *singleUse) {
+	for _, e := range entities[*seen:] {
+		if s := waitable(e); s.reserve() {
+			r.reserved = append(r.reserved, s)
+		}
+	}
+	*seen = len(entities)
+}
+
+func (w *WaitSet) reserveNew(r *reservedEntities) {
+	reserveTail(r, w.subscriptions, &r.subscriptions, func(s *Subscription) *singleUse { return &s.waitable })
+	reserveTail(r, w.timers, &r.timers, func(t *Timer) *singleUse { return &t.waitable })
+	reserveTail(r, w.services, &r.services, func(s *Service) *singleUse { return &s.waitable })
+	reserveTail(r, w.clients, &r.clients, func(c *Client) *singleUse { return &c.waitable })
+	reserveTail(r, w.actionClients, &r.actionClients, func(c *ActionClient) *singleUse { return &c.waitable })
+	reserveTail(r, w.actionServers, &r.actionServers, func(s *ActionServer) *singleUse { return &s.waitable })
+	reserveTail(r, w.guardConditions, &r.guardConds, func(g *guardCondition) *singleUse { return &g.waitable })
+}
+
+func (r *reservedEntities) releaseAll() {
+	for _, s := range r.reserved {
+		s.release()
+	}
 }
 
 func (w *WaitSet) addResources(res *rosResourceStore) {
@@ -197,8 +379,8 @@ func recoveredLostWakeup(prevTimedOut bool, elapsed time.Duration) bool {
 func (w *WaitSet) entityCounts() string {
 	return fmt.Sprintf(
 		"subscriptions=%d timers=%d services=%d clients=%d action_servers=%d action_clients=%d",
-		len(w.Subscriptions), len(w.Timers), len(w.Services), len(w.Clients),
-		len(w.ActionServers), len(w.ActionClients),
+		len(w.subscriptions), len(w.timers), len(w.services), len(w.clients),
+		len(w.actionServers), len(w.actionClients),
 	)
 }
 
@@ -213,44 +395,18 @@ timed-out wait within LostWakeupThreshold is logged as a recovered lost wakeup
 and counted in LostWakeupsRecovered.
 */
 func (w *WaitSet) Run(ctx context.Context) (err error) {
-	for _, subscription := range w.Subscriptions {
-		if subscription.waitable.reserve() {
-			defer subscription.waitable.release()
-		}
-	}
-	for _, timer := range w.Timers {
-		if timer.waitable.reserve() {
-			defer timer.waitable.release()
-		}
-	}
-	for _, service := range w.Services {
-		if service.waitable.reserve() {
-			defer service.waitable.release()
-		}
-	}
-	for _, client := range w.Clients {
-		if client.waitable.reserve() {
-			defer client.waitable.release()
-		}
-	}
-	for _, actionClient := range w.ActionClients {
-		if actionClient.waitable.reserve() {
-			defer actionClient.waitable.release()
-		}
-	}
-	for _, actionServer := range w.ActionServers {
-		if actionServer.waitable.reserve() {
-			defer actionServer.waitable.release()
-		}
-	}
-	for _, guardCondition := range w.guardConditions {
-		if guardCondition.waitable.reserve() {
-			defer guardCondition.waitable.release()
-		}
-	}
 	if ctx == nil {
 		return errors.New("context must not be nil")
 	}
+	if err := w.startRunning(); err != nil {
+		return err
+	}
+	var reserved reservedEntities
+	defer func() {
+		reserved.releaseAll()
+		w.stopRunning()
+	}()
+	w.reserveNew(&reserved)
 	errs := make(chan error, 1)
 	defer func() {
 		err = errors.Join(err, <-errs)
@@ -266,6 +422,11 @@ func (w *WaitSet) Run(ctx context.Context) (err error) {
 	var logger *Logger
 	prevTimedOut := false
 	for {
+		// Queued work is applied only here: dispatch below indexes the rcl
+		// arrays by the entity counts initEntities registered.
+		if w.applyQueued() {
+			w.reserveNew(&reserved)
+		}
 		if err := w.initEntities(); err != nil {
 			return err
 		}
@@ -284,13 +445,18 @@ func (w *WaitSet) Run(ctx context.Context) (err error) {
 		}
 
 		guardConditions := unsafe.Slice(w.rcl_wait_set_t.guard_conditions, len(w.guardConditions))
+		woken := false
 		for i := range w.guardConditions {
-			if guardConditions[i] == w.cancelWait.rclGuardCondition {
+			switch guardConditions[i] {
+			case w.cancelWait.rclGuardCondition:
 				return ctx.Err()
+			case w.wake.rclGuardCondition:
+				woken = true
 			}
 		}
 
-		if recoveredLostWakeup(prevTimedOut, elapsed) {
+		// A wake trigger is an expected immediate return, not a lost wakeup.
+		if !woken && recoveredLostWakeup(prevTimedOut, elapsed) {
 			w.lostWakeups.Add(1)
 			if logger == nil {
 				logger = GetLogger("rclgo.wait_set")
@@ -301,35 +467,35 @@ func (w *WaitSet) Run(ctx context.Context) (err error) {
 			))
 		}
 		prevTimedOut = false
-		timers := unsafe.Slice(w.rcl_wait_set_t.timers, len(w.Timers))
-		for i, t := range w.Timers {
+		timers := unsafe.Slice(w.rcl_wait_set_t.timers, len(w.timers))
+		for i, t := range w.timers {
 			if timers[i] != nil {
 				t.Reset() //nolint:errcheck
 				t.Callback(t)
 			}
 		}
-		subs := unsafe.Slice(w.rcl_wait_set_t.subscriptions, len(w.Subscriptions))
-		for i, s := range w.Subscriptions {
+		subs := unsafe.Slice(w.rcl_wait_set_t.subscriptions, len(w.subscriptions))
+		for i, s := range w.subscriptions {
 			if subs[i] != nil {
 				s.Callback(s)
 			}
 		}
-		svcs := unsafe.Slice(w.rcl_wait_set_t.services, len(w.Services))
-		for i, s := range w.Services {
+		svcs := unsafe.Slice(w.rcl_wait_set_t.services, len(w.services))
+		for i, s := range w.services {
 			if svcs[i] != nil {
 				s.handleRequest()
 			}
 		}
-		clients := unsafe.Slice(w.rcl_wait_set_t.clients, len(w.Clients))
-		for i, c := range w.Clients {
+		clients := unsafe.Slice(w.rcl_wait_set_t.clients, len(w.clients))
+		for i, c := range w.clients {
 			if clients[i] != nil {
 				c.sender.HandleResponse()
 			}
 		}
-		for _, s := range w.ActionServers {
+		for _, s := range w.actionServers {
 			s.handleReadyEntities(ctx, w)
 		}
-		for _, c := range w.ActionClients {
+		for _, c := range w.actionClients {
 			c.handleReadyEntities(w)
 		}
 	}
@@ -345,35 +511,35 @@ func (w *WaitSet) initEntities() error {
 	}
 	rc = C.rcl_wait_set_resize(
 		&w.rcl_wait_set_t,
-		C.size_t(len(w.Subscriptions)+2*len(w.ActionClients)),
+		C.size_t(len(w.subscriptions)+2*len(w.actionClients)),
 		C.size_t(len(w.guardConditions)),
-		C.size_t(len(w.Timers)+len(w.ActionServers)),
-		C.size_t(len(w.Clients)+3*len(w.ActionClients)),
-		C.size_t(len(w.Services)+3*len(w.ActionServers)),
+		C.size_t(len(w.timers)+len(w.actionServers)),
+		C.size_t(len(w.clients)+3*len(w.actionClients)),
+		C.size_t(len(w.services)+3*len(w.actionServers)),
 		w.rcl_wait_set_t.size_of_events,
 	)
 	if rc != C.RCL_RET_OK {
 		return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_resize() failed for wait_set='%v'", w))
 	}
-	for _, sub := range w.Subscriptions {
+	for _, sub := range w.subscriptions {
 		rc = C.rcl_wait_set_add_subscription(&w.rcl_wait_set_t, sub.rcl_subscription_t, nil)
 		if rc != C.RCL_RET_OK {
 			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_subscription() failed for wait_set='%v'", w))
 		}
 	}
-	for _, timer := range w.Timers {
+	for _, timer := range w.timers {
 		rc = C.rcl_wait_set_add_timer(&w.rcl_wait_set_t, timer.rcl_timer_t, nil)
 		if rc != C.RCL_RET_OK {
 			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_timer() failed for wait_set='%v'", w))
 		}
 	}
-	for _, service := range w.Services {
+	for _, service := range w.services {
 		rc = C.rcl_wait_set_add_service(&w.rcl_wait_set_t, service.rclService, nil)
 		if rc != C.RCL_RET_OK {
 			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_service() failed for wait_set='%v'", w))
 		}
 	}
-	for _, client := range w.Clients {
+	for _, client := range w.clients {
 		rc = C.rcl_wait_set_add_client(&w.rcl_wait_set_t, client.rclClient, nil)
 		if rc != C.RCL_RET_OK {
 			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_client() failed for wait_set='%v'", w))
@@ -385,13 +551,13 @@ func (w *WaitSet) initEntities() error {
 			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_guard_condition() failed for wait_set='%v'", w))
 		}
 	}
-	for _, server := range w.ActionServers {
+	for _, server := range w.actionServers {
 		rc = C.rcl_action_wait_set_add_action_server(&w.rcl_wait_set_t, &server.rclServer, nil)
 		if rc != C.RCL_RET_OK {
 			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_action_server() failed for wait_set='%v'", w))
 		}
 	}
-	for _, client := range w.ActionClients {
+	for _, client := range w.actionClients {
 		// rcl_action_wait_set_add_action_client is not thread-safe and reads the
 		// client handle, which other goroutines may be querying through
 		// ActionClient.IsServerAvailable; hold the client's handle lock for the
@@ -413,6 +579,9 @@ func (w *WaitSet) Close() (err error) {
 	if w.context == nil {
 		return closeErr("wait set")
 	}
+	w.mu.Lock()
+	w.closed = true
+	w.mu.Unlock()
 	w.context.removeResource(w)
 	w.context = nil
 	rc := C.rcl_wait_set_fini(&w.rcl_wait_set_t)
@@ -420,9 +589,14 @@ func (w *WaitSet) Close() (err error) {
 		err = errors.Join(err, errorsCast(rc))
 	}
 	var closeError closeError
-	cancelWaitErr := w.cancelWait.Close()
-	if cancelWaitErr != nil && !errors.As(cancelWaitErr, &closeError) {
-		err = errors.Join(err, cancelWaitErr)
+	for _, gc := range []*guardCondition{w.cancelWait, w.wake} {
+		if gc == nil {
+			continue
+		}
+		gcErr := gc.Close()
+		if gcErr != nil && !errors.As(gcErr, &closeError) {
+			err = errors.Join(err, gcErr)
+		}
 	}
 	return err
 }
