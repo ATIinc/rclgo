@@ -14,6 +14,7 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -138,4 +139,21 @@ func TestWaitSetExitRunsPendingCalls(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("Call queued before Run exited never returned")
 	}
+}
+
+func TestWaitSetHandleCacheDropsClosedEntities(t *testing.T) {
+	// The wait set caches entity handles in C memory; closing an entity must
+	// invalidate the cache so the freed handle is never passed to rcl again.
+	rclCtx := newTestContext(t)
+	ws, err := rclCtx.NewWaitSet()
+	require.NoError(t, err)
+	timer, err := rclCtx.NewTimer(time.Hour, func(*Timer) {})
+	require.NoError(t, err)
+	ws.AddTimers(timer)
+	require.NoError(t, ws.initEntities())
+	require.Equal(t, unsafe.Pointer(timer.rcl_timer_t), unsafe.Slice(ws.handles.handles, 1)[0])
+
+	require.NoError(t, timer.Close())
+	require.ErrorContains(t, ws.initEntities(), "rcl_wait_set_add_timer() failed")
+	assert.Nil(t, unsafe.Slice(ws.handles.handles, 1)[0])
 }

@@ -653,6 +653,7 @@ func (t *Timer) Close() (err error) {
 	if rc != C.RCL_RET_OK {
 		err = errors.Join(err, errorsCast(rc))
 	}
+	handleCloses.Add(1)
 	C.free(unsafe.Pointer(t.rcl_timer_t))
 	t.rcl_timer_t = nil
 	return err
@@ -786,6 +787,7 @@ func (s *Subscription) Close() (err error) {
 	if rc != C.RCL_RET_OK {
 		err = errors.Join(err, errorsCast(rc))
 	}
+	handleCloses.Add(1)
 	C.free(unsafe.Pointer(s.rcl_subscription_t))
 	s.rcl_subscription_t = nil
 	C.free(unsafe.Pointer(s.topicName))
@@ -824,6 +826,7 @@ func (c *guardCondition) Close() error {
 	}
 	c.context.removeResource(c)
 	rc := C.rcl_guard_condition_fini(c.rclGuardCondition)
+	handleCloses.Add(1)
 	C.free(unsafe.Pointer(c.rclGuardCondition))
 	c.rclGuardCondition = nil
 	if rc == C.RCL_RET_OK {
@@ -1033,6 +1036,7 @@ func (s *Service) Close() (err error) {
 	if rc != C.RCL_RET_OK {
 		err = errorsCastC(rc, "failed to finalize service")
 	}
+	handleCloses.Add(1)
 	C.free(unsafe.Pointer(s.rclService))
 	C.free(unsafe.Pointer(s.name))
 	s.name = nil
@@ -1215,6 +1219,7 @@ func (c *Client) Close() error {
 	if rc != C.RCL_RET_OK {
 		err = errors.Join(err, errorsCastC(rc, "failed to finalize client"))
 	}
+	handleCloses.Add(1)
 	C.free(unsafe.Pointer(c.rclClient))
 	c.rclClient = nil
 

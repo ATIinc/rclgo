@@ -1,8 +1,94 @@
 package rclgo
 
 /*
+#include <stdlib.h>
 #include <rcl/wait.h>
 #include <rcl_action/wait.h>
+
+// Handles of the entities that rclgo_wait_set_fill adds, in this order:
+// subscriptions, timers, services, clients, guard conditions.
+typedef struct {
+	void ** handles;
+	size_t subscriptions, timers, services, clients, guard_conditions;
+} rclgo_wait_handles_t;
+
+enum {
+	RCLGO_FILL_VALID,
+	RCLGO_FILL_CLEAR,
+	RCLGO_FILL_RESIZE,
+	RCLGO_FILL_SUBSCRIPTION,
+	RCLGO_FILL_TIMER,
+	RCLGO_FILL_SERVICE,
+	RCLGO_FILL_CLIENT,
+	RCLGO_FILL_GUARD_CONDITION,
+};
+
+// Clears, resizes, and refills ws from h in one cgo call. The extra_* sizes
+// reserve room for action entities, which the caller adds afterwards.
+static rcl_ret_t rclgo_wait_set_fill(
+	rcl_wait_set_t * ws, const rclgo_wait_handles_t * h,
+	size_t extra_subscriptions, size_t extra_timers, size_t extra_clients,
+	size_t extra_services, int * failed)
+{
+	if (!rcl_wait_set_is_valid(ws)) {
+		*failed = RCLGO_FILL_VALID;
+		return RCL_RET_WAIT_SET_INVALID;
+	}
+	rcl_ret_t rc = rcl_wait_set_clear(ws);
+	if (rc != RCL_RET_OK) {
+		*failed = RCLGO_FILL_CLEAR;
+		return rc;
+	}
+	rc = rcl_wait_set_resize(
+		ws,
+		h->subscriptions + extra_subscriptions,
+		h->guard_conditions,
+		h->timers + extra_timers,
+		h->clients + extra_clients,
+		h->services + extra_services,
+		ws->size_of_events);
+	if (rc != RCL_RET_OK) {
+		*failed = RCLGO_FILL_RESIZE;
+		return rc;
+	}
+	void ** p = h->handles;
+	for (size_t i = 0; i < h->subscriptions; i++, p++) {
+		rc = rcl_wait_set_add_subscription(ws, (const rcl_subscription_t *)*p, NULL);
+		if (rc != RCL_RET_OK) {
+			*failed = RCLGO_FILL_SUBSCRIPTION;
+			return rc;
+		}
+	}
+	for (size_t i = 0; i < h->timers; i++, p++) {
+		rc = rcl_wait_set_add_timer(ws, (const rcl_timer_t *)*p, NULL);
+		if (rc != RCL_RET_OK) {
+			*failed = RCLGO_FILL_TIMER;
+			return rc;
+		}
+	}
+	for (size_t i = 0; i < h->services; i++, p++) {
+		rc = rcl_wait_set_add_service(ws, (const rcl_service_t *)*p, NULL);
+		if (rc != RCL_RET_OK) {
+			*failed = RCLGO_FILL_SERVICE;
+			return rc;
+		}
+	}
+	for (size_t i = 0; i < h->clients; i++, p++) {
+		rc = rcl_wait_set_add_client(ws, (const rcl_client_t *)*p, NULL);
+		if (rc != RCL_RET_OK) {
+			*failed = RCLGO_FILL_CLIENT;
+			return rc;
+		}
+	}
+	for (size_t i = 0; i < h->guard_conditions; i++, p++) {
+		rc = rcl_wait_set_add_guard_condition(ws, (const rcl_guard_condition_t *)*p, NULL);
+		if (rc != RCL_RET_OK) {
+			*failed = RCLGO_FILL_GUARD_CONDITION;
+			return rc;
+		}
+	}
+	return RCL_RET_OK;
+}
 */
 import "C"
 
@@ -46,6 +132,10 @@ func (s *singleUse) release() {
 	(*atomic.Bool)(s).Store(false)
 }
 
+// handleCloses counts closes of entities whose handles WaitSets cache in C
+// memory, so a WaitSet rebuilds its cache instead of passing a freed handle.
+var handleCloses atomic.Uint64
+
 // ErrWaitSetClosed is returned by WaitSet.Call and WaitSet.Run after the wait
 // set has been closed.
 var ErrWaitSetClosed = errors.New("wait set is closed")
@@ -77,6 +167,11 @@ type WaitSet struct {
 	closed  bool
 	inline  int      // Call functions executing outside Run
 	queue   []func() // work for Run to apply at the top of its next iteration
+	dirty   bool     // the entity slices changed since handles was built
+
+	handles      C.rclgo_wait_handles_t
+	handlesCap   int
+	handlesClose uint64 // handleCloses when handles was built
 
 	rcl_wait_set_t C.rcl_wait_set_t
 	cancelWait     *guardCondition
@@ -104,6 +199,7 @@ func (c *Context) NewWaitSet() (ws *WaitSet, err error) {
 	ws = &WaitSet{
 		context:        c,
 		rcl_wait_set_t: C.rcl_get_zero_initialized_wait_set(),
+		dirty:          true,
 	}
 	ws.idle = sync.NewCond(&ws.mu)
 	defer onErr(&err, ws.Close)
@@ -186,12 +282,14 @@ func (w *WaitSet) add(apply func()) {
 	w.mu.Lock()
 	if !w.running {
 		apply()
+		w.dirty = true
 		w.mu.Unlock()
 		return
 	}
 	w.queue = append(w.queue, func() {
 		w.mu.Lock()
 		apply()
+		w.dirty = true
 		w.mu.Unlock()
 	})
 	w.mu.Unlock()
@@ -501,55 +599,69 @@ func (w *WaitSet) Run(ctx context.Context) (err error) {
 	}
 }
 
+// fillFailures names the rcl call that failed at each rclgo_wait_set_fill stage.
+var fillFailures = [...]string{
+	C.RCLGO_FILL_VALID:           "rcl_wait_set_is_valid()",
+	C.RCLGO_FILL_CLEAR:           "rcl_wait_set_clear()",
+	C.RCLGO_FILL_RESIZE:          "rcl_wait_set_resize()",
+	C.RCLGO_FILL_SUBSCRIPTION:    "rcl_wait_set_add_subscription()",
+	C.RCLGO_FILL_TIMER:           "rcl_wait_set_add_timer()",
+	C.RCLGO_FILL_SERVICE:         "rcl_wait_set_add_service()",
+	C.RCLGO_FILL_CLIENT:          "rcl_wait_set_add_client()",
+	C.RCLGO_FILL_GUARD_CONDITION: "rcl_wait_set_add_guard_condition()",
+}
+
+// rebuildHandles copies the entity handles into C memory for
+// rclgo_wait_set_fill, preserving the order dispatch indexes by.
+func (w *WaitSet) rebuildHandles() {
+	n := len(w.subscriptions) + len(w.timers) + len(w.services) + len(w.clients) + len(w.guardConditions)
+	if n > w.handlesCap {
+		C.free(unsafe.Pointer(w.handles.handles))
+		w.handles.handles = (*unsafe.Pointer)(C.malloc(C.size_t(n) * C.size_t(unsafe.Sizeof(unsafe.Pointer(nil)))))
+		w.handlesCap = n
+	}
+	handles := unsafe.Slice(w.handles.handles, n)[:0]
+	for _, s := range w.subscriptions {
+		handles = append(handles, unsafe.Pointer(s.rcl_subscription_t))
+	}
+	for _, t := range w.timers {
+		handles = append(handles, unsafe.Pointer(t.rcl_timer_t))
+	}
+	for _, s := range w.services {
+		handles = append(handles, unsafe.Pointer(s.rclService))
+	}
+	for _, c := range w.clients {
+		handles = append(handles, unsafe.Pointer(c.rclClient))
+	}
+	for _, g := range w.guardConditions {
+		handles = append(handles, unsafe.Pointer(g.rclGuardCondition))
+	}
+	w.handles.subscriptions = C.size_t(len(w.subscriptions))
+	w.handles.timers = C.size_t(len(w.timers))
+	w.handles.services = C.size_t(len(w.services))
+	w.handles.clients = C.size_t(len(w.clients))
+	w.handles.guard_conditions = C.size_t(len(w.guardConditions))
+}
+
+// initEntities refills the rcl wait set, which rcl_wait prunes on every call.
 func (w *WaitSet) initEntities() error {
-	if !C.rcl_wait_set_is_valid(&w.rcl_wait_set_t) {
-		return errorsCastC(C.RCL_RET_WAIT_SET_INVALID, fmt.Sprintf("rcl_wait_set_is_valid() failed for wait_set='%v'", w))
+	if closes := handleCloses.Load(); w.dirty || closes != w.handlesClose {
+		w.rebuildHandles()
+		w.dirty = false
+		w.handlesClose = closes
 	}
-	var rc C.rcl_ret_t = C.rcl_wait_set_clear(&w.rcl_wait_set_t)
-	if rc != C.RCL_RET_OK {
-		return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_clear() failed for wait_set='%v'", w))
-	}
-	rc = C.rcl_wait_set_resize(
+	var failed C.int
+	rc := C.rclgo_wait_set_fill(
 		&w.rcl_wait_set_t,
-		C.size_t(len(w.subscriptions)+2*len(w.actionClients)),
-		C.size_t(len(w.guardConditions)),
-		C.size_t(len(w.timers)+len(w.actionServers)),
-		C.size_t(len(w.clients)+3*len(w.actionClients)),
-		C.size_t(len(w.services)+3*len(w.actionServers)),
-		w.rcl_wait_set_t.size_of_events,
+		&w.handles,
+		C.size_t(2*len(w.actionClients)),
+		C.size_t(len(w.actionServers)),
+		C.size_t(3*len(w.actionClients)),
+		C.size_t(3*len(w.actionServers)),
+		&failed,
 	)
 	if rc != C.RCL_RET_OK {
-		return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_resize() failed for wait_set='%v'", w))
-	}
-	for _, sub := range w.subscriptions {
-		rc = C.rcl_wait_set_add_subscription(&w.rcl_wait_set_t, sub.rcl_subscription_t, nil)
-		if rc != C.RCL_RET_OK {
-			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_subscription() failed for wait_set='%v'", w))
-		}
-	}
-	for _, timer := range w.timers {
-		rc = C.rcl_wait_set_add_timer(&w.rcl_wait_set_t, timer.rcl_timer_t, nil)
-		if rc != C.RCL_RET_OK {
-			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_timer() failed for wait_set='%v'", w))
-		}
-	}
-	for _, service := range w.services {
-		rc = C.rcl_wait_set_add_service(&w.rcl_wait_set_t, service.rclService, nil)
-		if rc != C.RCL_RET_OK {
-			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_service() failed for wait_set='%v'", w))
-		}
-	}
-	for _, client := range w.clients {
-		rc = C.rcl_wait_set_add_client(&w.rcl_wait_set_t, client.rclClient, nil)
-		if rc != C.RCL_RET_OK {
-			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_client() failed for wait_set='%v'", w))
-		}
-	}
-	for _, guardCondition := range w.guardConditions {
-		rc = C.rcl_wait_set_add_guard_condition(&w.rcl_wait_set_t, guardCondition.rclGuardCondition, nil)
-		if rc != C.RCL_RET_OK {
-			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_guard_condition() failed for wait_set='%v'", w))
-		}
+		return errorsCastC(rc, fmt.Sprintf("%s failed for wait_set='%v'", fillFailures[failed], w))
 	}
 	for _, server := range w.actionServers {
 		rc = C.rcl_action_wait_set_add_action_server(&w.rcl_wait_set_t, &server.rclServer, nil)
@@ -582,6 +694,9 @@ func (w *WaitSet) Close() (err error) {
 	w.mu.Lock()
 	w.closed = true
 	w.mu.Unlock()
+	C.free(unsafe.Pointer(w.handles.handles))
+	w.handles = C.rclgo_wait_handles_t{}
+	w.handlesCap = 0
 	w.context.removeResource(w)
 	w.context = nil
 	rc := C.rcl_wait_set_fini(&w.rcl_wait_set_t)
