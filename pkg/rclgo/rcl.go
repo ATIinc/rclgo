@@ -1101,6 +1101,7 @@ func (s *Service) Close() (err error) {
 	}
 	handleCloses.Add(1)
 	C.free(unsafe.Pointer(s.rclService))
+	s.rclService = nil
 	C.free(unsafe.Pointer(s.name))
 	s.name = nil
 	return err
