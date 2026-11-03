@@ -480,17 +480,27 @@ func (s *ActionServer) IntrospectionState() ServiceIntrospectionState {
 	return s.introspectionState
 }
 
+// errActionServerTakeFailed is returned when no request is available. It is
+// built once because spurious wakeups make this a routine result.
+var errActionServerTakeFailed error = &ActionServerTakeFailed{rclError{
+	rclRetCode: C.RCL_RET_ACTION_SERVER_TAKE_FAILED,
+	context:    "[*rclgo.ActionServerTakeFailed] no request available to take",
+}}
+
 func (s *ActionServer) takeGoalRequest(goal *GoalHandle) error {
 	ts := s.typeSupport.SendGoal().Request()
 	reqBuf := ts.PrepareMemory()
 	defer ts.ReleaseMemory(reqBuf)
 	// rcl documents this as not thread-safe; calling it without rclServerMu
 	// relies on the RMW locking each service internally, as rmw_zenoh does.
-	err := rclCall("failed to take goal request", func() C.rcl_ret_t {
+	rc, err := rclCallRC("failed to take goal request", func() C.rcl_ret_t {
 		return C.rcl_action_take_goal_request(&s.rclServer, &goal.requestID, reqBuf)
-	})
-	if err != nil {
+	}, C.RCL_RET_ACTION_SERVER_TAKE_FAILED)
+	switch {
+	case err != nil:
 		return err
+	case rc != C.RCL_RET_OK:
+		return errActionServerTakeFailed
 	}
 	req := ts.New().(goalRequestMessage)
 	ts.AsGoStruct(req, reqBuf)
@@ -669,11 +679,14 @@ func (s *ActionServer) takeResultRequest(header *C.rmw_request_id_t) (goalIDMess
 	defer ts.ReleaseMemory(reqBuf)
 	// rcl documents this as not thread-safe; calling it without rclServerMu
 	// relies on the RMW locking each service internally, as rmw_zenoh does.
-	err := rclCall("failed to take result request", func() C.rcl_ret_t {
+	rc, err := rclCallRC("failed to take result request", func() C.rcl_ret_t {
 		return C.rcl_action_take_result_request(&s.rclServer, header, reqBuf)
-	})
-	if err != nil {
+	}, C.RCL_RET_ACTION_SERVER_TAKE_FAILED)
+	switch {
+	case err != nil:
 		return nil, err
+	case rc != C.RCL_RET_OK:
+		return nil, errActionServerTakeFailed
 	}
 	req := ts.New().(goalIDMessage)
 	ts.AsGoStruct(req, reqBuf)

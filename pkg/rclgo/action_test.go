@@ -445,8 +445,10 @@ func TestActionTakeGoalRequestErrorType(t *testing.T) {
 	server, err := node.NewActionServer("take_goal_error", action, actionServerOpts)
 	require.NoError(t, err)
 	// No request is pending, so rcl reports a take failure.
+	err = server.Testing_takeGoalRequest()
 	var takeFailed *rclgo.ActionServerTakeFailed
-	require.ErrorAs(t, server.Testing_takeGoalRequest(), &takeFailed)
+	require.ErrorAs(t, err, &takeFailed)
+	require.NotContains(t, err.Error(), "goroutine ", "routine take failure built a stack trace")
 }
 
 func TestActionIgnoredFailureLeavesNoStaleError(t *testing.T) {
