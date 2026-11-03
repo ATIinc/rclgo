@@ -104,7 +104,8 @@ func TestWaitSetIdleIterationCost(t *testing.T) {
 
 // startStringPublisher publishes on topic from its own context every
 // millisecond until the test ends, so late subscriptions still see traffic.
-func startStringPublisher(t *testing.T, topic string) {
+// The returned function stops publishing and closes the context early.
+func startStringPublisher(t *testing.T, topic string) (stop func()) {
 	t.Helper()
 	pubCtx, err := newDefaultRCLContext()
 	require.NoError(t, err)
@@ -128,11 +129,16 @@ func startStringPublisher(t *testing.T, topic string) {
 			}
 		}
 	}()
-	t.Cleanup(func() {
-		close(done)
-		<-stopped
-		pubCtx.Close()
-	})
+	var once sync.Once
+	stop = func() {
+		once.Do(func() {
+			close(done)
+			<-stopped
+			pubCtx.Close()
+		})
+	}
+	t.Cleanup(stop)
+	return stop
 }
 
 // startWaitSet runs ws on its own goroutine and returns a function that stops
@@ -186,10 +192,15 @@ func TestWaitSetConcurrentAddSubscriptions(t *testing.T) {
 		topic    = "/ws_concurrent_add"
 		subCount = 40
 	)
-	startStringPublisher(t, topic)
+	stopPublisher := startStringPublisher(t, topic)
 	rclCtx, err := newDefaultRCLContext()
 	require.NoError(t, err)
-	t.Cleanup(func() { rclCtx.Close() })
+	t.Cleanup(func() {
+		// rmw_zenoh can deadlock destroying a subscription that is still
+		// receiving, so stop the traffic first.
+		stopPublisher()
+		rclCtx.Close()
+	})
 	node, err := rclCtx.NewNode("ws_concurrent_add", "")
 	require.NoError(t, err)
 	ws, err := rclCtx.NewWaitSet()
