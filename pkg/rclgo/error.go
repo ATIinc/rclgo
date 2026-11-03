@@ -99,6 +99,31 @@ func rclCallRC(context string, call func() C.rcl_ret_t, expected ...C.rcl_ret_t)
 	return rc, errorsCastC(rc, context)
 }
 
+// rclIgnore runs call, whose failure the caller cannot act on, and consumes
+// the error state on failure so a later failure cannot report it.
+func rclIgnore(logger *Logger, context string, call func() C.rcl_ret_t) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	if rc := call(); rc != C.RCL_RET_OK {
+		if logger != nil {
+			logger.Debug(errorsCastC(rc, context))
+		} else {
+			C.rcutils_reset_error()
+		}
+	}
+}
+
+// rclCallPtr is rclCall for calls that return nil on failure. It returns the
+// consumed error string when they do.
+func rclCallPtr[T any](call func() *T) (*T, string) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	if p := call(); p != nil {
+		return p, ""
+	}
+	return nil, errorString()
+}
+
 func errorsCast(rcl_ret_t C.rcl_ret_t) error {
 	return errorsCastC(rcl_ret_t, "")
 }

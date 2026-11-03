@@ -103,7 +103,7 @@ func ParseArgs(args []string) (*Args, []string, error) {
 			C.free(unsafe.Pointer(arg))
 		}
 		a.unparsed = nil
-		C.rcl_arguments_fini(&a.parsed)
+		rclIgnore(nil, "", func() C.rcl_ret_t { return C.rcl_arguments_fini(&a.parsed) })
 	})
 	var restArgs []string
 	isROSArg := false
@@ -177,7 +177,7 @@ func (m *serializedMessage) c() *C.rmw_serialized_message_t {
 }
 
 func (m *serializedMessage) Close() {
-	C.rcutils_uint8_array_fini(m.c())
+	rclIgnore(nil, "", func() C.rcl_ret_t { return C.rcutils_uint8_array_fini(m.c()) })
 }
 
 func (m *serializedMessage) AsSlice() []byte {
@@ -262,7 +262,7 @@ func ExpandTopicName(
 	if err != nil {
 		return "", err
 	}
-	defer C.rcutils_string_map_fini(&csubstitutions)
+	defer rclIgnore(nil, "", func() C.rcl_ret_t { return C.rcutils_string_map_fini(&csubstitutions) })
 	for key, value := range substitutions {
 		ckey := C.CString(key)
 		defer C.free(unsafe.Pointer(ckey))
@@ -342,26 +342,27 @@ func (c *Context) NewNode(node_name, namespace string) (node *Node, err error) {
 	if err != nil {
 		return nil, err
 	}
-	cstr := C.rcl_node_get_name(node.rcl_node_t)
-	if cstr == nil {
-		return nil, errors.New("unexpectedly invalid node")
+	nodeString := func(get func() *C.char) (string, error) {
+		cstr, msg := rclCallPtr(get)
+		if cstr == nil {
+			return "", errors.New("unexpectedly invalid node: " + msg)
+		}
+		return C.GoString(cstr), nil
 	}
-	node.name = C.GoString(cstr)
-	cstr = C.rcl_node_get_namespace(node.rcl_node_t)
-	if cstr == nil {
-		return nil, errors.New("unexpectedly invalid node")
+	if node.name, err = nodeString(func() *C.char { return C.rcl_node_get_name(node.rcl_node_t) }); err != nil {
+		return nil, err
 	}
-	node.namespace = C.GoString(cstr)
-	cstr = C.rcl_node_get_fully_qualified_name(node.rcl_node_t)
-	if cstr == nil {
-		return nil, errors.New("unexpectedly invalid node")
+	if node.namespace, err = nodeString(func() *C.char { return C.rcl_node_get_namespace(node.rcl_node_t) }); err != nil {
+		return nil, err
 	}
-	node.fullyQualifiedName = C.GoString(cstr)
-	loggerName := C.rcl_node_get_logger_name(node.rcl_node_t)
-	if loggerName == nil {
-		return nil, errors.New("unexpectedly invalid node")
+	if node.fullyQualifiedName, err = nodeString(func() *C.char { return C.rcl_node_get_fully_qualified_name(node.rcl_node_t) }); err != nil {
+		return nil, err
 	}
-	node.logger = GetLogger(C.GoString(loggerName))
+	loggerName, err := nodeString(func() *C.char { return C.rcl_node_get_logger_name(node.rcl_node_t) })
+	if err != nil {
+		return nil, err
+	}
+	node.logger = GetLogger(loggerName)
 
 	c.addResource(node)
 	return node, nil

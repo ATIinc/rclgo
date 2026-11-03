@@ -195,7 +195,9 @@ func (g *GoalHandle) setResult(msg types.Message) {
 	g.result = msg
 	g.server.rclServerMu.Lock()
 	defer g.server.rclServerMu.Unlock()
-	C.rcl_action_notify_goal_done(&g.server.rclServer)
+	rclIgnore(g.server.node.Logger(), "failed to notify goal done", func() C.rcl_ret_t {
+		return C.rcl_action_notify_goal_done(&g.server.rclServer)
+	})
 	g.resultCond.Broadcast()
 }
 
@@ -513,7 +515,9 @@ func (s *ActionServer) acceptGoal(goal *GoalHandle) error {
 	*goal.handle = *handle
 	runtime.SetFinalizer(goal, func(g *GoalHandle) {
 		if g.handle != nil {
-			C.rcl_action_goal_handle_fini(g.handle)
+			rclIgnore(g.server.node.Logger(), "failed to finalize goal handle", func() C.rcl_ret_t {
+				return C.rcl_action_goal_handle_fini(g.handle)
+			})
 			C.free(unsafe.Pointer(g.handle))
 			g.handle = nil
 		}
@@ -754,7 +758,9 @@ func (s *ActionServer) handleCancelRequest() {
 			s.node.Logger().Error(err)
 			return
 		}
-		defer C.rcl_action_cancel_response_fini(&respBuf)
+		defer rclIgnore(s.node.Logger(), "failed to finalize cancel response", func() C.rcl_ret_t {
+			return C.rcl_action_cancel_response_fini(&respBuf)
+		})
 		resp := ts.Response().New()
 		ts.Response().AsGoStruct(resp, unsafe.Pointer(&respBuf.msg))
 		var goalsToCancel []*GoalHandle
@@ -801,7 +807,9 @@ func (s *ActionServer) sendStatuses(lock bool) {
 		defer s.rclServerMu.Unlock()
 	}
 	statuses := C.rcl_action_get_zero_initialized_goal_status_array()
-	defer C.rcl_action_goal_status_array_fini(&statuses)
+	defer rclIgnore(s.node.Logger(), "failed to finalize goal status array", func() C.rcl_ret_t {
+		return C.rcl_action_goal_status_array_fini(&statuses)
+	})
 	err := rclCall("", func() C.rcl_ret_t {
 		return C.rcl_action_get_goal_status_array(&s.rclServer, &statuses)
 	})

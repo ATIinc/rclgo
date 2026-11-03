@@ -3,6 +3,7 @@ package rclgo_test
 import (
 	"context"
 	"errors"
+	"runtime"
 	"sort"
 	"sync"
 	"testing"
@@ -445,6 +446,28 @@ func TestActionTakeGoalRequestErrorType(t *testing.T) {
 	// No request is pending, so rcl reports a take failure.
 	var takeFailed *rclgo.ActionServerTakeFailed
 	require.ErrorAs(t, server.Testing_takeGoalRequest(), &takeFailed)
+}
+
+func TestActionIgnoredFailureLeavesNoStaleError(t *testing.T) {
+	// rcutils error state is per thread; pin so both failures share it.
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	rclCtx, err := newDefaultRCLContext()
+	require.NoError(t, err)
+	defer rclCtx.Close()
+	node, err := rclCtx.NewNode("ignored_failure", "actions_test")
+	require.NoError(t, err)
+	_, action := newWaitAction()
+	server, err := node.NewActionServer("ignored_failure", action, actionServerOpts)
+	require.NoError(t, err)
+	require.NoError(t, server.Close())
+
+	// rcl_action_notify_goal_done fails on the closed server and is ignored.
+	server.Testing_setResultOnEmptyGoal()
+
+	next := rclgo.Testing_errorsCastC(1, "next failure")
+	require.Contains(t, next.Error(), "next failure error not set")
+	require.NotContains(t, next.Error(), "action server")
 }
 
 func TestActionStatuses(t *testing.T) {

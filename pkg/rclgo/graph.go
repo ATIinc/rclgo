@@ -30,9 +30,13 @@ func (n *Node) GetTopicNamesAndTypes(demangle bool) (map[string][]string, error)
 
 func (n *Node) GetNodeNames() (names, namespaces []string, err error) {
 	rcnames := C.rcutils_get_zero_initialized_string_array()
-	defer C.rcutils_string_array_fini(&rcnames)
+	defer rclIgnore(n.Logger(), "failed to finalize node names", func() C.rcl_ret_t {
+		return C.rcutils_string_array_fini(&rcnames)
+	})
 	rcnamespaces := C.rcutils_get_zero_initialized_string_array()
-	defer C.rcutils_string_array_fini(&rcnamespaces)
+	defer rclIgnore(n.Logger(), "failed to finalize node namespaces", func() C.rcl_ret_t {
+		return C.rcutils_string_array_fini(&rcnamespaces)
+	})
 	err = rclCall("failed to get node names", func() C.rcl_ret_t {
 		return C.rcl_get_node_names(
 			n.rcl_node_t,
@@ -151,7 +155,9 @@ func (n *Node) getNamesAndTypes(
 	cnamespace := C.CString(namespace)
 	defer C.free(unsafe.Pointer(cnamespace))
 	cnamesAndTypes := C.rcl_get_zero_initialized_names_and_types()
-	defer C.rcl_names_and_types_fini(&cnamesAndTypes)
+	defer rclIgnore(n.Logger(), "failed to finalize names and types", func() C.rcl_ret_t {
+		return C.rcl_names_and_types_fini(&cnamesAndTypes)
+	})
 	err := rclCall("failed to get topic names and types", func() C.rcl_ret_t {
 		return get(cnode, cnamespace, &cnamesAndTypes)
 	})
@@ -236,7 +242,9 @@ func (n *Node) getInfoByTopic(kind, topic string, mangle bool, get func(
 	ctopic := C.CString(topic)
 	defer C.free(unsafe.Pointer(ctopic))
 	infoArray := C.rmw_get_zero_initialized_topic_endpoint_info_array()
-	defer C.rmw_topic_endpoint_info_array_fini(&infoArray, n.context.rcl_allocator_t)
+	defer rclIgnore(n.Logger(), "failed to finalize topic endpoint info", func() C.rcl_ret_t {
+		return C.rmw_topic_endpoint_info_array_fini(&infoArray, n.context.rcl_allocator_t)
+	})
 	err := rclCall("failed to get "+kind+" info by topic", func() C.rcl_ret_t {
 		return get(ctopic, !C.bool(mangle), &infoArray)
 	})

@@ -222,10 +222,12 @@ func (l *Logger) Child(name string) *Logger {
 func (l *Logger) Level() (LogSeverity, error) {
 	loggingMutex.Lock()
 	defer loggingMutex.Unlock()
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	level := C.rcutils_logging_get_logger_level(l.cname)
 	runtime.KeepAlive(l)
 	if level < 0 {
-		return 0, errors.New("failed to get log level")
+		return 0, errors.New("failed to get log level: " + errorString())
 	}
 	return LogSeverity(level), nil
 }
@@ -257,10 +259,12 @@ func (l *Logger) IsEnabledFor(level LogSeverity) bool {
 func (l *Logger) EffectiveLevel() (LogSeverity, error) {
 	loggingMutex.Lock()
 	defer loggingMutex.Unlock()
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	level := C.rcutils_logging_get_logger_effective_level(l.cname)
 	runtime.KeepAlive(l)
 	if level < 0 {
-		return 0, errors.New("failed to get effective log level")
+		return 0, errors.New("failed to get effective log level: " + errorString())
 	}
 	return LogSeverity(level), nil
 }

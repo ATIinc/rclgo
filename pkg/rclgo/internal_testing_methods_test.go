@@ -17,3 +17,9 @@ func (w *WaitSet) Testing_cachedHandles() []unsafe.Pointer {
 func (s *ActionServer) Testing_takeGoalRequest() error {
 	return s.takeGoalRequest(newEmptyGoal(s, func() {}))
 }
+
+// Testing_setResultOnEmptyGoal runs GoalHandle.setResult for a goal s never
+// accepted, which drives rcl_action_notify_goal_done.
+func (s *ActionServer) Testing_setResultOnEmptyGoal() {
+	newEmptyGoal(s, func() {}).setResult(nil)
+}
