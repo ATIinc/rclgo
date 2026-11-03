@@ -82,7 +82,7 @@ func warmUpActionClient(
 	})
 	defer func() {
 		cancel()
-		<-watchDone
+		_ = <-watchDone
 	}()
 	for i := byte(0); ; i++ {
 		req := test_msgs_action.NewFibonacci_SendGoal_Request()
