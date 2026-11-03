@@ -13,3 +13,7 @@ func (w *WaitSet) Testing_cachedHandles() []unsafe.Pointer {
 		w.handles.clients + w.handles.guard_conditions
 	return append([]unsafe.Pointer(nil), unsafe.Slice(w.handles.handles, n)...)
 }
+
+func (s *ActionServer) Testing_takeGoalRequest() error {
+	return s.takeGoalRequest(newEmptyGoal(s, func() {}))
+}

@@ -486,7 +486,7 @@ func (s *ActionServer) takeGoalRequest(goal *GoalHandle) error {
 		return C.rcl_action_take_goal_request(&s.rclServer, &goal.requestID, reqBuf)
 	})
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 	req := ts.New().(goalRequestMessage)
 	ts.AsGoStruct(req, reqBuf)

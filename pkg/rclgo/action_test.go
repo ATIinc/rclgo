@@ -433,6 +433,20 @@ func (a goalStatuses) Less(i, j int) bool {
 	return a[i].Status < a[j].Status
 }
 
+func TestActionTakeGoalRequestErrorType(t *testing.T) {
+	rclCtx, err := newDefaultRCLContext()
+	require.NoError(t, err)
+	defer rclCtx.Close()
+	node, err := rclCtx.NewNode("take_goal_error", "actions_test")
+	require.NoError(t, err)
+	_, action := newWaitAction()
+	server, err := node.NewActionServer("take_goal_error", action, actionServerOpts)
+	require.NoError(t, err)
+	// No request is pending, so rcl reports a take failure.
+	var takeFailed *rclgo.ActionServerTakeFailed
+	require.ErrorAs(t, server.Testing_takeGoalRequest(), &takeFailed)
+}
+
 func TestActionStatuses(t *testing.T) {
 	continueChan, statusAction := newWaitAction()
 	var (
