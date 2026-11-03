@@ -36,5 +36,9 @@
   // Warm the module cache after the container is built. Run `make test` to
   // exercise the full suite against the installed ROS interfaces.
   "postCreateCommand": "go mod download",
-  "remoteUser": "root"
+  // Run as the image's non-root user, with its UID/GID remapped to the host
+  // user's on Linux so files in the bind-mounted workspace keep host ownership.
+  "containerUser": "ubuntu",
+  "remoteUser": "ubuntu",
+  "updateRemoteUserUID": true
 }

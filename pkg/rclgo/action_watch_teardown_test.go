@@ -92,14 +92,14 @@ func TestWatchFeedbackChannelSignalsAfterDrain(t *testing.T) {
 			// cancel the watch while the handler is blocked: the channel must not fire yet
 			stopWatch()
 			select {
-			case <-errc:
-				t.Fatal("channel signaled while the handler was still running")
+			case err := <-errc:
+				t.Fatalf("channel signaled while the handler was still running: %v", err)
 			case <-time.After(100 * time.Millisecond):
 			}
 
 			// release the handler: now the channel fires, and later feedback must not reach the handler
 			close(release)
-			timeOut(5000, func() { <-errc }, "Waiting for the watch channel after the handler returned")
+			timeOut(5000, func() { _ = <-errc }, "Waiting for the watch channel after the handler returned")
 			signaled.Store(true)
 			for range int(goal.Order) {
 				action.continueChan <- struct{}{}
@@ -112,8 +112,8 @@ func TestWatchFeedbackChannelSignalsAfterDrain(t *testing.T) {
 		Convey("Resources are released properly", func() {
 			cancel()
 			timeOut(1000, func() {
-				<-spinErr
-				<-spinErr
+				_ = <-spinErr
+				_ = <-spinErr
 			}, "Waiting for spinning to stop")
 			So(rclctx.Close(), ShouldBeNil)
 		})
