@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"runtime"
+	"slices"
 	"sort"
 	"sync"
 	"testing"
@@ -549,27 +550,32 @@ func TestActionStatuses(t *testing.T) {
 					So(err, ShouldEqual, context.Canceled)
 				}
 			}
-			waitForStatus := func(status rclgo.GoalStatus) {
-				timeOut(1000, func() {
+			// Each handler call runs on its own goroutine, so statuses arrive in
+			// any order; wait until all expected ones have been seen.
+			waitForStatuses := func(want ...rclgo.GoalStatus) {
+				timeOut(10000, func() {
 					for {
 						statusesMu.Lock()
-						if len(statuses) > 0 && statuses[len(statuses)-1].Status == status {
-							statusesMu.Unlock()
-							return
+						seen := 0
+						for _, w := range want {
+							if slices.ContainsFunc(statuses, func(s goalStatus) bool { return s.Status == w }) {
+								seen++
+							}
 						}
 						statusesMu.Unlock()
+						if seen == len(want) {
+							return
+						}
 						time.Sleep(10 * time.Millisecond)
 					}
-				}, "Wait for status change")
+				}, "Wait for statuses")
 			}
 			var testResults []testResult
 			addResult := func(ctx context.Context, id *types.GoalID) {
 				resp, err := client.GetResult(ctx, id)
 				statusesMu.Lock()
-				// Status messages can be delivered out of order (e.g. under
-				// rmw_zenoh), so sort by status to make the snapshot
-				// deterministic. sort.Sort is a no-op on a nil slice, so
-				// goals with no observed statuses stay nil.
+				// Handlers run concurrently, so sort to compare the statuses as a
+				// set. Goals with no observed statuses stay nil.
 				sort.Sort(statuses)
 				testResults = append(testResults, testResult{
 					Result:   resp,
@@ -579,15 +585,41 @@ func TestActionStatuses(t *testing.T) {
 				statusesMu.Unlock()
 			}
 
+			// Statuses published before the client's status subscription has
+			// matched are lost, so abort untracked goals until one is reported.
+			warmCtx, stopWarm := context.WithCancel(ctx)
+			warmed := make(chan struct{})
+			var warmOnce sync.Once
+			warmWatch := client.WatchStatus(warmCtx, nil, func(context.Context, types.Message) {
+				warmOnce.Do(func() { close(warmed) })
+			})
+			timeOut(10000, func() {
+				for i := byte(0); warmCtx.Err() == nil; i++ {
+					req := test_msgs_action.NewFibonacci_SendGoal_Request()
+					req.Goal.Order = 1
+					req.GoalID.Uuid = types.GoalID{0xff, i}
+					attemptCtx, stopAttempt := context.WithTimeout(warmCtx, 200*time.Millisecond)
+					_, _ = client.SendGoalRequest(attemptCtx, req)
+					stopAttempt()
+					select {
+					case <-warmed:
+						return
+					case <-time.After(100 * time.Millisecond):
+					}
+				}
+			}, "Wait for status delivery")
+			stopWarm()
+			<-warmWatch
+
 			id, ctx, cancel := send(0) // should succeed
 			continueChan <- struct{}{}
-			waitForStatus(rclgo.GoalSucceeded)
+			waitForStatuses(rclgo.GoalAccepted, rclgo.GoalExecuting, rclgo.GoalSucceeded)
 			addResult(ctx, id) //nolint:contextcheck // not the type of func it thinks
 			cancel()
 
 			id, ctx, cancel = send(0) // should be canceled
 			sendCancel(ctx, id)       //nolint:contextcheck // not the type of func it thinks
-			waitForStatus(rclgo.GoalCanceled)
+			waitForStatuses(rclgo.GoalAccepted, rclgo.GoalExecuting, rclgo.GoalCanceling, rclgo.GoalCanceled)
 			addResult(ctx, id) //nolint:contextcheck // not the type of func it thinks
 			cancel()
 
@@ -596,7 +628,7 @@ func TestActionStatuses(t *testing.T) {
 			cancel()
 
 			id, ctx, cancel = send(1) // should be aborted
-			waitForStatus(rclgo.GoalAborted)
+			waitForStatuses(rclgo.GoalAccepted, rclgo.GoalExecuting, rclgo.GoalAborted)
 			addResult(ctx, id) //nolint:contextcheck // not the type of func it thinks
 			cancel()
 
