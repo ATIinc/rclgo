@@ -96,6 +96,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -203,19 +204,21 @@ func (c *Context) NewWaitSet() (ws *WaitSet, err error) {
 	}
 	ws.idle = sync.NewCond(&ws.mu)
 	defer onErr(&err, ws.Close)
-	var rc C.rcl_ret_t = C.rcl_wait_set_init(
-		&ws.rcl_wait_set_t,
-		subscriptionsCount,
-		guardConditionsCount,
-		timersCount,
-		clientsCount,
-		servicesCount,
-		eventsCount,
-		c.rcl_context_t,
-		*c.rcl_allocator_t,
-	)
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCast(rc)
+	err = rclCall("", func() C.rcl_ret_t {
+		return C.rcl_wait_set_init(
+			&ws.rcl_wait_set_t,
+			subscriptionsCount,
+			guardConditionsCount,
+			timersCount,
+			clientsCount,
+			servicesCount,
+			eventsCount,
+			c.rcl_context_t,
+			*c.rcl_allocator_t,
+		)
+	})
+	if err != nil {
+		return nil, err
 	}
 	ws.cancelWait, err = c.newGuardCondition()
 	if err != nil {
@@ -529,17 +532,16 @@ func (w *WaitSet) Run(ctx context.Context) (err error) {
 			return err
 		}
 		started := time.Now()
-		rc := C.rcl_wait(&w.rcl_wait_set_t, C.int64_t(timeoutNanos))
+		rc, err := rclCallRC("", func() C.rcl_ret_t {
+			return C.rcl_wait(&w.rcl_wait_set_t, C.int64_t(timeoutNanos))
+		}, C.RCL_RET_TIMEOUT)
 		elapsed := time.Since(started)
-
-		switch rc {
-		case C.RCL_RET_OK:
-			// fall through to handle the ready items
-		case C.RCL_RET_TIMEOUT:
+		if err != nil {
+			return err
+		}
+		if rc == C.RCL_RET_TIMEOUT {
 			prevTimedOut = true
 			continue
-		default:
-			return errorsCast(rc)
 		}
 
 		guardConditions := unsafe.Slice(w.rcl_wait_set_t.guard_conditions, len(w.guardConditions))
@@ -650,7 +652,10 @@ func (w *WaitSet) initEntities() error {
 		w.dirty = false
 		w.handlesClose = closes
 	}
+	// The rcl calls below inline rclCall so contexts are only formatted on
+	// failure.
 	var failed C.int
+	runtime.LockOSThread()
 	rc := C.rclgo_wait_set_fill(
 		&w.rcl_wait_set_t,
 		&w.handles,
@@ -661,13 +666,20 @@ func (w *WaitSet) initEntities() error {
 		&failed,
 	)
 	if rc != C.RCL_RET_OK {
-		return errorsCastC(rc, fmt.Sprintf("%s failed for wait set (%s)", fillFailures[failed], w.entityCounts()))
+		err := errorsCastC(rc, fmt.Sprintf("%s failed for wait set (%s)", fillFailures[failed], w.entityCounts()))
+		runtime.UnlockOSThread()
+		return err
 	}
+	runtime.UnlockOSThread()
 	for _, server := range w.actionServers {
+		runtime.LockOSThread()
 		rc = C.rcl_action_wait_set_add_action_server(&w.rcl_wait_set_t, &server.rclServer, nil)
 		if rc != C.RCL_RET_OK {
-			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_action_server() failed for wait set (%s)", w.entityCounts()))
+			err := errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_action_server() failed for wait set (%s)", w.entityCounts()))
+			runtime.UnlockOSThread()
+			return err
 		}
+		runtime.UnlockOSThread()
 	}
 	for _, client := range w.actionClients {
 		// rcl_action_wait_set_add_action_client is not thread-safe and reads the
@@ -675,11 +687,15 @@ func (w *WaitSet) initEntities() error {
 		// ActionClient.IsServerAvailable; hold the client's handle lock for the
 		// registration the same way the take path does.
 		client.rclClientMu.Lock()
+		runtime.LockOSThread()
 		rc = C.rcl_action_wait_set_add_action_client(&w.rcl_wait_set_t, &client.rclClient, nil, nil)
 		client.rclClientMu.Unlock()
 		if rc != C.RCL_RET_OK {
-			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_action_client() failed for wait set (%s)", w.entityCounts()))
+			err := errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_action_client() failed for wait set (%s)", w.entityCounts()))
+			runtime.UnlockOSThread()
+			return err
 		}
+		runtime.UnlockOSThread()
 	}
 	return nil
 }
@@ -699,10 +715,7 @@ func (w *WaitSet) Close() (err error) {
 	w.handlesCap = 0
 	w.context.removeResource(w)
 	w.context = nil
-	rc := C.rcl_wait_set_fini(&w.rcl_wait_set_t)
-	if rc != C.RCL_RET_OK {
-		err = errors.Join(err, errorsCast(rc))
-	}
+	err = rclCall("", func() C.rcl_ret_t { return C.rcl_wait_set_fini(&w.rcl_wait_set_t) })
 	var closeError closeError
 	for _, gc := range []*guardCondition{w.cancelWait, w.wake} {
 		if gc == nil {

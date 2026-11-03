@@ -114,16 +114,15 @@ func rclInitLogging(rclArgs *Args, update bool) error {
 		return nil
 	}
 	loggingInitialized = true
-	rc := C.rcl_logging_configure_with_output_handler(
-		&rclArgs.parsed,
-		loggingAllocator,
-		(*[0]byte)(C.loggingOutputHandler),
-	)
+	err := rclCall("rclInitLogging -> rcl_logging_configure_with_output_handler()", func() C.rcl_ret_t {
+		return C.rcl_logging_configure_with_output_handler(
+			&rclArgs.parsed,
+			loggingAllocator,
+			(*[0]byte)(C.loggingOutputHandler),
+		)
+	})
 	runtime.KeepAlive(rclArgs)
-	if rc != C.RCL_RET_OK {
-		return errorsCastC(rc, "rclInitLogging -> rcl_logging_configure_with_output_handler()")
-	}
-	return nil
+	return err
 }
 
 var rcutilsLogFormat = C.CString("%s")
@@ -235,12 +234,11 @@ func (l *Logger) Level() (LogSeverity, error) {
 func (l *Logger) SetLevel(level LogSeverity) error {
 	loggingMutex.Lock()
 	defer loggingMutex.Unlock()
-	ret := C.rcutils_logging_set_logger_level(l.cname, C.int(level))
+	err := rclCall("SetLoggerLevel", func() C.rcl_ret_t {
+		return C.rcutils_logging_set_logger_level(l.cname, C.int(level))
+	})
 	runtime.KeepAlive(l)
-	if ret != C.RCL_RET_OK {
-		return errorsCastC(ret, "SetLoggerLevel")
-	}
-	return nil
+	return err
 }
 
 // IsEnabledFor returns true if l can log messages whose severity is at least

@@ -33,14 +33,16 @@ func (n *Node) GetNodeNames() (names, namespaces []string, err error) {
 	defer C.rcutils_string_array_fini(&rcnames)
 	rcnamespaces := C.rcutils_get_zero_initialized_string_array()
 	defer C.rcutils_string_array_fini(&rcnamespaces)
-	rc := C.rcl_get_node_names(
-		n.rcl_node_t,
-		*n.context.rcl_allocator_t,
-		&rcnames,
-		&rcnamespaces,
-	)
-	if rc != C.RCL_RET_OK {
-		return nil, nil, errorsCastC(rc, "failed to get node names")
+	err = rclCall("failed to get node names", func() C.rcl_ret_t {
+		return C.rcl_get_node_names(
+			n.rcl_node_t,
+			*n.context.rcl_allocator_t,
+			&rcnames,
+			&rcnamespaces,
+		)
+	})
+	if err != nil {
+		return nil, nil, err
 	}
 	cnames := unsafe.Slice(rcnames.data, rcnames.size)
 	names = make([]string, rcnames.size)
@@ -150,9 +152,11 @@ func (n *Node) getNamesAndTypes(
 	defer C.free(unsafe.Pointer(cnamespace))
 	cnamesAndTypes := C.rcl_get_zero_initialized_names_and_types()
 	defer C.rcl_names_and_types_fini(&cnamesAndTypes)
-	rc := get(cnode, cnamespace, &cnamesAndTypes)
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCastC(rc, "failed to get topic names and types")
+	err := rclCall("failed to get topic names and types", func() C.rcl_ret_t {
+		return get(cnode, cnamespace, &cnamesAndTypes)
+	})
+	if err != nil {
+		return nil, err
 	}
 	names := unsafe.Slice(cnamesAndTypes.names.data, cnamesAndTypes.names.size)
 	types := unsafe.Slice(cnamesAndTypes.types, len(names))
@@ -233,9 +237,11 @@ func (n *Node) getInfoByTopic(kind, topic string, mangle bool, get func(
 	defer C.free(unsafe.Pointer(ctopic))
 	infoArray := C.rmw_get_zero_initialized_topic_endpoint_info_array()
 	defer C.rmw_topic_endpoint_info_array_fini(&infoArray, n.context.rcl_allocator_t)
-	rc := get(ctopic, !C.bool(mangle), &infoArray)
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCastC(rc, "failed to get "+kind+" info by topic")
+	err := rclCall("failed to get "+kind+" info by topic", func() C.rcl_ret_t {
+		return get(ctopic, !C.bool(mangle), &infoArray)
+	})
+	if err != nil {
+		return nil, err
 	}
 	infoSlice := unsafe.Slice(infoArray.info_array, infoArray.size)
 	infos := make([]TopicEndpointInfo, len(infoSlice))

@@ -120,14 +120,16 @@ func ParseArgs(args []string) (*Args, []string, error) {
 			restArgs = append(restArgs, arg)
 		}
 	}
-	rc := C.rcl_parse_arguments(
-		rclArgs.argc(),
-		rclArgs.argv(),
-		C.rcl_get_default_allocator(),
-		&rclArgs.parsed,
-	)
-	if rc != C.RCL_RET_OK {
-		return nil, restArgs, errorsCastC(rc, "rcl_parse_arguments")
+	err := rclCall("rcl_parse_arguments", func() C.rcl_ret_t {
+		return C.rcl_parse_arguments(
+			rclArgs.argc(),
+			rclArgs.argv(),
+			C.rcl_get_default_allocator(),
+			&rclArgs.parsed,
+		)
+	})
+	if err != nil {
+		return nil, restArgs, err
 	}
 	return rclArgs, restArgs, nil
 }
@@ -160,9 +162,11 @@ type serializedMessage C.rmw_serialized_message_t
 func newSerializedMessage(size int) (serializedMessage, error) {
 	msg := C.rmw_get_zero_initialized_serialized_message()
 	allocator := C.rcl_get_default_allocator()
-	rc := C.rcutils_uint8_array_init(&msg, C.size_t(size), &allocator)
-	if rc != C.RCL_RET_OK {
-		return serializedMessage{}, errorsCastC(rc, "failed to initialize serialized message")
+	err := rclCall("failed to initialize serialized message", func() C.rcl_ret_t {
+		return C.rcutils_uint8_array_init(&msg, C.size_t(size), &allocator)
+	})
+	if err != nil {
+		return serializedMessage{}, err
 	}
 	msg.buffer_length = msg.buffer_capacity
 	return serializedMessage(msg), nil
@@ -199,13 +203,15 @@ func Serialize(msg types.Message) (buf []byte, err error) {
 		return nil, err
 	}
 	defer serialized.Close()
-	rc := C.rmw_serialize(
-		cmsg,
-		(*C.rosidl_message_type_support_t)(ts.TypeSupport()),
-		serialized.c(),
-	)
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCast(rc)
+	err = rclCall("", func() C.rcl_ret_t {
+		return C.rmw_serialize(
+			cmsg,
+			(*C.rosidl_message_type_support_t)(ts.TypeSupport()),
+			serialized.c(),
+		)
+	})
+	if err != nil {
+		return nil, err
 	}
 	return serialized.ToSlice(), nil
 }
@@ -221,13 +227,15 @@ func Deserialize(buf []byte, ts types.MessageTypeSupport) (msg types.Message, er
 	copy(serialized.AsSlice(), buf)
 	cmsg := ts.PrepareMemory()
 	defer ts.ReleaseMemory(cmsg)
-	rc := C.rmw_deserialize(
-		serialized.c(),
-		(*C.rosidl_message_type_support_t)(ts.TypeSupport()),
-		cmsg,
-	)
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCast(rc)
+	err = rclCall("", func() C.rcl_ret_t {
+		return C.rmw_deserialize(
+			serialized.c(),
+			(*C.rosidl_message_type_support_t)(ts.TypeSupport()),
+			cmsg,
+		)
+	})
+	if err != nil {
+		return nil, err
 	}
 	gomsg := ts.New()
 	ts.AsGoStruct(gomsg, cmsg)
@@ -244,13 +252,15 @@ func ExpandTopicName(
 	substitutions map[string]string,
 ) (expanded string, err error) {
 	csubstitutions := C.rcutils_get_zero_initialized_string_map()
-	rc := C.rcutils_string_map_init(
-		&csubstitutions,
-		C.size_t(len(substitutions)),
-		C.rcl_get_default_allocator(),
-	)
-	if rc != C.RCL_RET_OK {
-		return "", errorsCastC(rc, "failed to initialize substitution map")
+	err = rclCall("failed to initialize substitution map", func() C.rcl_ret_t {
+		return C.rcutils_string_map_init(
+			&csubstitutions,
+			C.size_t(len(substitutions)),
+			C.rcl_get_default_allocator(),
+		)
+	})
+	if err != nil {
+		return "", err
 	}
 	defer C.rcutils_string_map_fini(&csubstitutions)
 	for key, value := range substitutions {
@@ -258,9 +268,11 @@ func ExpandTopicName(
 		defer C.free(unsafe.Pointer(ckey))
 		cvalue := C.CString(value)
 		defer C.free(unsafe.Pointer(cvalue))
-		rc = C.rcutils_string_map_set(&csubstitutions, ckey, cvalue)
-		if rc != C.RCL_RET_OK {
-			return "", errorsCastC(rc, "failed to set substitution pair")
+		err = rclCall("failed to set substitution pair", func() C.rcl_ret_t {
+			return C.rcutils_string_map_set(&csubstitutions, ckey, cvalue)
+		})
+		if err != nil {
+			return "", err
 		}
 	}
 	cinputTopicName := C.CString(inputTopicName)
@@ -270,16 +282,18 @@ func ExpandTopicName(
 	cnodeNamespace := C.CString(nodeNamespace)
 	defer C.free(unsafe.Pointer(cnodeNamespace))
 	var output *C.char
-	rc = C.rcl_expand_topic_name(
-		cinputTopicName,
-		cnodeName,
-		cnodeNamespace,
-		&csubstitutions,
-		C.rcl_get_default_allocator(),
-		&output,
-	)
-	if rc != C.RCL_RET_OK {
-		return "", errorsCastC(rc, "failed to expand topic name")
+	err = rclCall("failed to expand topic name", func() C.rcl_ret_t {
+		return C.rcl_expand_topic_name(
+			cinputTopicName,
+			cnodeName,
+			cnodeNamespace,
+			&csubstitutions,
+			C.rcl_get_default_allocator(),
+			&output,
+		)
+	})
+	if err != nil {
+		return "", err
 	}
 	defer C.free(unsafe.Pointer(output))
 	return C.GoString(output), nil
@@ -316,15 +330,17 @@ func (c *Context) NewNode(node_name, namespace string) (node *Node, err error) {
 	cnamespace := C.CString(namespace)
 	defer C.free(unsafe.Pointer(cnamespace))
 	rcl_node_options := C.rcl_node_get_default_options()
-	rc := C.rcl_node_init(
-		node.rcl_node_t,
-		cname,
-		cnamespace,
-		c.rcl_context_t,
-		&rcl_node_options,
-	)
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCastC(rc, "failed to create node:")
+	err = rclCall("failed to create node:", func() C.rcl_ret_t {
+		return C.rcl_node_init(
+			node.rcl_node_t,
+			cname,
+			cnamespace,
+			c.rcl_context_t,
+			&rcl_node_options,
+		)
+	})
+	if err != nil {
+		return nil, err
 	}
 	cstr := C.rcl_node_get_name(node.rcl_node_t)
 	if cstr == nil {
@@ -361,11 +377,9 @@ func (n *Node) Close() error {
 	n.context.removeResource(n)
 
 	err := n.rosResourceStore.Close()
-
-	rc := C.rcl_node_fini(n.rcl_node_t)
-	if rc != C.RCL_RET_OK {
-		err = errors.Join(err, errorsCast(rc))
-	}
+	err = errors.Join(err, rclCall("", func() C.rcl_ret_t {
+		return C.rcl_node_fini(n.rcl_node_t)
+	}))
 	C.free(unsafe.Pointer(n.rcl_node_t))
 	n.rcl_node_t = nil
 
@@ -459,15 +473,17 @@ func (n *Node) NewPublisher(
 	rcl_publisher_options_t.allocator = *n.context.rcl_allocator_t
 	options.Qos.asCStruct(&rcl_publisher_options_t.qos)
 
-	var rc C.rcl_ret_t = C.rcl_publisher_init(
-		pub.rcl_publisher_t,
-		n.rcl_node_t,
-		(*C.rosidl_message_type_support_t)(ros2msg.TypeSupport()),
-		pub.topicName,
-		&rcl_publisher_options_t,
-	)
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCast(rc)
+	err = rclCall("", func() C.rcl_ret_t {
+		return C.rcl_publisher_init(
+			pub.rcl_publisher_t,
+			n.rcl_node_t,
+			(*C.rosidl_message_type_support_t)(ros2msg.TypeSupport()),
+			pub.topicName,
+			&rcl_publisher_options_t,
+		)
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	n.addResource(pub)
@@ -479,18 +495,18 @@ func (p *Publisher) Node() *Node {
 	return p.node
 }
 
-func (p *Publisher) Publish(ros2msg types.Message) error {
-	var rc C.rcl_ret_t
-
+func (p *Publisher) Publish(ros2msg types.Message) (err error) {
 	ptr := p.typeSupport.PrepareMemory()
 	defer p.typeSupport.ReleaseMemory(ptr)
 	p.typeSupport.AsCStruct(ptr, ros2msg)
 
-	rc = C.rcl_publish(p.rcl_publisher_t, ptr, nil)
-	if rc != C.RCL_RET_OK {
-		return errorsCastC(rc, fmt.Sprintf("rcl_publish() failed for publisher on topic '%s' of node '%s'", p.TopicName, p.node.FullyQualifiedName()))
+	// Inline rclCall: the context is only formatted on failure.
+	runtime.LockOSThread()
+	if rc := C.rcl_publish(p.rcl_publisher_t, ptr, nil); rc != C.RCL_RET_OK {
+		err = errorsCastC(rc, fmt.Sprintf("rcl_publish() failed for publisher on topic '%s' of node '%s'", p.TopicName, p.node.FullyQualifiedName()))
 	}
-	return nil
+	runtime.UnlockOSThread()
+	return err
 }
 
 // PublishSerialized publishes a message that has already been serialized.
@@ -501,19 +517,19 @@ func (p *Publisher) PublishSerialized(msg []byte) error {
 	}
 	defer rclMsg.Close()
 	copy(rclMsg.AsSlice(), msg)
-	rc := C.rcl_publish_serialized_message(p.rcl_publisher_t, rclMsg.c(), nil)
-	if rc != C.RCL_RET_OK {
-		return errorsCastC(rc, "failed to publish serialized message")
-	}
-	return nil
+	return rclCall("failed to publish serialized message", func() C.rcl_ret_t {
+		return C.rcl_publish_serialized_message(p.rcl_publisher_t, rclMsg.c(), nil)
+	})
 }
 
 // GetSubscriptionCount returns the number of subscriptions matched to p.
 func (p *Publisher) GetSubscriptionCount() (int, error) {
 	var count C.size_t
-	rc := C.rcl_publisher_get_subscription_count(p.rcl_publisher_t, &count)
-	if rc != C.RCL_RET_OK {
-		return 0, errorsCastC(rc, "failed to get subscription count")
+	err := rclCall("failed to get subscription count", func() C.rcl_ret_t {
+		return C.rcl_publisher_get_subscription_count(p.rcl_publisher_t, &count)
+	})
+	if err != nil {
+		return 0, err
 	}
 	return int(count), nil
 }
@@ -526,10 +542,9 @@ func (p *Publisher) Close() (err error) {
 		return closeErr("publisher")
 	}
 	p.node.removeResource(p)
-	rc := C.rcl_publisher_fini(p.rcl_publisher_t, p.node.rcl_node_t)
-	if rc != C.RCL_RET_OK {
-		err = errors.Join(err, errorsCast(rc))
-	}
+	err = rclCall("", func() C.rcl_ret_t {
+		return C.rcl_publisher_fini(p.rcl_publisher_t, p.node.rcl_node_t)
+	})
 	C.free(unsafe.Pointer(p.rcl_publisher_t))
 	p.rcl_publisher_t = nil
 	C.free(unsafe.Pointer(p.topicName))
@@ -558,13 +573,15 @@ func (c *Context) NewClock(clockType ClockType) (clock *Clock, err error) {
 	}
 	clock.rcl_clock_t = (*C.rcl_clock_t)(C.calloc(1, C.sizeof_rcl_clock_t))
 	defer onErr(&err, c.Close)
-	rc := C.rcl_clock_init(
-		C.rcl_clock_type_t(clockType),
-		clock.rcl_clock_t,
-		c.rcl_allocator_t,
-	)
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCast(rc)
+	err = rclCall("", func() C.rcl_ret_t {
+		return C.rcl_clock_init(
+			C.rcl_clock_type_t(clockType),
+			clock.rcl_clock_t,
+			c.rcl_allocator_t,
+		)
+	})
+	if err != nil {
+		return nil, err
 	}
 	c.addResource(clock)
 	return clock, nil
@@ -578,10 +595,9 @@ func (c *Clock) Close() (err error) {
 		return closeErr("clock")
 	}
 	c.context.removeResource(c)
-	rc := C.rcl_clock_fini(c.rcl_clock_t)
-	if rc != C.RCL_RET_OK {
-		err = errors.Join(err, errorsCast(rc))
-	}
+	err = rclCall("", func() C.rcl_ret_t {
+		return C.rcl_clock_fini(c.rcl_clock_t)
+	})
 	C.free(unsafe.Pointer(c.rcl_clock_t))
 	c.rcl_clock_t = nil
 	return err
@@ -594,9 +610,11 @@ func (c *Clock) Context() *Context {
 
 func (c *Clock) now() (time.Duration, error) {
 	var t C.rcl_time_point_value_t
-	rc := C.rcl_clock_get_now(c.rcl_clock_t, &t)
-	if rc != C.RCL_RET_OK {
-		return 0, errorsCastC(rc, "failed to get current time")
+	err := rclCall("failed to get current time", func() C.rcl_ret_t {
+		return C.rcl_clock_get_now(c.rcl_clock_t, &t)
+	})
+	if err != nil {
+		return 0, err
 	}
 	return time.Duration(t), nil
 }
@@ -628,17 +646,19 @@ func (c *Context) NewTimer(timeout time.Duration, timer_callback func(*Timer)) (
 	*timer.rcl_timer_t = C.rcl_get_zero_initialized_timer()
 	defer onErr(&err, timer.Close)
 
-	rc := C.rcl_timer_init2(
-		timer.rcl_timer_t,
-		c.Clock().rcl_clock_t,
-		c.rcl_context_t,
-		C.int64_t(timeout),
-		nil,
-		*c.rcl_allocator_t,
-		true,
-	)
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCast(rc)
+	err = rclCall("", func() C.rcl_ret_t {
+		return C.rcl_timer_init2(
+			timer.rcl_timer_t,
+			c.Clock().rcl_clock_t,
+			c.rcl_context_t,
+			C.int64_t(timeout),
+			nil,
+			*c.rcl_allocator_t,
+			true,
+		)
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	c.addResource(timer)
@@ -652,19 +672,17 @@ func (t *Timer) Context() *Context {
 
 func (t *Timer) GetTimeUntilNextCall() (int64, error) {
 	var time_until_next_call C.int64_t
-	rc := C.rcl_timer_get_time_until_next_call(t.rcl_timer_t, &time_until_next_call)
-	if rc != C.RCL_RET_OK {
-		return 0, errorsCast(rc)
+	err := rclCall("", func() C.rcl_ret_t {
+		return C.rcl_timer_get_time_until_next_call(t.rcl_timer_t, &time_until_next_call)
+	})
+	if err != nil {
+		return 0, err
 	}
 	return int64(time_until_next_call), nil
 }
 
 func (t *Timer) Reset() error {
-	rc := C.rcl_timer_reset(t.rcl_timer_t)
-	if rc != C.RCL_RET_OK {
-		return errorsCast(rc)
-	}
-	return nil
+	return rclCall("", func() C.rcl_ret_t { return C.rcl_timer_reset(t.rcl_timer_t) })
 }
 
 /*
@@ -675,10 +693,7 @@ func (t *Timer) Close() (err error) {
 		return closeErr("timer")
 	}
 	t.context.removeResource(t)
-	rc := C.rcl_timer_fini(t.rcl_timer_t)
-	if rc != C.RCL_RET_OK {
-		err = errors.Join(err, errorsCast(rc))
-	}
+	err = rclCall("", func() C.rcl_ret_t { return C.rcl_timer_fini(t.rcl_timer_t) })
 	handleCloses.Add(1)
 	C.free(unsafe.Pointer(t.rcl_timer_t))
 	t.rcl_timer_t = nil
@@ -736,15 +751,17 @@ func (n *Node) NewSubscription(
 	rclOpts.allocator = *n.context.rcl_allocator_t
 	options.Qos.asCStruct(&rclOpts.qos)
 
-	rc := C.rcl_subscription_init(
-		sub.rcl_subscription_t,
-		n.rcl_node_t,
-		(*C.rosidl_message_type_support_t)(ros2msg.TypeSupport()),
-		sub.topicName,
-		&rclOpts,
-	)
-	if rc != C.RCL_RET_OK {
-		return sub, errorsCastC(rc, fmt.Sprintf("Topic name '%s'", topicName))
+	err = rclCall(fmt.Sprintf("Topic name '%s'", topicName), func() C.rcl_ret_t {
+		return C.rcl_subscription_init(
+			sub.rcl_subscription_t,
+			n.rcl_node_t,
+			(*C.rosidl_message_type_support_t)(ros2msg.TypeSupport()),
+			sub.topicName,
+			&rclOpts,
+		)
+	})
+	if err != nil {
+		return sub, err
 	}
 
 	n.addResource(sub)
@@ -762,9 +779,12 @@ func (s *Subscription) TakeMessage(out types.Message) (*MessageInfo, error) {
 	ros2_msg_receive_buffer := s.Ros2MsgType.PrepareMemory()
 	defer s.Ros2MsgType.ReleaseMemory(ros2_msg_receive_buffer)
 
+	runtime.LockOSThread()
 	rc := C.rcl_take(s.rcl_subscription_t, ros2_msg_receive_buffer, &rmw_message_info, nil)
-	if rc != C.RCL_RET_OK {
-		return nil, s.takeErr("rcl_take()", rc)
+	err := s.takeErr("rcl_take()", rc)
+	runtime.UnlockOSThread()
+	if err != nil {
+		return nil, err
 	}
 	s.Ros2MsgType.AsGoStruct(out, ros2_msg_receive_buffer)
 	info := &MessageInfo{}
@@ -811,9 +831,12 @@ func (s *Subscription) TakeSerializedMessageInto(dst []byte, info *MessageInfo) 
 		s.take.msg = C.rmw_serialized_message_t(msg)
 	}
 	s.take.info = C.rmw_message_info_t{}
+	runtime.LockOSThread()
 	rc := C.rcl_take_serialized_message(s.rcl_subscription_t, &s.take.msg, &s.take.info, nil)
-	if rc != C.RCL_RET_OK {
-		return nil, s.takeErr("rcl_take_serialized_message()", rc)
+	err := s.takeErr("rcl_take_serialized_message()", rc)
+	runtime.UnlockOSThread()
+	if err != nil {
+		return nil, err
 	}
 	if info != nil {
 		info.fromCStruct(&s.take.info)
@@ -828,8 +851,13 @@ var errSubscriptionTakeFailed error = &SubscriptionTakeFailed{rclError{
 	context:    "[*rclgo.SubscriptionTakeFailed] no message available to take",
 }}
 
+// takeErr maps a take's return code to an error. The caller holds the OS
+// thread from the take through this call.
 func (s *Subscription) takeErr(call string, rc C.rcl_ret_t) error {
-	if rc == C.RCL_RET_SUBSCRIPTION_TAKE_FAILED {
+	switch rc {
+	case C.RCL_RET_OK:
+		return nil
+	case C.RCL_RET_SUBSCRIPTION_TAKE_FAILED:
 		return errSubscriptionTakeFailed
 	}
 	return errorsCastC(rc, fmt.Sprintf("%s failed for subscription on topic '%s' of node '%s'", call, s.TopicName, s.node.FullyQualifiedName()))
@@ -838,9 +866,11 @@ func (s *Subscription) takeErr(call string, rc C.rcl_ret_t) error {
 // GetPublisherCount returns the number of publishers matched to s.
 func (s *Subscription) GetPublisherCount() (int, error) {
 	var count C.size_t
-	rc := C.rcl_subscription_get_publisher_count(s.rcl_subscription_t, &count)
-	if rc != C.RCL_RET_OK {
-		return 0, errorsCastC(rc, "failed to get publisher count")
+	err := rclCall("failed to get publisher count", func() C.rcl_ret_t {
+		return C.rcl_subscription_get_publisher_count(s.rcl_subscription_t, &count)
+	})
+	if err != nil {
+		return 0, err
 	}
 	return int(count), nil
 }
@@ -860,10 +890,9 @@ func (s *Subscription) Close() (err error) {
 		s.take = nil
 	}
 	s.node.removeResource(s)
-	rc := C.rcl_subscription_fini(s.rcl_subscription_t, s.node.rcl_node_t)
-	if rc != C.RCL_RET_OK {
-		err = errors.Join(err, errorsCast(rc))
-	}
+	err = rclCall("", func() C.rcl_ret_t {
+		return C.rcl_subscription_fini(s.rcl_subscription_t, s.node.rcl_node_t)
+	})
 	handleCloses.Add(1)
 	C.free(unsafe.Pointer(s.rcl_subscription_t))
 	s.rcl_subscription_t = nil
@@ -885,13 +914,15 @@ func (c *Context) newGuardCondition() (g *guardCondition, err error) {
 	}
 	*g.rclGuardCondition = C.rcl_get_zero_initialized_guard_condition()
 	defer onErr(&err, g.Close)
-	rc := C.rcl_guard_condition_init(
-		g.rclGuardCondition,
-		c.rcl_context_t,
-		C.rcl_guard_condition_get_default_options(),
-	)
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCast(rc)
+	err = rclCall("", func() C.rcl_ret_t {
+		return C.rcl_guard_condition_init(
+			g.rclGuardCondition,
+			c.rcl_context_t,
+			C.rcl_guard_condition_get_default_options(),
+		)
+	})
+	if err != nil {
+		return nil, err
 	}
 	c.addResource(g)
 	return g, nil
@@ -902,22 +933,15 @@ func (c *guardCondition) Close() error {
 		return closeErr("guard condition")
 	}
 	c.context.removeResource(c)
-	rc := C.rcl_guard_condition_fini(c.rclGuardCondition)
+	err := rclCall("", func() C.rcl_ret_t { return C.rcl_guard_condition_fini(c.rclGuardCondition) })
 	handleCloses.Add(1)
 	C.free(unsafe.Pointer(c.rclGuardCondition))
 	c.rclGuardCondition = nil
-	if rc == C.RCL_RET_OK {
-		return nil
-	}
-	return errorsCast(rc)
+	return err
 }
 
 func (c *guardCondition) Trigger() error {
-	rc := C.rcl_trigger_guard_condition(c.rclGuardCondition)
-	if rc != C.RCL_RET_OK {
-		return errorsCast(rc)
-	}
-	return nil
+	return rclCall("", func() C.rcl_ret_t { return C.rcl_trigger_guard_condition(c.rclGuardCondition) })
 }
 
 type RequestID struct {
@@ -1041,15 +1065,17 @@ func (n *Node) NewService(
 	defer onErr(&err, s.Close)
 	opts := C.rcl_service_options_t{allocator: *n.context.rcl_allocator_t}
 	options.Qos.asCStruct(&opts.qos)
-	retCode := C.rcl_service_init(
-		s.rclService,
-		n.rcl_node_t,
-		(*C.struct_rosidl_service_type_support_t)(typeSupport.TypeSupport()),
-		s.name,
-		&opts,
-	)
-	if retCode != C.RCL_RET_OK {
-		return nil, errorsCastC(retCode, "failed to create service")
+	err = rclCall("failed to create service", func() C.rcl_ret_t {
+		return C.rcl_service_init(
+			s.rclService,
+			n.rcl_node_t,
+			(*C.struct_rosidl_service_type_support_t)(typeSupport.TypeSupport()),
+			s.name,
+			&opts,
+		)
+	})
+	if err != nil {
+		return nil, err
 	}
 	if options.Introspection != ServiceIntrospectionOff {
 		if err = s.ConfigureIntrospection(options.Introspection); err != nil {
@@ -1081,16 +1107,18 @@ func (s *Service) ConfigureIntrospection(state ServiceIntrospectionState) error 
 	}
 	pubOpts := C.rcl_publisher_get_default_options()
 	pubOpts.allocator = *s.node.context.rcl_allocator_t
-	rc := C.rcl_service_configure_service_introspection(
-		s.rclService,
-		s.node.rcl_node_t,
-		s.node.context.Clock().rcl_clock_t,
-		(*C.struct_rosidl_service_type_support_t)(s.typeSupport.TypeSupport()),
-		pubOpts,
-		C.rcl_service_introspection_state_t(state),
-	)
-	if rc != C.RCL_RET_OK {
-		return errorsCastC(rc, "failed to configure service introspection")
+	err := rclCall("failed to configure service introspection", func() C.rcl_ret_t {
+		return C.rcl_service_configure_service_introspection(
+			s.rclService,
+			s.node.rcl_node_t,
+			s.node.context.Clock().rcl_clock_t,
+			(*C.struct_rosidl_service_type_support_t)(s.typeSupport.TypeSupport()),
+			pubOpts,
+			C.rcl_service_introspection_state_t(state),
+		)
+	})
+	if err != nil {
+		return err
 	}
 	s.introspectionState = state
 	return nil
@@ -1109,10 +1137,9 @@ func (s *Service) Close() (err error) {
 		return closeErr("service")
 	}
 	s.node.removeResource(s)
-	rc := C.rcl_service_fini(s.rclService, s.node.rcl_node_t)
-	if rc != C.RCL_RET_OK {
-		err = errorsCastC(rc, "failed to finalize service")
-	}
+	err = rclCall("failed to finalize service", func() C.rcl_ret_t {
+		return C.rcl_service_fini(s.rclService, s.node.rcl_node_t)
+	})
 	handleCloses.Add(1)
 	C.free(unsafe.Pointer(s.rclService))
 	s.rclService = nil
@@ -1130,8 +1157,13 @@ func (s *Service) handleRequest() {
 	var reqHeader C.rmw_service_info_t
 	reqBuffer := s.requestTypeSupport.PrepareMemory()
 	defer s.requestTypeSupport.ReleaseMemory(reqBuffer)
-	switch rc := C.rcl_take_request_with_info(s.rclService, &reqHeader, reqBuffer); rc {
-	case C.RCL_RET_OK:
+	rc, err := rclCallRC("failed to take request", func() C.rcl_ret_t {
+		return C.rcl_take_request_with_info(s.rclService, &reqHeader, reqBuffer)
+	}, C.RCL_RET_SERVICE_TAKE_FAILED)
+	switch {
+	case err != nil:
+		s.node.Logger().Debug(err)
+	case rc == C.RCL_RET_OK:
 		info := ServiceInfo{
 			SourceTimestamp:   time.Unix(0, int64(reqHeader.source_timestamp)),
 			ReceivedTimestamp: time.Unix(0, int64(reqHeader.received_timestamp)),
@@ -1146,16 +1178,11 @@ func (s *Service) handleRequest() {
 				respBuffer := s.responseTypeSupport.PrepareMemory()
 				defer s.responseTypeSupport.ReleaseMemory(respBuffer)
 				s.responseTypeSupport.AsCStruct(respBuffer, resp)
-				rc := C.rcl_send_response(s.rclService, &reqHeader.request_id, respBuffer)
-				if rc != C.RCL_RET_OK {
-					return errorsCastC(rc, "failed to send response")
-				}
-				return nil
+				return rclCall("failed to send response", func() C.rcl_ret_t {
+					return C.rcl_send_response(s.rclService, &reqHeader.request_id, respBuffer)
+				})
 			}),
 		)
-	case C.RCL_RET_SERVICE_TAKE_FAILED:
-	default:
-		s.node.Logger().Debug(errorsCastC(rc, "failed to take request"))
 	}
 }
 
@@ -1224,15 +1251,17 @@ func (n *Node) NewClient(
 	options.Qos.asCStruct(&opts.qos)
 	cserviceName := C.CString(serviceName)
 	defer C.free(unsafe.Pointer(cserviceName))
-	rc := C.rcl_client_init(
-		c.rclClient,
-		n.rcl_node_t,
-		(*C.struct_rosidl_service_type_support_t)(typeSupport.TypeSupport()),
-		cserviceName,
-		&opts,
-	)
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCastC(rc, "failed to create client")
+	err = rclCall("failed to create client", func() C.rcl_ret_t {
+		return C.rcl_client_init(
+			c.rclClient,
+			n.rcl_node_t,
+			(*C.struct_rosidl_service_type_support_t)(typeSupport.TypeSupport()),
+			cserviceName,
+			&opts,
+		)
+	})
+	if err != nil {
+		return nil, err
 	}
 	if options.Introspection != ServiceIntrospectionOff {
 		if err = c.ConfigureIntrospection(options.Introspection); err != nil {
@@ -1264,16 +1293,18 @@ func (c *Client) ConfigureIntrospection(state ServiceIntrospectionState) error {
 	}
 	pubOpts := C.rcl_publisher_get_default_options()
 	pubOpts.allocator = *c.node.context.rcl_allocator_t
-	rc := C.rcl_client_configure_service_introspection(
-		c.rclClient,
-		c.node.rcl_node_t,
-		c.node.context.Clock().rcl_clock_t,
-		(*C.struct_rosidl_service_type_support_t)(c.typeSupport.TypeSupport()),
-		pubOpts,
-		C.rcl_service_introspection_state_t(state),
-	)
-	if rc != C.RCL_RET_OK {
-		return errorsCastC(rc, "failed to configure service introspection")
+	err := rclCall("failed to configure service introspection", func() C.rcl_ret_t {
+		return C.rcl_client_configure_service_introspection(
+			c.rclClient,
+			c.node.rcl_node_t,
+			c.node.context.Clock().rcl_clock_t,
+			(*C.struct_rosidl_service_type_support_t)(c.typeSupport.TypeSupport()),
+			pubOpts,
+			C.rcl_service_introspection_state_t(state),
+		)
+	})
+	if err != nil {
+		return err
 	}
 	c.introspectionState = state
 	return nil
@@ -1293,10 +1324,9 @@ func (c *Client) Close() error {
 	}
 	c.node.removeResource(c)
 	err := c.sender.Close()
-	rc := C.rcl_client_fini(c.rclClient, c.node.rcl_node_t)
-	if rc != C.RCL_RET_OK {
-		err = errors.Join(err, errorsCastC(rc, "failed to finalize client"))
-	}
+	err = errors.Join(err, rclCall("failed to finalize client", func() C.rcl_ret_t {
+		return C.rcl_client_fini(c.rclClient, c.node.rcl_node_t)
+	}))
 	handleCloses.Add(1)
 	C.free(unsafe.Pointer(c.rclClient))
 	c.rclClient = nil
@@ -1311,9 +1341,11 @@ func (c *Client) Node() *Node {
 
 func (c *Client) IsServerAvailable() (bool, error) {
 	var isAvailable C.bool
-	rc := C.rcl_service_server_is_available(c.node.rcl_node_t, c.rclClient, &isAvailable)
-	if rc != C.RCL_RET_OK {
-		return false, errorsCastC(rc, "failed to check if server is available")
+	err := rclCall("failed to check if server is available", func() C.rcl_ret_t {
+		return C.rcl_service_server_is_available(c.node.rcl_node_t, c.rclClient, &isAvailable)
+	})
+	if err != nil {
+		return false, err
 	}
 	return bool(isAvailable), nil
 }
@@ -1329,26 +1361,31 @@ func (c *Client) Send(ctx context.Context, req types.Message) (types.Message, *S
 
 func (c *Client) sendRequest(req unsafe.Pointer) (C.int64_t, error) {
 	var seqNum C.int64_t
-	rc := C.rcl_send_request(c.rclClient, req, &seqNum)
-	if rc != C.RCL_RET_OK {
-		return 0, errorsCastC(rc, "failed to send request")
+	err := rclCall("failed to send request", func() C.rcl_ret_t {
+		return C.rcl_send_request(c.rclClient, req, &seqNum)
+	})
+	if err != nil {
+		return 0, err
 	}
 	return seqNum, nil
 }
 
 func (c *Client) takeResponse(resp unsafe.Pointer) (C.int64_t, any, error) {
 	var header C.rmw_service_info_t
-	switch rc := C.rcl_take_response_with_info(c.rclClient, &header, resp); rc {
-	case C.RCL_RET_OK:
+	rc, err := rclCallRC("failed to take response", func() C.rcl_ret_t {
+		return C.rcl_take_response_with_info(c.rclClient, &header, resp)
+	}, C.RCL_RET_CLIENT_TAKE_FAILED)
+	switch {
+	case err != nil:
+		return 0, nil, err
+	case rc == C.RCL_RET_OK:
 		return header.request_id.sequence_number, &ServiceInfo{
 			SourceTimestamp:   time.Unix(0, int64(header.source_timestamp)),
 			ReceivedTimestamp: time.Unix(0, int64(header.received_timestamp)),
 			RequestID:         newRequestID(&header.request_id),
 		}, nil
-	case C.RCL_RET_CLIENT_TAKE_FAILED:
-		return 0, nil, errTakeFailed
 	default:
-		return 0, nil, errorsCastC(rc, "failed to take response")
+		return 0, nil, errTakeFailed
 	}
 }
 

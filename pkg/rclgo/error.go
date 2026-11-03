@@ -12,11 +12,21 @@ package rclgo
 /*
 #include <rcl/types.h>
 #include <rcutils/error_handling.h>
+
+// Reads and clears in one call so a later failure that sets no message cannot
+// report this one's.
+static rcutils_error_string_t rclgo_take_error_string(void) {
+	rcutils_error_string_t s = rcutils_get_error_string();
+	rcutils_reset_error();
+	return s;
+}
 */
 import "C"
 
 import (
 	"fmt"
+	"runtime"
+	"slices"
 )
 
 type rclError struct {
@@ -40,7 +50,7 @@ func (e *rclError) Error() string {
  * \return The current error string, with file and line number, or "error not set" if not set.
  */
 func errorString() string {
-	rcutils_error_string_str := C.rcutils_get_error_string().str // TODO: Do I need to free this or not?
+	rcutils_error_string_str := C.rclgo_take_error_string().str
 
 	// Because the C string is null-terminated, we need to find the NULL-character to know where the string ends.
 	// Otherwise we create a Go string of length 1024 of NULLs and gibberish
@@ -60,6 +70,33 @@ func errorString() string {
 
 func errorsBuildContext(e error, ctx string, stackTrace string) string {
 	return fmt.Sprintf("[%T]", e) + " " + ctx + " " + errorString() + "\n" + stackTrace + "\n"
+}
+
+// rcutils error state is thread-local, so a failing call and the read of its
+// error string must run on one OS thread. rclCall and rclCallRC lock the
+// goroutine to its thread for exactly that span; hot paths inline the same.
+
+// rclCall runs call and, if it does not return RCL_RET_OK, builds the error
+// from the rcutils error state with context.
+func rclCall(context string, call func() C.rcl_ret_t) error {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	if rc := call(); rc != C.RCL_RET_OK {
+		return errorsCastC(rc, context)
+	}
+	return nil
+}
+
+// rclCallRC is rclCall for callers that branch on the return code. Codes in
+// expected are returned with a nil error and leave the error state unread.
+func rclCallRC(context string, call func() C.rcl_ret_t, expected ...C.rcl_ret_t) (C.rcl_ret_t, error) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	rc := call()
+	if rc == C.RCL_RET_OK || slices.Contains(expected, rc) {
+		return rc, nil
+	}
+	return rc, errorsCastC(rc, context)
 }
 
 func errorsCast(rcl_ret_t C.rcl_ret_t) error {
