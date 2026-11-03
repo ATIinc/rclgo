@@ -484,6 +484,8 @@ func (s *ActionServer) takeGoalRequest(goal *GoalHandle) error {
 	ts := s.typeSupport.SendGoal().Request()
 	reqBuf := ts.PrepareMemory()
 	defer ts.ReleaseMemory(reqBuf)
+	// rcl documents this as not thread-safe; calling it without rclServerMu
+	// relies on the RMW locking each service internally, as rmw_zenoh does.
 	err := rclCall("failed to take goal request", func() C.rcl_ret_t {
 		return C.rcl_action_take_goal_request(&s.rclServer, &goal.requestID, reqBuf)
 	})
@@ -541,6 +543,8 @@ func (s *ActionServer) sendGoalResponseWithStamp(goal *GoalHandle, stamp time.Du
 	buf := ts.PrepareMemory()
 	defer ts.ReleaseMemory(buf)
 	ts.AsCStruct(buf, resp)
+	// rcl documents this as thread-safe only per distinct response; calling it
+	// without rclServerMu relies on the RMW locking each service, as rmw_zenoh does.
 	return rclCall("failed to send goal response", func() C.rcl_ret_t {
 		return C.rcl_action_send_goal_response(&s.rclServer, &goal.requestID, buf)
 	})
@@ -663,6 +667,8 @@ func (s *ActionServer) takeResultRequest(header *C.rmw_request_id_t) (goalIDMess
 	ts := s.typeSupport.GetResult().Request()
 	reqBuf := ts.PrepareMemory()
 	defer ts.ReleaseMemory(reqBuf)
+	// rcl documents this as not thread-safe; calling it without rclServerMu
+	// relies on the RMW locking each service internally, as rmw_zenoh does.
 	err := rclCall("failed to take result request", func() C.rcl_ret_t {
 		return C.rcl_action_take_result_request(&s.rclServer, header, reqBuf)
 	})
@@ -688,6 +694,8 @@ func (s *ActionServer) sendResultResponse(status GoalStatus, result types.Messag
 	buf := ts.PrepareMemory()
 	defer ts.ReleaseMemory(buf)
 	ts.AsCStruct(buf, resp)
+	// rcl documents this as not thread-safe; calling it without rclServerMu
+	// relies on the RMW locking each service internally, as rmw_zenoh does.
 	return rclCall("failed to send result response", func() C.rcl_ret_t {
 		return C.rcl_action_send_result_response(&s.rclServer, header, buf)
 	})
@@ -739,6 +747,8 @@ func (s *ActionServer) handleCancelRequest() {
 	reqBuf := ts.Request().PrepareMemory()
 	respBuf := C.rcl_action_get_zero_initialized_cancel_response()
 	var header C.rmw_request_id_t
+	// rcl documents the cancel take and response send as not thread-safe; calling
+	// them without rclServerMu relies on the RMW locking each service, as rmw_zenoh does.
 	// The take error is built here, not in the goroutine, which may run on
 	// another thread.
 	rc, takeErr := rclCallRC("failed to take cancel request", func() C.rcl_ret_t {
@@ -1225,6 +1235,8 @@ func (c *ActionClient) SendGoalRequest(ctx context.Context, request types.Messag
 
 func (c *ActionClient) sendGoalRequest(req unsafe.Pointer) (C.int64_t, error) {
 	var seqNum C.int64_t
+	// rcl documents this as thread-safe only per distinct goal; calling it without
+	// rclClientMu relies on the RMW locking each service, as rmw_zenoh does.
 	err := rclCall("failed to send goal request", func() C.rcl_ret_t {
 		return C.rcl_action_send_goal_request(&c.rclClient, req, &seqNum)
 	})
@@ -1264,6 +1276,8 @@ func (c *ActionClient) GetResult(ctx context.Context, goalID *types.GoalID) (typ
 
 func (c *ActionClient) sendResultRequest(req unsafe.Pointer) (C.int64_t, error) {
 	var seqNum C.int64_t
+	// rcl documents this as thread-safe only per distinct goal; calling it without
+	// rclClientMu relies on the RMW locking each service, as rmw_zenoh does.
 	err := rclCall("failed to send result request", func() C.rcl_ret_t {
 		return C.rcl_action_send_result_request(&c.rclClient, req, &seqNum)
 	})
@@ -1312,6 +1326,8 @@ func (c *ActionClient) CancelGoal(ctx context.Context, request types.Message) (t
 
 func (c *ActionClient) sendCancelRequest(req unsafe.Pointer) (C.int64_t, error) {
 	var seqNum C.int64_t
+	// rcl documents this as not thread-safe; calling it without rclClientMu
+	// relies on the RMW locking each service internally, as rmw_zenoh does.
 	err := rclCall("failed to send cancel request", func() C.rcl_ret_t {
 		return C.rcl_action_send_cancel_request(&c.rclClient, req, &seqNum)
 	})
