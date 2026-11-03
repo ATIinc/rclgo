@@ -23,8 +23,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"math"
 	"runtime"
+	"slices"
 	"sync"
 	"unsafe"
 )
@@ -78,9 +80,27 @@ func (s *rosResourceStore) removeResource(r rosResource) {
 	delete(s.resources, r.getID())
 }
 
+// snapshot returns the stored resources. Callers iterate the copy because
+// closing a resource calls removeResource, which takes the store's mutex.
+func (s *rosResourceStore) snapshot() []rosResource {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	return slices.Collect(maps.Values(s.resources))
+}
+
+func (s *rosResourceStore) contains(r rosResource) bool {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	return s.resources[r.getID()] == r
+}
+
 func (s *rosResourceStore) Close() (err error) {
-	for _, r := range s.resources {
-		err = errors.Join(err, r.Close())
+	for _, r := range s.snapshot() {
+		// Closing one resource can close others, e.g. a wait set its guard
+		// conditions; skip those rather than report a double close.
+		if s.contains(r) {
+			err = errors.Join(err, r.Close())
+		}
 	}
 	return err
 }

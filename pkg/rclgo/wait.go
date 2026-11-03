@@ -425,7 +425,7 @@ func (r *reservedEntities) releaseAll() {
 }
 
 func (w *WaitSet) addResources(res *rosResourceStore) {
-	for _, res := range res.resources {
+	for _, res := range res.snapshot() {
 		switch res := res.(type) {
 		case *Subscription:
 			w.AddSubscriptions(res)

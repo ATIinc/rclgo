@@ -323,3 +323,33 @@ func TestWaitSetCallsDoNotOutliveRun(t *testing.T) {
 	}
 	require.Positive(t, executed.Load())
 }
+
+func TestSpinConcurrentWithResourceCreation(t *testing.T) {
+	// Run with -race: Spin collects the context's resources while another
+	// goroutine adds timers to it.
+	rclCtx, err := rclgo.NewContext(0, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { rclCtx.Close() })
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	const timers = 200
+	var created atomic.Int32
+	var wg sync.WaitGroup
+	wg.Go(func() {
+		for range timers {
+			if _, err := rclCtx.NewTimer(time.Hour, func(*rclgo.Timer) {}); err != nil {
+				t.Error(err)
+				return
+			}
+			created.Add(1)
+		}
+	})
+	spins := 0
+	for spins == 0 || created.Load() < timers {
+		require.ErrorIs(t, rclCtx.Spin(canceled), context.Canceled)
+		spins++
+	}
+	wg.Wait()
+	t.Logf("%d spins overlapped %d timer creations", spins, timers)
+}
