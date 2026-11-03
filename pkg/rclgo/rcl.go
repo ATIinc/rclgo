@@ -488,7 +488,7 @@ func (p *Publisher) Publish(ros2msg types.Message) error {
 
 	rc = C.rcl_publish(p.rcl_publisher_t, ptr, nil)
 	if rc != C.RCL_RET_OK {
-		return errorsCastC(rc, fmt.Sprintf("rcl_publish() failed for publisher '%+v'", p))
+		return errorsCastC(rc, fmt.Sprintf("rcl_publish() failed for publisher on topic '%s' of node '%s'", p.TopicName, p.node.FullyQualifiedName()))
 	}
 	return nil
 }
@@ -764,7 +764,7 @@ func (s *Subscription) TakeMessage(out types.Message) (*MessageInfo, error) {
 
 	rc := C.rcl_take(s.rcl_subscription_t, ros2_msg_receive_buffer, &rmw_message_info, nil)
 	if rc != C.RCL_RET_OK {
-		return nil, errorsCastC(rc, fmt.Sprintf("rcl_take() failed for subscription='%+v'", s))
+		return nil, s.takeErr("rcl_take()", rc)
 	}
 	s.Ros2MsgType.AsGoStruct(out, ros2_msg_receive_buffer)
 	info := &MessageInfo{}
@@ -813,12 +813,26 @@ func (s *Subscription) TakeSerializedMessageInto(dst []byte, info *MessageInfo) 
 	s.take.info = C.rmw_message_info_t{}
 	rc := C.rcl_take_serialized_message(s.rcl_subscription_t, &s.take.msg, &s.take.info, nil)
 	if rc != C.RCL_RET_OK {
-		return nil, errorsCastC(rc, fmt.Sprintf("rcl_take_serialized_message() failed for subscription='%+v'", s))
+		return nil, s.takeErr("rcl_take_serialized_message()", rc)
 	}
 	if info != nil {
 		info.fromCStruct(&s.take.info)
 	}
 	return append(dst[:0], (*serializedMessage)(&s.take.msg).AsSlice()...), nil
+}
+
+// errSubscriptionTakeFailed is returned when no message is available. It is
+// built once because callers poll for it at high rates.
+var errSubscriptionTakeFailed error = &SubscriptionTakeFailed{rclError{
+	rclRetCode: C.RCL_RET_SUBSCRIPTION_TAKE_FAILED,
+	context:    "[*rclgo.SubscriptionTakeFailed] no message available to take",
+}}
+
+func (s *Subscription) takeErr(call string, rc C.rcl_ret_t) error {
+	if rc == C.RCL_RET_SUBSCRIPTION_TAKE_FAILED {
+		return errSubscriptionTakeFailed
+	}
+	return errorsCastC(rc, fmt.Sprintf("%s failed for subscription on topic '%s' of node '%s'", call, s.TopicName, s.node.FullyQualifiedName()))
 }
 
 // GetPublisherCount returns the number of publishers matched to s.

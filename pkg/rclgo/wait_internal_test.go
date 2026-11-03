@@ -154,6 +154,8 @@ func TestWaitSetHandleCacheDropsClosedEntities(t *testing.T) {
 	require.Equal(t, unsafe.Pointer(timer.rcl_timer_t), unsafe.Slice(ws.handles.handles, 1)[0])
 
 	require.NoError(t, timer.Close())
-	require.ErrorContains(t, ws.initEntities(), "rcl_wait_set_add_timer() failed")
+	err = ws.initEntities()
+	require.ErrorContains(t, err, "rcl_wait_set_add_timer() failed")
+	require.ErrorContains(t, err, "timers=1")
 	assert.Nil(t, unsafe.Slice(ws.handles.handles, 1)[0])
 }

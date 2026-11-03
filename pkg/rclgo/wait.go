@@ -661,12 +661,12 @@ func (w *WaitSet) initEntities() error {
 		&failed,
 	)
 	if rc != C.RCL_RET_OK {
-		return errorsCastC(rc, fmt.Sprintf("%s failed for wait_set='%v'", fillFailures[failed], w))
+		return errorsCastC(rc, fmt.Sprintf("%s failed for wait set (%s)", fillFailures[failed], w.entityCounts()))
 	}
 	for _, server := range w.actionServers {
 		rc = C.rcl_action_wait_set_add_action_server(&w.rcl_wait_set_t, &server.rclServer, nil)
 		if rc != C.RCL_RET_OK {
-			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_action_server() failed for wait_set='%v'", w))
+			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_action_server() failed for wait set (%s)", w.entityCounts()))
 		}
 	}
 	for _, client := range w.actionClients {
@@ -678,7 +678,7 @@ func (w *WaitSet) initEntities() error {
 		rc = C.rcl_action_wait_set_add_action_client(&w.rcl_wait_set_t, &client.rclClient, nil, nil)
 		client.rclClientMu.Unlock()
 		if rc != C.RCL_RET_OK {
-			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_action_client() failed for wait_set='%v'", w))
+			return errorsCastC(rc, fmt.Sprintf("rcl_wait_set_add_action_client() failed for wait set (%s)", w.entityCounts()))
 		}
 	}
 	return nil

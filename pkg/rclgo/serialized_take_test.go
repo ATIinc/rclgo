@@ -120,6 +120,20 @@ func TestTakeSerializedMessageInto(t *testing.T) {
 		assert.Zero(t, allocs)
 	})
 
+	t.Run("no message available", func(t *testing.T) {
+		var takeFailed *rclgo.SubscriptionTakeFailed
+		_, err := sub.TakeSerializedMessageInto(nil, nil)
+		require.ErrorAs(t, err, &takeFailed)
+		var typed std_msgs.ColorRGBA
+		_, err = sub.TakeMessage(&typed)
+		require.ErrorAs(t, err, &takeFailed)
+		// Callers poll for this result, so it must not allocate.
+		allocs := testing.AllocsPerRun(100, func() {
+			_, _ = sub.TakeSerializedMessageInto(nil, nil)
+		})
+		assert.Zero(t, allocs)
+	})
+
 	t.Run("take after close", func(t *testing.T) {
 		require.NoError(t, sub.Close())
 		_, err := sub.TakeSerializedMessageInto(nil, nil)
