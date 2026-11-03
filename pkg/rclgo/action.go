@@ -568,7 +568,7 @@ func (s *ActionServer) handleGoalRequest(ctx context.Context) {
 	go func() {
 		defer cancel()
 		if err != nil {
-			if !errors.Is(err, &ActionServerTakeFailed{}) {
+			if _, ok := errors.AsType[*ActionServerTakeFailed](err); !ok {
 				s.node.Logger().Error(err)
 			}
 			return
@@ -706,7 +706,7 @@ func (s *ActionServer) handleResultRequest() {
 	req, err := s.takeResultRequest(&header)
 	go func() {
 		if err != nil {
-			if !errors.Is(err, &ActionServerTakeFailed{}) {
+			if _, ok := errors.AsType[*ActionServerTakeFailed](err); !ok {
 				s.node.Logger().Error(err)
 			}
 			return
