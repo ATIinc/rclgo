@@ -215,8 +215,8 @@ func TestActionExecution(t *testing.T) {
 		Convey("Resources are released properly", func() {
 			cancel()
 			timeOut(1000, func() {
-				<-spinErr
-				<-spinErr
+				_ = <-spinErr
+				_ = <-spinErr
 			}, "Waiting for spinning to stop")
 			So(rclctx.Close(), ShouldBeNil)
 		})
@@ -683,8 +683,8 @@ func TestActionAbortWithResult(t *testing.T) {
 		Convey("Resources are released properly", func() {
 			cancel()
 			timeOut(1000, func() {
-				<-spinErr
-				<-spinErr
+				_ = <-spinErr
+				_ = <-spinErr
 			}, "Waiting for spinning to stop")
 			So(rclctx.Close(), ShouldBeNil)
 		})

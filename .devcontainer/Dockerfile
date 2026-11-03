@@ -14,8 +14,8 @@ ENV ROS_DISTRO=${ROS_DISTRO}
 # the bootstrap toolchain installed here will fetch the exact version go.mod
 # asks for on first build. Override GO_VERSION at build time to pin a newer
 # bootstrap.
-ARG GO_VERSION=1.24.4
-ARG GOLANGCI_LINT_VERSION=v2.1.6
+ARG GO_VERSION=1.27.3
+ARG GOLANGCI_LINT_VERSION=v2.15.0
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -28,6 +28,7 @@ RUN apt-get update \
         git \
         make \
         pkg-config \
+        sudo \
         ros-${ROS_DISTRO}-action-msgs \
         ros-${ROS_DISTRO}-example-interfaces \
         ros-${ROS_DISTRO}-test-msgs \
@@ -45,11 +46,28 @@ RUN ARCH="$(dpkg --print-architecture)" \
     && tar -C /usr/local -xzf /tmp/go.tgz \
     && rm /tmp/go.tgz
 
-ENV PATH=/usr/local/go/bin:/root/go/bin:${PATH}
-ENV GOPATH=/root/go
+# Non-root development user. The devcontainer runs as this user, and the
+# devcontainer tooling (updateRemoteUserUID) remaps its UID/GID to match the
+# host user at container start, so files created in the bind-mounted workspace
+# are owned by you rather than root. Ubuntu noble based images already ship an
+# `ubuntu` user at UID 1000; create the user if the base image lacks it.
+ARG USERNAME=ubuntu
+ARG USER_UID=1000
+ARG USER_GID=${USER_UID}
+RUN if ! id -u "${USERNAME}" >/dev/null 2>&1; then \
+        groupadd --gid "${USER_GID}" "${USERNAME}" \
+        && useradd --uid "${USER_UID}" --gid "${USER_GID}" -m -s /bin/bash "${USERNAME}"; \
+    fi \
+    && echo "${USERNAME} ALL=(root) NOPASSWD:ALL" > "/etc/sudoers.d/${USERNAME}" \
+    && chmod 0440 "/etc/sudoers.d/${USERNAME}" \
+    && mkdir -p "/home/${USERNAME}/go" \
+    && chown -R "${USERNAME}:" "/home/${USERNAME}/go"
+
+ENV GOPATH=/home/${USERNAME}/go
+ENV PATH=/usr/local/go/bin:${GOPATH}/bin:${PATH}
 
 # golangci-lint for `make lint`.
-RUN curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+RUN curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/main/install.sh \
         | sh -s -- -b /usr/local/bin "${GOLANGCI_LINT_VERSION}"
 
 # cgocheck=0 is required by rclgo's cgo bindings (see ros2.env).
