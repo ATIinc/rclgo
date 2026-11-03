@@ -65,6 +65,46 @@ func newWaitAction() (chan struct{}, rclgo.Action) {
 	)
 }
 
+// warmUpActionClient sends untracked goals of the given order until watch
+// reports a message. Messages published before a new client's subscriptions
+// have matched the server are lost, so tests that count them warm up first.
+func warmUpActionClient(
+	ctx context.Context,
+	client *rclgo.ActionClient,
+	order int32,
+	watch func(context.Context, func(context.Context, types.Message)) <-chan error,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	received := make(chan struct{})
+	var once sync.Once
+	watchDone := watch(ctx, func(context.Context, types.Message) {
+		once.Do(func() { close(received) })
+	})
+	defer func() {
+		cancel()
+		<-watchDone
+	}()
+	for i := byte(0); ; i++ {
+		req := test_msgs_action.NewFibonacci_SendGoal_Request()
+		req.Goal.Order = order
+		req.GoalID.Uuid = types.GoalID{0xff, i}
+		attemptCtx, stopAttempt := context.WithTimeout(ctx, 200*time.Millisecond)
+		_, _ = client.SendGoalRequest(attemptCtx, req)
+		stopAttempt()
+		select {
+		case <-received:
+			return nil
+		case <-ctx.Done():
+			return errors.New("action client warm-up received no message")
+		case <-time.After(100 * time.Millisecond):
+		}
+	}
+}
+
+// fibonacciWarmUpOrder makes fibonacciAction send one feedback message and
+// finish without waiting on continueChan.
+const fibonacciWarmUpOrder = 1000
+
 type fibonacciAction struct {
 	continueChan chan struct{}
 }
@@ -81,6 +121,9 @@ func (a *fibonacciAction) ExecuteGoal(_ context.Context, goal *rclgo.GoalHandle)
 	sender, err := goal.Accept()
 	if err != nil {
 		return nil, err
+	}
+	if desc.Order == fibonacciWarmUpOrder {
+		return test_msgs_action.NewFibonacci_Result(), sender.Send(test_msgs_action.NewFibonacci_Feedback())
 	}
 	if desc.Order >= 100 {
 		return nil, errors.New("order must be less than 100")
@@ -154,11 +197,16 @@ func TestActionExecution(t *testing.T) {
 			go func() { spinErr <- node2.Spin(ctx) }()
 		})
 		Convey("Watch a successful goal", func() {
+			So(warmUpActionClient(ctx, client, fibonacciWarmUpOrder, func(ctx context.Context, h func(context.Context, types.Message)) <-chan error {
+				return client.WatchFeedback(ctx, nil, h)
+			}), ShouldBeNil)
+			watchCtx, stopWatch := context.WithTimeout(ctx, 10*time.Second)
+			defer stopWatch()
 			goal := test_msgs_action.NewFibonacci_Goal()
 			goal.Order = 10
 			feedbacks := make(fibonacciFeedbacks, 0)
 			var feedbacksMu sync.Mutex
-			result, _, err := client.WatchGoal(ctx, goal, func(_ context.Context, m types.Message) {
+			result, _, err := client.WatchGoal(watchCtx, goal, func(_ context.Context, m types.Message) {
 				fb := m.(*test_msgs_action.Fibonacci_FeedbackMessage)
 				feedbacksMu.Lock()
 				feedbacks = append(feedbacks, &fb.Feedback)
@@ -181,18 +229,22 @@ func TestActionExecution(t *testing.T) {
 		})
 		Convey("Watch a rejected goal", func() {
 			close(action.continueChan)
+			watchCtx, stopWatch := context.WithTimeout(ctx, 10*time.Second)
+			defer stopWatch()
 			goal := test_msgs_action.NewFibonacci_Goal()
 			goal.Order = -1
-			resp, _, err := client.WatchGoal(ctx, goal, func(context.Context, types.Message) {
+			resp, _, err := client.WatchGoal(watchCtx, goal, func(context.Context, types.Message) {
 				panic("no feedback should be sent")
 			})
 			So(err, ShouldNotBeNil)
 			So(resp, ShouldBeNil)
 		})
 		Convey("Send a goal that will be rejected", func() {
+			sendCtx, stopSend := context.WithTimeout(ctx, 10*time.Second)
+			defer stopSend()
 			goal := test_msgs_action.NewFibonacci_Goal()
 			goal.Order = -1
-			resp, id, err := client.SendGoal(ctx, goal)
+			resp, id, err := client.SendGoal(sendCtx, goal)
 			So(err, ShouldBeNil)
 			So(id, ShouldNotBeNil)
 			So(resp, ShouldNotBeNil)
@@ -200,15 +252,17 @@ func TestActionExecution(t *testing.T) {
 			So(r.Accepted, ShouldBeFalse)
 		})
 		Convey("Send a goal that will be aborted", func() {
+			sendCtx, stopSend := context.WithTimeout(ctx, 10*time.Second)
+			defer stopSend()
 			goal := test_msgs_action.NewFibonacci_Goal()
 			goal.Order = 100
-			resp, id, err := client.SendGoal(ctx, goal)
+			resp, id, err := client.SendGoal(sendCtx, goal)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(id, ShouldNotBeNil)
 			r := resp.(*test_msgs_action.Fibonacci_SendGoal_Response)
 			So(r.Accepted, ShouldBeTrue)
-			resp, err = client.GetResult(ctx, id)
+			resp, err = client.GetResult(sendCtx, id)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			result := resp.(*test_msgs_action.Fibonacci_GetResult_Response)
@@ -587,31 +641,10 @@ func TestActionStatuses(t *testing.T) {
 				statusesMu.Unlock()
 			}
 
-			// Statuses published before the client's status subscription has
-			// matched are lost, so abort untracked goals until one is reported.
-			warmCtx, stopWarm := context.WithCancel(ctx)
-			warmed := make(chan struct{})
-			var warmOnce sync.Once
-			warmWatch := client.WatchStatus(warmCtx, nil, func(context.Context, types.Message) {
-				warmOnce.Do(func() { close(warmed) })
-			})
-			timeOut(10000, func() {
-				for i := byte(0); warmCtx.Err() == nil; i++ {
-					req := test_msgs_action.NewFibonacci_SendGoal_Request()
-					req.Goal.Order = 1
-					req.GoalID.Uuid = types.GoalID{0xff, i}
-					attemptCtx, stopAttempt := context.WithTimeout(warmCtx, 200*time.Millisecond)
-					_, _ = client.SendGoalRequest(attemptCtx, req)
-					stopAttempt()
-					select {
-					case <-warmed:
-						return
-					case <-time.After(100 * time.Millisecond):
-					}
-				}
-			}, "Wait for status delivery")
-			stopWarm()
-			<-warmWatch
+			// Order 1 makes newWaitAction abort at once, which publishes statuses.
+			So(warmUpActionClient(ctx, client, 1, func(ctx context.Context, h func(context.Context, types.Message)) <-chan error {
+				return client.WatchStatus(ctx, nil, h)
+			}), ShouldBeNil)
 
 			id, ctx, cancel := send(0) // should succeed
 			continueChan <- struct{}{}
