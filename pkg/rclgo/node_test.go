@@ -2,7 +2,12 @@ package rclgo_test
 
 import (
 	"context"
+	"encoding/hex"
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -143,4 +148,62 @@ func TestNodeGetTopicNamesAndTypes(t *testing.T) {
 		"/topic_names_and_types_test/test_topic":  {"std_msgs/msg/Bool", "std_msgs/msg/String"},
 		"/topic_names_and_types_test/test_topic2": {"std_msgs/msg/Int64"},
 	})
+}
+
+func TestTypeHashString(t *testing.T) {
+	var h rclgo.TypeHash
+	assert.Empty(t, h.String())
+	h.Version = 1
+	_, err := hex.Decode(h.Value[:], []byte("a0a7aeb5bcc3cad1d8dfe6edf4fb020910171e252c333a41484f565d646b7279"))
+	require.NoError(t, err)
+	// Output of rosidl_stringify_type_hash for the same input.
+	assert.Equal(t, "RIHS01_a0a7aeb5bcc3cad1d8dfe6edf4fb020910171e252c333a41484f565d646b7279", h.String())
+}
+
+// installedTypeHash returns the hash rosidl generated for typeName
+// ("pkg/msg/Type"), read from the type description installed with the package.
+func installedTypeHash(t *testing.T, typeName string) string {
+	t.Helper()
+	parts := strings.SplitN(typeName, "/", 3)
+	require.Len(t, parts, 3)
+	for _, prefix := range filepath.SplitList(os.Getenv("AMENT_PREFIX_PATH")) {
+		data, err := os.ReadFile(filepath.Join(prefix, "share", parts[0], parts[1], parts[2]+".json")) //nolint:gosec // test reads the ROS install tree
+		if err != nil {
+			continue
+		}
+		var desc struct {
+			TypeHashes []struct {
+				TypeName   string `json:"type_name"`
+				HashString string `json:"hash_string"`
+			} `json:"type_hashes"`
+		}
+		require.NoError(t, json.Unmarshal(data, &desc))
+		for _, h := range desc.TypeHashes {
+			if h.TypeName == typeName {
+				return h.HashString
+			}
+		}
+	}
+	t.Fatalf("no installed type description for %s", typeName)
+	return ""
+}
+
+func TestGetPublishersInfoByTopicTypeHash(t *testing.T) {
+	const topic = "/type_hash_test/color"
+	rclCtx, err := newDefaultRCLContext()
+	require.NoError(t, err)
+	defer rclCtx.Close()
+	node, err := rclCtx.NewNode("type_hash_test", "")
+	require.NoError(t, err)
+	_, err = node.NewPublisher(topic, std_msgs_msg.ColorRGBATypeSupport, nil)
+	require.NoError(t, err)
+
+	var infos []rclgo.TopicEndpointInfo
+	require.Eventually(t, func() bool {
+		infos, err = node.GetPublishersInfoByTopic(topic, false)
+		return err == nil && len(infos) == 1
+	}, 3*time.Second, 50*time.Millisecond)
+	hash := infos[0].TopicTypeHash.String()
+	assert.Regexp(t, `^RIHS01_[0-9a-f]{64}$`, hash)
+	assert.Equal(t, installedTypeHash(t, "std_msgs/msg/ColorRGBA"), hash)
 }

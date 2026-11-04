@@ -23,7 +23,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/alessio/shellescape"
+	"al.essio.dev/pkg/shellescape"
 	"github.com/kivilahtio/go-re/v0"
 )
 
