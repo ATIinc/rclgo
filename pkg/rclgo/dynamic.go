@@ -37,43 +37,45 @@ char* formatString(const char* format, ...) {
 
 typedef rosidl_message_type_support_t * (*GetTypeSupportFunc)();
 
-const char* loadTypeSupport(
+// dlerrorCopy copies the dlerror message before a later dl call can overwrite it.
+static char* dlerrorCopy() {
+	const char* msg = dlerror();
+	return strdup(msg != NULL ? msg : "unknown dynamic loading error");
+}
+
+// loadTypeSupport returns NULL on success, otherwise an error message the caller frees.
+char* loadTypeSupport(
 	const char* pkgName,
+	const char* subfolder,
 	const char* ifaceName,
 	void** lib,
 	void** typeSupport
 ) {
-	char* libName = formatString(
-		"lib%s__rosidl_typesupport_c.so",
-		pkgName
-	);
+	char* libName = formatString("lib%s__rosidl_typesupport_c.so", pkgName);
 	if (libName == NULL) {
-		return "allocation failed";
+		return strdup("allocation failed");
 	}
 	*lib = dlopen(libName, RTLD_LAZY);
+	free(libName);
 	if (*lib == NULL) {
-		free(libName);
-		return dlerror();
+		return dlerrorCopy();
 	}
 	char* tsName = formatString(
-		"rosidl_typesupport_c__get_message_type_support_handle__%s__msg__%s",
-		pkgName, ifaceName
+		"rosidl_typesupport_c__get_message_type_support_handle__%s__%s__%s",
+		pkgName, subfolder, ifaceName
 	);
 	if (tsName == NULL) {
-		free(libName);
 		dlclose(*lib);
-		return "allocation failed";
+		return strdup("allocation failed");
 	}
 	void* tsSym = dlsym(*lib, tsName);
+	free(tsName);
 	if (tsSym == NULL) {
-		free(libName);
+		char* err = dlerrorCopy();
 		dlclose(*lib);
-		free(tsName);
-		return dlerror();
+		return err;
 	}
 	*typeSupport = ((GetTypeSupportFunc)tsSym)();
-	free(libName);
-	free(tsName);
 	return NULL;
 }
 */
@@ -82,6 +84,8 @@ import "C"
 import (
 	"fmt"
 	"runtime"
+	"slices"
+	"strings"
 	"unsafe"
 
 	"github.com/ATIinc/rclgo/pkg/rclgo/types"
@@ -102,14 +106,34 @@ type dynamicMessageTypeSupport struct {
 // Backwards compatibility is not guaranteed for this API. Use it only if
 // necessary.
 func LoadDynamicMessageTypeSupport(pkgName, msgName string) (types.MessageTypeSupport, error) {
+	return loadDynamicTypeSupport(pkgName, "msg", msgName)
+}
+
+// LoadDynamicMessageTypeSupportByName is LoadDynamicMessageTypeSupport for a
+// message type named as graph queries report it: <package>/<msg|srv|action>/<Name>.
+// Besides plain messages this covers the messages services and actions publish,
+// such as std_srvs/srv/Trigger_Event and
+// example_interfaces/action/Fibonacci_FeedbackMessage.
+func LoadDynamicMessageTypeSupportByName(typeName string) (types.MessageTypeSupport, error) {
+	parts := strings.Split(typeName, "/")
+	if len(parts) != 3 || parts[0] == "" || parts[2] == "" ||
+		!slices.Contains([]string{"msg", "srv", "action"}, parts[1]) {
+		return nil, fmt.Errorf("invalid message type name %q: want <package>/<msg|srv|action>/<Name>", typeName)
+	}
+	return loadDynamicTypeSupport(parts[0], parts[1], parts[2])
+}
+
+func loadDynamicTypeSupport(pkgName, subfolder, name string) (types.MessageTypeSupport, error) {
 	cPkgName := C.CString(pkgName)
 	defer C.free(unsafe.Pointer(cPkgName))
-	cIfaceName := C.CString(msgName)
-	defer C.free(unsafe.Pointer(cIfaceName))
+	cSubfolder := C.CString(subfolder)
+	defer C.free(unsafe.Pointer(cSubfolder))
+	cName := C.CString(name)
+	defer C.free(unsafe.Pointer(cName))
 	ts := new(dynamicMessageTypeSupport)
-	err := C.loadTypeSupport(cPkgName, cIfaceName, &ts.lib, &ts.typeSupport)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load type support: %v", C.GoString(err))
+	if cErr := C.loadTypeSupport(cPkgName, cSubfolder, cName, &ts.lib, &ts.typeSupport); cErr != nil {
+		defer C.free(unsafe.Pointer(cErr))
+		return nil, fmt.Errorf("failed to load type support for %s/%s/%s: %s", pkgName, subfolder, name, C.GoString(cErr))
 	}
 	runtime.SetFinalizer(ts, func(g *dynamicMessageTypeSupport) {
 		C.dlclose(g.lib)
