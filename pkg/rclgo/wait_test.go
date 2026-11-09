@@ -17,6 +17,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	std_msgs "github.com/ATIinc/rclgo/internal/msgs/std_msgs/msg"
@@ -363,4 +364,78 @@ func TestSpinConcurrentWithResourceCreation(t *testing.T) {
 	}
 	wg.Wait()
 	t.Logf("%d spins overlapped %d timer creations", spins, timers)
+}
+
+func TestWaitSetSharedSubscriptionRunsInOneWaitSetAtATime(t *testing.T) {
+	const topic = "/ws_shared_sub"
+	stopPublisher := startStringPublisher(t, topic)
+	rclCtx, err := newDefaultRCLContext()
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		// rmw_zenoh can deadlock destroying a subscription that is still
+		// receiving, so stop the traffic first.
+		stopPublisher()
+		rclCtx.Close()
+	})
+	node, err := rclCtx.NewNode("ws_shared_sub", "")
+	require.NoError(t, err)
+	var received atomic.Int64
+	sub, err := node.NewSubscription(topic, std_msgs.StringTypeSupport, nil, func(s *rclgo.Subscription) {
+		if _, _, err := s.TakeSerializedMessage(); err == nil {
+			received.Add(1)
+		}
+	})
+	require.NoError(t, err)
+	receivesMore := func(what string) {
+		t.Helper()
+		before := received.Load()
+		require.Eventually(t, func() bool { return received.Load() > before }, 10*time.Second, time.Millisecond, what)
+	}
+
+	ws1, err := rclCtx.NewWaitSet()
+	require.NoError(t, err)
+	ws1.AddSubscriptions(sub)
+	ws2, err := rclCtx.NewWaitSet()
+	require.NoError(t, err)
+	ws2.AddSubscriptions(sub)
+
+	stop1 := startWaitSet(t, ws1)
+	receivesMore("first wait set")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	inUse, ok := errors.AsType[*rclgo.EntityInUseError](ws2.Run(ctx))
+	require.True(t, ok, "second Run did not report the shared subscription")
+	assert.Equal(t, "subscription", inUse.Kind)
+	assert.Equal(t, topic, inUse.Name)
+	receivesMore("first wait set after the conflict")
+
+	require.ErrorIs(t, stop1(), context.Canceled)
+	stop2 := startWaitSet(t, ws2)
+	receivesMore("second wait set after the first stopped")
+	require.ErrorIs(t, stop2(), context.Canceled)
+}
+
+func TestSpinFailsOnEntityInRunningWaitSet(t *testing.T) {
+	rclCtx, err := rclgo.NewContext(0, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { rclCtx.Close() })
+	var fired atomic.Int64
+	timer, err := rclCtx.NewTimer(time.Millisecond, func(*rclgo.Timer) { fired.Add(1) })
+	require.NoError(t, err)
+	ws, err := rclCtx.NewWaitSet()
+	require.NoError(t, err)
+	ws.AddTimers(timer)
+	stop := startWaitSet(t, ws)
+	require.Eventually(t, func() bool { return fired.Load() > 0 }, 5*time.Second, time.Millisecond, "wait set never ran")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	inUse, ok := errors.AsType[*rclgo.EntityInUseError](rclCtx.Spin(ctx))
+	require.True(t, ok, "Spin did not report the timer held by the running wait set")
+	assert.Equal(t, "timer", inUse.Kind)
+
+	require.ErrorIs(t, stop(), context.Canceled)
+	canceled, cancelNow := context.WithCancel(context.Background())
+	cancelNow()
+	require.ErrorIs(t, rclCtx.Spin(canceled), context.Canceled)
 }

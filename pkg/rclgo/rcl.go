@@ -422,6 +422,7 @@ func spinErr(spinner string, err error) error {
 
 // Spin starts and waits for all ROS resources in the node that need waiting
 // such as subscriptions. Spin returns when an error occurs or ctx is canceled.
+// It fails at once if any of them is in another running wait set.
 func (n *Node) Spin(ctx context.Context) error {
 	ws, err := n.context.NewWaitSet()
 	if err != nil {

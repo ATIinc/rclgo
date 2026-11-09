@@ -303,7 +303,7 @@ func (c *Context) SetClock(newClock *Clock) {
 
 // Spin starts and waits for all ROS resources in the context that need waiting
 // such as nodes and subscriptions. Spin returns when an error occurs or ctx is
-// canceled.
+// canceled. It fails at once if any of them is in another running wait set.
 func (c *Context) Spin(ctx context.Context) error {
 	ws, err := c.NewWaitSet()
 	if err != nil {

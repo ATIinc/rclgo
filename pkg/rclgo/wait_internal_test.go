@@ -74,32 +74,83 @@ func newTestContext(t *testing.T) *Context {
 	return ctx
 }
 
-func TestWaitSetReservesEntitiesAddedWhileRunning(t *testing.T) {
-	rclCtx := newTestContext(t)
-	ws, err := rclCtx.NewWaitSet()
-	require.NoError(t, err)
-	fired := make(chan struct{}, 1)
-	timer, err := rclCtx.NewTimer(time.Millisecond, func(*Timer) {
-		select {
-		case fired <- struct{}{}:
-		default:
-		}
-	})
-	require.NoError(t, err)
-
+// runInBackground runs ws until the returned function cancels it, which then
+// returns Run's error.
+func runInBackground(t *testing.T, ws *WaitSet) func() error {
+	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
 	runErr := make(chan error, 1)
 	go func() { runErr <- ws.Run(ctx) }()
-	ws.AddTimers(timer)
-	select {
-	case <-fired:
-	case <-time.After(5 * time.Second):
-		t.Fatal("timer added while running never fired")
+	var once sync.Once
+	var err error
+	stop := func() error {
+		once.Do(func() {
+			cancel()
+			select {
+			case err = <-runErr:
+			case <-time.After(5 * time.Second):
+				err = errors.New("Run did not return after cancellation")
+			}
+		})
+		return err
 	}
-	assert.True(t, (*atomic.Bool)(&timer.waitable).Load(), "timer not reserved while running")
-	cancel()
-	require.ErrorIs(t, <-runErr, context.Canceled)
-	assert.False(t, (*atomic.Bool)(&timer.waitable).Load(), "timer still reserved after Run returned")
+	t.Cleanup(func() { _ = stop() })
+	return stop
+}
+
+func TestWaitSetSkipsConflictingAddWhileRunning(t *testing.T) {
+	rclCtx := newTestContext(t)
+	reserved := func(timer *Timer) bool { return (*atomic.Bool)(&timer.waitable).Load() }
+	var a, b, c, aInFlight, aOverlaps atomic.Int64
+	timerA, err := rclCtx.NewTimer(time.Millisecond, func(*Timer) {
+		if aInFlight.Add(1) > 1 {
+			aOverlaps.Add(1)
+		}
+		a.Add(1)
+		time.Sleep(100 * time.Microsecond)
+		aInFlight.Add(-1)
+	})
+	require.NoError(t, err)
+	timerB, err := rclCtx.NewTimer(time.Millisecond, func(*Timer) { b.Add(1) })
+	require.NoError(t, err)
+	timerC, err := rclCtx.NewTimer(time.Millisecond, func(*Timer) { c.Add(1) })
+	require.NoError(t, err)
+
+	ws1, err := rclCtx.NewWaitSet()
+	require.NoError(t, err)
+	ws1.AddTimers(timerA)
+	stop1 := runInBackground(t, ws1)
+	ws2, err := rclCtx.NewWaitSet()
+	require.NoError(t, err)
+	ws2.AddTimers(timerB)
+	stop2 := runInBackground(t, ws2)
+	require.Eventually(t, func() bool { return a.Load() > 0 && b.Load() > 0 }, 5*time.Second, time.Millisecond)
+
+	// timerA is held by ws1, so ws2 must skip it but still take timerC.
+	ws2.AddTimers(timerA, timerC)
+	require.NoError(t, ws2.Call(func() error {
+		assert.Equal(t, []*Timer{timerB, timerC}, ws2.timers)
+		return nil
+	}))
+	// A Call queued during the same drain runs before the cache rebuild.
+	require.Eventually(t, func() bool {
+		var cached uint64
+		_ = ws2.Call(func() error { cached = uint64(ws2.handles.timers); return nil })
+		return cached == 2
+	}, 5*time.Second, time.Millisecond, "handle cache never held exactly timerB and timerC")
+	aBefore, bBefore := a.Load(), b.Load()
+	require.Eventually(t, func() bool {
+		return c.Load() > 0 && a.Load() > aBefore && b.Load() > bBefore
+	}, 5*time.Second, time.Millisecond, "timers stopped firing after the skipped add")
+	assert.Zero(t, aOverlaps.Load(), "timerA dispatched by two wait sets at once")
+	assert.True(t, reserved(timerC), "timerC not reserved while ws2 runs")
+
+	require.ErrorIs(t, stop2(), context.Canceled)
+	assert.True(t, reserved(timerA), "ws2 released timerA, which ws1 holds")
+	assert.False(t, reserved(timerB))
+	assert.False(t, reserved(timerC))
+	require.ErrorIs(t, stop1(), context.Canceled)
+	assert.False(t, reserved(timerA))
 }
 
 func TestWaitSetExitRunsPendingCalls(t *testing.T) {

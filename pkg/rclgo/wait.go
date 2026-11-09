@@ -133,6 +133,72 @@ func (s *singleUse) release() {
 	(*atomic.Bool)(s).Store(false)
 }
 
+// EntityInUseError is returned by WaitSet.Run when an entity is already being
+// waited on by a running wait set, which rcl does not allow.
+type EntityInUseError struct {
+	// Kind is the entity type, e.g. "subscription", "timer" or "action server".
+	Kind string
+	// Name is the topic, service or action name; empty for timers and guard
+	// conditions.
+	Name string
+}
+
+func (e *EntityInUseError) Error() string {
+	if e.Name == "" {
+		return e.Kind + " is already being waited on by a running wait set"
+	}
+	return fmt.Sprintf("%s %q is already being waited on by a running wait set", e.Kind, e.Name)
+}
+
+// waitEntity is an entity a WaitSet can wait on.
+type waitEntity interface {
+	waitState() *singleUse
+	inUseError() *EntityInUseError
+}
+
+func (s *Subscription) waitState() *singleUse { return &s.waitable }
+func (s *Subscription) inUseError() *EntityInUseError {
+	return &EntityInUseError{Kind: "subscription", Name: s.TopicName}
+}
+
+func (t *Timer) waitState() *singleUse { return &t.waitable }
+func (t *Timer) inUseError() *EntityInUseError {
+	return &EntityInUseError{Kind: "timer"}
+}
+
+func (s *Service) waitState() *singleUse { return &s.waitable }
+func (s *Service) inUseError() *EntityInUseError {
+	name, _ := rclCallPtr(func() *C.char { return C.rcl_service_get_service_name(s.rclService) })
+	return &EntityInUseError{Kind: "service", Name: C.GoString(name)}
+}
+
+func (c *Client) waitState() *singleUse { return &c.waitable }
+func (c *Client) inUseError() *EntityInUseError {
+	name, _ := rclCallPtr(func() *C.char { return C.rcl_client_get_service_name(c.rclClient) })
+	return &EntityInUseError{Kind: "client", Name: C.GoString(name)}
+}
+
+func (s *ActionServer) waitState() *singleUse { return &s.waitable }
+func (s *ActionServer) inUseError() *EntityInUseError {
+	s.rclServerMu.Lock()
+	defer s.rclServerMu.Unlock()
+	name, _ := rclCallPtr(func() *C.char { return C.rcl_action_server_get_action_name(&s.rclServer) })
+	return &EntityInUseError{Kind: "action server", Name: C.GoString(name)}
+}
+
+func (c *ActionClient) waitState() *singleUse { return &c.waitable }
+func (c *ActionClient) inUseError() *EntityInUseError {
+	c.rclClientMu.Lock()
+	defer c.rclClientMu.Unlock()
+	name, _ := rclCallPtr(func() *C.char { return C.rcl_action_client_get_action_name(&c.rclClient) })
+	return &EntityInUseError{Kind: "action client", Name: C.GoString(name)}
+}
+
+func (g *guardCondition) waitState() *singleUse { return &g.waitable }
+func (g *guardCondition) inUseError() *EntityInUseError {
+	return &EntityInUseError{Kind: "guard condition"}
+}
+
 // handleCloses counts closes of entities whose handles WaitSets cache in C
 // memory, so a WaitSet rebuilds its cache instead of passing a freed handle.
 var handleCloses atomic.Uint64
@@ -145,6 +211,9 @@ var ErrWaitSetClosed = errors.New("wait set is closed")
 //
 // The Add methods and Call are safe to use from any goroutine, including while
 // Run is active and from callbacks dispatched by Run.
+//
+// An entity may belong to several wait sets but be waited on by at most one
+// running wait set at a time.
 type WaitSet struct {
 	rosID
 	// WaitTimeout bounds each underlying rcl_wait call made by Run. Zero
@@ -169,6 +238,8 @@ type WaitSet struct {
 	inline  int      // Call functions executing outside Run
 	queue   []func() // work for Run to apply at the top of its next iteration
 	dirty   bool     // the entity slices changed since handles was built
+
+	reserved []*singleUse // entities the active Run reserved; Run goroutine only
 
 	handles      C.rclgo_wait_handles_t
 	handlesCap   int
@@ -239,40 +310,55 @@ func (w *WaitSet) Context() *Context {
 }
 
 // AddSubscriptions adds subs to the wait set. While Run is active the
-// subscriptions are picked up at the start of its next iteration.
+// subscriptions are picked up at the start of its next iteration; one already
+// waited on by another running wait set is skipped and the error logged, also
+// when the add is made inside a Call.
 func (w *WaitSet) AddSubscriptions(subs ...*Subscription) {
-	subs = slices.Clone(subs)
-	w.add(func() { w.subscriptions = append(w.subscriptions, subs...) })
+	addEntities(w, &w.subscriptions, subs)
 }
 
 // AddTimers adds timers to the wait set. See AddSubscriptions.
 func (w *WaitSet) AddTimers(timers ...*Timer) {
-	timers = slices.Clone(timers)
-	w.add(func() { w.timers = append(w.timers, timers...) })
+	addEntities(w, &w.timers, timers)
 }
 
 // AddServices adds services to the wait set. See AddSubscriptions.
 func (w *WaitSet) AddServices(services ...*Service) {
-	services = slices.Clone(services)
-	w.add(func() { w.services = append(w.services, services...) })
+	addEntities(w, &w.services, services)
 }
 
 // AddClients adds clients to the wait set. See AddSubscriptions.
 func (w *WaitSet) AddClients(clients ...*Client) {
-	clients = slices.Clone(clients)
-	w.add(func() { w.clients = append(w.clients, clients...) })
+	addEntities(w, &w.clients, clients)
 }
 
 // AddActionServers adds action servers to the wait set. See AddSubscriptions.
 func (w *WaitSet) AddActionServers(servers ...*ActionServer) {
-	servers = slices.Clone(servers)
-	w.add(func() { w.actionServers = append(w.actionServers, servers...) })
+	addEntities(w, &w.actionServers, servers)
 }
 
 // AddActionClients adds action clients to the wait set. See AddSubscriptions.
 func (w *WaitSet) AddActionClients(clients ...*ActionClient) {
-	clients = slices.Clone(clients)
-	w.add(func() { w.actionClients = append(w.actionClients, clients...) })
+	addEntities(w, &w.actionClients, clients)
+}
+
+// addEntities appends entities to dst. Applied by an active Run, it reserves
+// each one and skips those another running wait set holds.
+func addEntities[T waitEntity](w *WaitSet, dst *[]T, entities []T) {
+	entities = slices.Clone(entities)
+	w.add(func(running bool) (conflicts []error) {
+		for _, e := range entities {
+			if running {
+				if !e.waitState().reserve() {
+					conflicts = append(conflicts, e.inUseError())
+					continue
+				}
+				w.reserved = append(w.reserved, e.waitState())
+			}
+			*dst = append(*dst, e)
+		}
+		return conflicts
+	})
 }
 
 func (w *WaitSet) addGuardConditions(guardConditions ...*guardCondition) {
@@ -280,20 +366,26 @@ func (w *WaitSet) addGuardConditions(guardConditions ...*guardCondition) {
 }
 
 // add applies an entity-slice mutation now if Run is not active, otherwise
-// queues it for Run. It never blocks on Run, so callbacks may use it.
-func (w *WaitSet) add(apply func()) {
+// queues it for Run. It never blocks on Run, so callbacks may use it. apply
+// is told whether Run is active and returns the entities it skipped.
+func (w *WaitSet) add(apply func(running bool) []error) {
 	w.mu.Lock()
 	if !w.running {
-		apply()
+		apply(false)
 		w.dirty = true
 		w.mu.Unlock()
 		return
 	}
 	w.queue = append(w.queue, func() {
 		w.mu.Lock()
-		apply()
+		// Work left for stopRunning runs after Run has released its
+		// reservations, so it appends without reserving.
+		conflicts := apply(w.running)
 		w.dirty = true
 		w.mu.Unlock()
+		for _, err := range conflicts {
+			GetLogger("rclgo.wait_set").Error("skipped entity added to a running wait set: ", err)
+		}
 	})
 	w.mu.Unlock()
 	// A failed trigger only delays the add to the next WaitTimeout expiry.
@@ -376,55 +468,66 @@ func (w *WaitSet) stopRunning() {
 }
 
 // applyQueued executes queued work until the queue is empty, since queued
-// functions may queue more. It reports whether anything ran.
-func (w *WaitSet) applyQueued() bool {
-	applied := false
+// functions may queue more.
+func (w *WaitSet) applyQueued() {
 	for {
 		w.mu.Lock()
 		pending := w.queue
 		w.queue = nil
 		w.mu.Unlock()
 		if len(pending) == 0 {
-			return applied
+			return
 		}
-		applied = true
 		for _, fn := range pending {
 			fn()
 		}
 	}
 }
 
-// reservedEntities tracks which entities a Run has reserved so entities added
-// while running are reserved once and all are released on exit.
-type reservedEntities struct {
-	subscriptions, timers, services, clients int
-	actionClients, actionServers, guardConds int
-	reserved                                 []*singleUse
-}
-
-func reserveTail[T any](r *reservedEntities, entities []T, seen *int, waitable func(T) *singleUse) {
-	for _, e := range entities[*seen:] {
-		if s := waitable(e); s.reserve() {
-			r.reserved = append(r.reserved, s)
+// reserveAll reserves every entity present when Run starts. On a conflict it
+// returns the error; the caller releases what was reserved.
+func (w *WaitSet) reserveAll() error {
+	for _, e := range w.entities() {
+		if !e.waitState().reserve() {
+			return e.inUseError()
 		}
+		w.reserved = append(w.reserved, e.waitState())
 	}
-	*seen = len(entities)
+	return nil
 }
 
-func (w *WaitSet) reserveNew(r *reservedEntities) {
-	reserveTail(r, w.subscriptions, &r.subscriptions, func(s *Subscription) *singleUse { return &s.waitable })
-	reserveTail(r, w.timers, &r.timers, func(t *Timer) *singleUse { return &t.waitable })
-	reserveTail(r, w.services, &r.services, func(s *Service) *singleUse { return &s.waitable })
-	reserveTail(r, w.clients, &r.clients, func(c *Client) *singleUse { return &c.waitable })
-	reserveTail(r, w.actionClients, &r.actionClients, func(c *ActionClient) *singleUse { return &c.waitable })
-	reserveTail(r, w.actionServers, &r.actionServers, func(s *ActionServer) *singleUse { return &s.waitable })
-	reserveTail(r, w.guardConditions, &r.guardConds, func(g *guardCondition) *singleUse { return &g.waitable })
+func (w *WaitSet) entities() []waitEntity {
+	all := make([]waitEntity, 0, len(w.subscriptions)+len(w.timers)+len(w.services)+
+		len(w.clients)+len(w.actionClients)+len(w.actionServers)+len(w.guardConditions))
+	for _, e := range w.subscriptions {
+		all = append(all, e)
+	}
+	for _, e := range w.timers {
+		all = append(all, e)
+	}
+	for _, e := range w.services {
+		all = append(all, e)
+	}
+	for _, e := range w.clients {
+		all = append(all, e)
+	}
+	for _, e := range w.actionClients {
+		all = append(all, e)
+	}
+	for _, e := range w.actionServers {
+		all = append(all, e)
+	}
+	for _, e := range w.guardConditions {
+		all = append(all, e)
+	}
+	return all
 }
 
-func (r *reservedEntities) releaseAll() {
-	for _, s := range r.reserved {
+func (w *WaitSet) releaseReserved() {
+	for _, s := range w.reserved {
 		s.release()
 	}
+	w.reserved = nil
 }
 
 func (w *WaitSet) addResources(res *rosResourceStore) {
@@ -494,6 +597,9 @@ zero) so that a wakeup lost inside the RMW layer delays the affected entity by
 at most one period instead of hanging Run. A ready return that follows a
 timed-out wait within LostWakeupThreshold is logged as a recovered lost wakeup
 and counted in LostWakeupsRecovered.
+
+Run returns an *EntityInUseError if an entity present at start is already
+being waited on by another running wait set.
 */
 func (w *WaitSet) Run(ctx context.Context) (err error) {
 	if ctx == nil {
@@ -502,12 +608,13 @@ func (w *WaitSet) Run(ctx context.Context) (err error) {
 	if err := w.startRunning(); err != nil {
 		return err
 	}
-	var reserved reservedEntities
 	defer func() {
-		reserved.releaseAll()
+		w.releaseReserved()
 		w.stopRunning()
 	}()
-	w.reserveNew(&reserved)
+	if err := w.reserveAll(); err != nil {
+		return err
+	}
 	errs := make(chan error, 1)
 	defer func() {
 		err = errors.Join(err, <-errs)
@@ -525,9 +632,7 @@ func (w *WaitSet) Run(ctx context.Context) (err error) {
 	for {
 		// Queued work is applied only here: dispatch below indexes the rcl
 		// arrays by the entity counts initEntities registered.
-		if w.applyQueued() {
-			w.reserveNew(&reserved)
-		}
+		w.applyQueued()
 		if err := w.initEntities(); err != nil {
 			return err
 		}
