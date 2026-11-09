@@ -659,10 +659,12 @@ func (w *WaitSet) initEntities() error {
 	rc := C.rclgo_wait_set_fill(
 		&w.rcl_wait_set_t,
 		&w.handles,
-		C.size_t(2*len(w.actionClients)),
-		C.size_t(len(w.actionServers)),
-		C.size_t(3*len(w.actionClients)),
-		C.size_t(3*len(w.actionServers)),
+		// Room for the entities rcl_action adds per action client or server
+		// after this call; see rcl_action_*_wait_set_get_num_entities.
+		C.size_t(2*len(w.actionClients)), // feedback and status subscriptions
+		C.size_t(len(w.actionServers)),   // goal expiration timer
+		C.size_t(3*len(w.actionClients)), // goal, cancel, and result clients
+		C.size_t(3*len(w.actionServers)), // goal, cancel, and result services
 		&failed,
 	)
 	if rc != C.RCL_RET_OK {
