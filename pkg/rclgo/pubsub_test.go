@@ -336,7 +336,7 @@ func BenchmarkPubsubMemoryLeakAllocateInLoop(b *testing.B) {
 			fmt.Println("error:", errs)
 			continue
 		}
-		go func() { errChan <- rclContextSub.Spin(runCtx) }()
+		go func() { errChan <- rclContextPub.Spin(runCtx) }()
 
 		time.Sleep(1000 * time.Millisecond)
 
@@ -392,8 +392,9 @@ func BenchmarkPubsubMemoryLeakAllocateOutOfLoop(b *testing.B) {
 	if errs != nil {
 		panic(errs)
 	}
-	go func() { errChan <- rclContext.Spin(runCtx) }()
 
+	// One Spin after the timer exists waits on both; two would share the
+	// subscription.
 	rclContext, errs = newContextWithPublisherTimer(
 		rclContext,
 		"pub",

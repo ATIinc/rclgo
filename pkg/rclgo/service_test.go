@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"testing"
 	"time"
+	"unsafe"
 
 	. "github.com/smartystreets/goconvey/convey" //nolint:revive
 
@@ -215,5 +216,48 @@ func TestServiceIntrospectionStateZeroValue(t *testing.T) {
 		// ClientOptions disable introspection.
 		var state rclgo.ServiceIntrospectionState
 		So(state, ShouldEqual, rclgo.ServiceIntrospectionOff)
+	})
+}
+
+func TestServiceCloseInWaitSet(t *testing.T) {
+	var rclCtx *rclgo.Context
+	defer func() {
+		if rclCtx != nil {
+			rclCtx.Close()
+		}
+	}()
+	Convey("Scenario: closing a service registered in a wait set", t, func() {
+		var err error
+		rclCtx, err = newDefaultRCLContext()
+		So(err, ShouldBeNil)
+		node, err := rclCtx.NewNode("service_close_node", "/test")
+		So(err, ShouldBeNil)
+		service, err := node.NewService(
+			"close_in_wait_set",
+			example_interfaces_srv.AddTwoIntsTypeSupport,
+			nil,
+			func(_ *rclgo.ServiceInfo, _ types.Message, _ rclgo.ServiceResponseSender) {},
+		)
+		So(err, ShouldBeNil)
+		ws, err := rclCtx.NewWaitSet()
+		So(err, ShouldBeNil)
+		ws.AddServices(service)
+		So(ws.Testing_initEntities(), ShouldBeNil)
+		So(ws.Testing_cachedHandles()[0], ShouldNotEqual, unsafe.Pointer(nil))
+
+		So(service.Close(), ShouldBeNil)
+
+		Convey("The wait set passes rcl a nil handle, not the freed one", func() {
+			err := ws.Testing_initEntities()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "rcl_wait_set_add_service() failed")
+			So(ws.Testing_cachedHandles()[0], ShouldEqual, unsafe.Pointer(nil))
+		})
+
+		Convey("A second Close returns the close error", func() {
+			err := service.Close()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "tried to close a closed service")
+		})
 	})
 }

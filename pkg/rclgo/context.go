@@ -23,8 +23,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"math"
 	"runtime"
+	"slices"
 	"sync"
 	"unsafe"
 )
@@ -78,9 +80,27 @@ func (s *rosResourceStore) removeResource(r rosResource) {
 	delete(s.resources, r.getID())
 }
 
+// snapshot returns the stored resources. Callers iterate the copy because
+// closing a resource calls removeResource, which takes the store's mutex.
+func (s *rosResourceStore) snapshot() []rosResource {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	return slices.Collect(maps.Values(s.resources))
+}
+
+func (s *rosResourceStore) contains(r rosResource) bool {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	return s.resources[r.getID()] == r
+}
+
 func (s *rosResourceStore) Close() (err error) {
-	for _, r := range s.resources {
-		err = errors.Join(err, r.Close())
+	for _, r := range s.snapshot() {
+		// Closing one resource can close others, e.g. a wait set its guard
+		// conditions; skip those rather than report a double close.
+		if s.contains(r) {
+			err = errors.Join(err, r.Close())
+		}
 	}
 	return err
 }
@@ -214,19 +234,25 @@ func NewContextWithOpts(rclArgs *Args, opts *ContextOptions) (ctx *Context, err 
 	}
 
 	rcl_init_options_t := C.rcl_get_zero_initialized_init_options()
-	rc := C.rcl_init_options_init(&rcl_init_options_t, *ctx.rcl_allocator_t)
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCast(rc)
+	err = rclCall("", func() C.rcl_ret_t {
+		return C.rcl_init_options_init(&rcl_init_options_t, *ctx.rcl_allocator_t)
+	})
+	if err != nil {
+		return nil, err
 	}
-	rc = C.rcl_init_options_set_domain_id(&rcl_init_options_t, C.size_t(opts.DomainID))
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCast(rc)
+	err = rclCall("", func() C.rcl_ret_t {
+		return C.rcl_init_options_set_domain_id(&rcl_init_options_t, C.size_t(opts.DomainID))
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	rc = C.rcl_init(rclArgs.argc(), rclArgs.argv(), &rcl_init_options_t, ctx.rcl_context_t)
+	err = rclCall("", func() C.rcl_ret_t {
+		return C.rcl_init(rclArgs.argc(), rclArgs.argv(), &rcl_init_options_t, ctx.rcl_context_t)
+	})
 	runtime.KeepAlive(rclArgs)
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCast(rc)
+	if err != nil {
+		return nil, err
 	}
 
 	ctx.defaultClock, err = ctx.NewClock(opts.ClockType)
@@ -244,11 +270,15 @@ func (c *Context) Close() error {
 	}
 	errs := c.rosResourceStore.Close()
 	if c.rcl_context_t != nil {
-		if rc := C.rcl_shutdown(c.rcl_context_t); rc != C.RCL_RET_OK {
-			errs = errors.Join(errs, errorsCastC(rc, fmt.Sprintf("C.rcl_shutdown(%+v)", c.rcl_context_t)))
-		} else if rc := C.rcl_context_fini(c.rcl_context_t); rc != C.RCL_RET_OK {
-			errs = errors.Join(errs, errorsCastC(rc, "rcl_context_fini failed"))
+		shutdownErr := rclCall(fmt.Sprintf("C.rcl_shutdown(%+v)", c.rcl_context_t), func() C.rcl_ret_t {
+			return C.rcl_shutdown(c.rcl_context_t)
+		})
+		if shutdownErr == nil {
+			shutdownErr = rclCall("rcl_context_fini failed", func() C.rcl_ret_t {
+				return C.rcl_context_fini(c.rcl_context_t)
+			})
 		}
+		errs = errors.Join(errs, shutdownErr)
 		C.free(unsafe.Pointer(c.rcl_context_t))
 		c.rcl_context_t = nil
 	}
@@ -273,7 +303,7 @@ func (c *Context) SetClock(newClock *Clock) {
 
 // Spin starts and waits for all ROS resources in the context that need waiting
 // such as nodes and subscriptions. Spin returns when an error occurs or ctx is
-// canceled.
+// canceled. It fails at once if any of them is in another running wait set.
 func (c *Context) Spin(ctx context.Context) error {
 	ws, err := c.NewWaitSet()
 	if err != nil {

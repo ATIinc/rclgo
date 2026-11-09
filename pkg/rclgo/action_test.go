@@ -3,6 +3,8 @@ package rclgo_test
 import (
 	"context"
 	"errors"
+	"runtime"
+	"slices"
 	"sort"
 	"sync"
 	"testing"
@@ -63,6 +65,46 @@ func newWaitAction() (chan struct{}, rclgo.Action) {
 	)
 }
 
+// warmUpActionClient sends untracked goals of the given order until watch
+// reports a message. Messages published before a new client's subscriptions
+// have matched the server are lost, so tests that count them warm up first.
+func warmUpActionClient(
+	ctx context.Context,
+	client *rclgo.ActionClient,
+	order int32,
+	watch func(context.Context, func(context.Context, types.Message)) <-chan error,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	received := make(chan struct{})
+	var once sync.Once
+	watchDone := watch(ctx, func(context.Context, types.Message) {
+		once.Do(func() { close(received) })
+	})
+	defer func() {
+		cancel()
+		_ = <-watchDone
+	}()
+	for i := byte(0); ; i++ {
+		req := test_msgs_action.NewFibonacci_SendGoal_Request()
+		req.Goal.Order = order
+		req.GoalID.Uuid = types.GoalID{0xff, i}
+		attemptCtx, stopAttempt := context.WithTimeout(ctx, 200*time.Millisecond)
+		_, _ = client.SendGoalRequest(attemptCtx, req)
+		stopAttempt()
+		select {
+		case <-received:
+			return nil
+		case <-ctx.Done():
+			return errors.New("action client warm-up received no message")
+		case <-time.After(100 * time.Millisecond):
+		}
+	}
+}
+
+// fibonacciWarmUpOrder makes fibonacciAction send one feedback message and
+// finish without waiting on continueChan.
+const fibonacciWarmUpOrder = 1000
+
 type fibonacciAction struct {
 	continueChan chan struct{}
 }
@@ -79,6 +121,9 @@ func (a *fibonacciAction) ExecuteGoal(_ context.Context, goal *rclgo.GoalHandle)
 	sender, err := goal.Accept()
 	if err != nil {
 		return nil, err
+	}
+	if desc.Order == fibonacciWarmUpOrder {
+		return test_msgs_action.NewFibonacci_Result(), sender.Send(test_msgs_action.NewFibonacci_Feedback())
 	}
 	if desc.Order >= 100 {
 		return nil, errors.New("order must be less than 100")
@@ -152,11 +197,16 @@ func TestActionExecution(t *testing.T) {
 			go func() { spinErr <- node2.Spin(ctx) }()
 		})
 		Convey("Watch a successful goal", func() {
+			So(warmUpActionClient(ctx, client, fibonacciWarmUpOrder, func(ctx context.Context, h func(context.Context, types.Message)) <-chan error {
+				return client.WatchFeedback(ctx, nil, h)
+			}), ShouldBeNil)
+			watchCtx, stopWatch := context.WithTimeout(ctx, 10*time.Second)
+			defer stopWatch()
 			goal := test_msgs_action.NewFibonacci_Goal()
 			goal.Order = 10
 			feedbacks := make(fibonacciFeedbacks, 0)
 			var feedbacksMu sync.Mutex
-			result, _, err := client.WatchGoal(ctx, goal, func(_ context.Context, m types.Message) {
+			result, _, err := client.WatchGoal(watchCtx, goal, func(_ context.Context, m types.Message) {
 				fb := m.(*test_msgs_action.Fibonacci_FeedbackMessage)
 				feedbacksMu.Lock()
 				feedbacks = append(feedbacks, &fb.Feedback)
@@ -179,18 +229,22 @@ func TestActionExecution(t *testing.T) {
 		})
 		Convey("Watch a rejected goal", func() {
 			close(action.continueChan)
+			watchCtx, stopWatch := context.WithTimeout(ctx, 10*time.Second)
+			defer stopWatch()
 			goal := test_msgs_action.NewFibonacci_Goal()
 			goal.Order = -1
-			resp, _, err := client.WatchGoal(ctx, goal, func(context.Context, types.Message) {
+			resp, _, err := client.WatchGoal(watchCtx, goal, func(context.Context, types.Message) {
 				panic("no feedback should be sent")
 			})
 			So(err, ShouldNotBeNil)
 			So(resp, ShouldBeNil)
 		})
 		Convey("Send a goal that will be rejected", func() {
+			sendCtx, stopSend := context.WithTimeout(ctx, 10*time.Second)
+			defer stopSend()
 			goal := test_msgs_action.NewFibonacci_Goal()
 			goal.Order = -1
-			resp, id, err := client.SendGoal(ctx, goal)
+			resp, id, err := client.SendGoal(sendCtx, goal)
 			So(err, ShouldBeNil)
 			So(id, ShouldNotBeNil)
 			So(resp, ShouldNotBeNil)
@@ -198,15 +252,17 @@ func TestActionExecution(t *testing.T) {
 			So(r.Accepted, ShouldBeFalse)
 		})
 		Convey("Send a goal that will be aborted", func() {
+			sendCtx, stopSend := context.WithTimeout(ctx, 10*time.Second)
+			defer stopSend()
 			goal := test_msgs_action.NewFibonacci_Goal()
 			goal.Order = 100
-			resp, id, err := client.SendGoal(ctx, goal)
+			resp, id, err := client.SendGoal(sendCtx, goal)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(id, ShouldNotBeNil)
 			r := resp.(*test_msgs_action.Fibonacci_SendGoal_Response)
 			So(r.Accepted, ShouldBeTrue)
-			resp, err = client.GetResult(ctx, id)
+			resp, err = client.GetResult(sendCtx, id)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			result := resp.(*test_msgs_action.Fibonacci_GetResult_Response)
@@ -215,8 +271,8 @@ func TestActionExecution(t *testing.T) {
 		Convey("Resources are released properly", func() {
 			cancel()
 			timeOut(1000, func() {
-				<-spinErr
-				<-spinErr
+				_ = <-spinErr
+				_ = <-spinErr
 			}, "Waiting for spinning to stop")
 			So(rclctx.Close(), ShouldBeNil)
 		})
@@ -433,6 +489,44 @@ func (a goalStatuses) Less(i, j int) bool {
 	return a[i].Status < a[j].Status
 }
 
+func TestActionTakeGoalRequestErrorType(t *testing.T) {
+	rclCtx, err := newDefaultRCLContext()
+	require.NoError(t, err)
+	defer rclCtx.Close()
+	node, err := rclCtx.NewNode("take_goal_error", "actions_test")
+	require.NoError(t, err)
+	_, action := newWaitAction()
+	server, err := node.NewActionServer("take_goal_error", action, actionServerOpts)
+	require.NoError(t, err)
+	// No request is pending, so rcl reports a take failure.
+	err = server.Testing_takeGoalRequest()
+	var takeFailed *rclgo.ActionServerTakeFailed
+	require.ErrorAs(t, err, &takeFailed)
+	require.NotContains(t, err.Error(), "goroutine ", "routine take failure built a stack trace")
+}
+
+func TestActionIgnoredFailureLeavesNoStaleError(t *testing.T) {
+	// rcutils error state is per thread; pin so both failures share it.
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	rclCtx, err := newDefaultRCLContext()
+	require.NoError(t, err)
+	defer rclCtx.Close()
+	node, err := rclCtx.NewNode("ignored_failure", "actions_test")
+	require.NoError(t, err)
+	_, action := newWaitAction()
+	server, err := node.NewActionServer("ignored_failure", action, actionServerOpts)
+	require.NoError(t, err)
+	require.NoError(t, server.Close())
+
+	// rcl_action_notify_goal_done fails on the closed server and is ignored.
+	server.Testing_setResultOnEmptyGoal()
+
+	next := rclgo.Testing_errorsCastC(1, "next failure")
+	require.Contains(t, next.Error(), "next failure error not set")
+	require.NotContains(t, next.Error(), "action server")
+}
+
 func TestActionStatuses(t *testing.T) {
 	continueChan, statusAction := newWaitAction()
 	var (
@@ -512,27 +606,32 @@ func TestActionStatuses(t *testing.T) {
 					So(err, ShouldEqual, context.Canceled)
 				}
 			}
-			waitForStatus := func(status rclgo.GoalStatus) {
-				timeOut(1000, func() {
+			// Each handler call runs on its own goroutine, so statuses arrive in
+			// any order; wait until all expected ones have been seen.
+			waitForStatuses := func(want ...rclgo.GoalStatus) {
+				timeOut(10000, func() {
 					for {
 						statusesMu.Lock()
-						if len(statuses) > 0 && statuses[len(statuses)-1].Status == status {
-							statusesMu.Unlock()
-							return
+						seen := 0
+						for _, w := range want {
+							if slices.ContainsFunc(statuses, func(s goalStatus) bool { return s.Status == w }) {
+								seen++
+							}
 						}
 						statusesMu.Unlock()
+						if seen == len(want) {
+							return
+						}
 						time.Sleep(10 * time.Millisecond)
 					}
-				}, "Wait for status change")
+				}, "Wait for statuses")
 			}
 			var testResults []testResult
 			addResult := func(ctx context.Context, id *types.GoalID) {
 				resp, err := client.GetResult(ctx, id)
 				statusesMu.Lock()
-				// Status messages can be delivered out of order (e.g. under
-				// rmw_zenoh), so sort by status to make the snapshot
-				// deterministic. sort.Sort is a no-op on a nil slice, so
-				// goals with no observed statuses stay nil.
+				// Handlers run concurrently, so sort to compare the statuses as a
+				// set. Goals with no observed statuses stay nil.
 				sort.Sort(statuses)
 				testResults = append(testResults, testResult{
 					Result:   resp,
@@ -542,15 +641,20 @@ func TestActionStatuses(t *testing.T) {
 				statusesMu.Unlock()
 			}
 
+			// Order 1 makes newWaitAction abort at once, which publishes statuses.
+			So(warmUpActionClient(ctx, client, 1, func(ctx context.Context, h func(context.Context, types.Message)) <-chan error {
+				return client.WatchStatus(ctx, nil, h)
+			}), ShouldBeNil)
+
 			id, ctx, cancel := send(0) // should succeed
 			continueChan <- struct{}{}
-			waitForStatus(rclgo.GoalSucceeded)
+			waitForStatuses(rclgo.GoalAccepted, rclgo.GoalExecuting, rclgo.GoalSucceeded)
 			addResult(ctx, id) //nolint:contextcheck // not the type of func it thinks
 			cancel()
 
 			id, ctx, cancel = send(0) // should be canceled
 			sendCancel(ctx, id)       //nolint:contextcheck // not the type of func it thinks
-			waitForStatus(rclgo.GoalCanceled)
+			waitForStatuses(rclgo.GoalAccepted, rclgo.GoalExecuting, rclgo.GoalCanceling, rclgo.GoalCanceled)
 			addResult(ctx, id) //nolint:contextcheck // not the type of func it thinks
 			cancel()
 
@@ -559,7 +663,7 @@ func TestActionStatuses(t *testing.T) {
 			cancel()
 
 			id, ctx, cancel = send(1) // should be aborted
-			waitForStatus(rclgo.GoalAborted)
+			waitForStatuses(rclgo.GoalAccepted, rclgo.GoalExecuting, rclgo.GoalAborted)
 			addResult(ctx, id) //nolint:contextcheck // not the type of func it thinks
 			cancel()
 
@@ -683,8 +787,8 @@ func TestActionAbortWithResult(t *testing.T) {
 		Convey("Resources are released properly", func() {
 			cancel()
 			timeOut(1000, func() {
-				<-spinErr
-				<-spinErr
+				_ = <-spinErr
+				_ = <-spinErr
 			}, "Waiting for spinning to stop")
 			So(rclctx.Close(), ShouldBeNil)
 		})

@@ -7,6 +7,8 @@ package rclgo
 import "C"
 
 import (
+	"encoding/hex"
+	"fmt"
 	"unsafe"
 )
 
@@ -28,17 +30,23 @@ func (n *Node) GetTopicNamesAndTypes(demangle bool) (map[string][]string, error)
 
 func (n *Node) GetNodeNames() (names, namespaces []string, err error) {
 	rcnames := C.rcutils_get_zero_initialized_string_array()
-	defer C.rcutils_string_array_fini(&rcnames)
+	defer rclIgnore(n.Logger(), "failed to finalize node names", func() C.rcl_ret_t {
+		return C.rcutils_string_array_fini(&rcnames)
+	})
 	rcnamespaces := C.rcutils_get_zero_initialized_string_array()
-	defer C.rcutils_string_array_fini(&rcnamespaces)
-	rc := C.rcl_get_node_names(
-		n.rcl_node_t,
-		*n.context.rcl_allocator_t,
-		&rcnames,
-		&rcnamespaces,
-	)
-	if rc != C.RCL_RET_OK {
-		return nil, nil, errorsCastC(rc, "failed to get node names")
+	defer rclIgnore(n.Logger(), "failed to finalize node namespaces", func() C.rcl_ret_t {
+		return C.rcutils_string_array_fini(&rcnamespaces)
+	})
+	err = rclCall("failed to get node names", func() C.rcl_ret_t {
+		return C.rcl_get_node_names(
+			n.rcl_node_t,
+			*n.context.rcl_allocator_t,
+			&rcnames,
+			&rcnamespaces,
+		)
+	})
+	if err != nil {
+		return nil, nil, err
 	}
 	cnames := unsafe.Slice(rcnames.data, rcnames.size)
 	names = make([]string, rcnames.size)
@@ -147,10 +155,14 @@ func (n *Node) getNamesAndTypes(
 	cnamespace := C.CString(namespace)
 	defer C.free(unsafe.Pointer(cnamespace))
 	cnamesAndTypes := C.rcl_get_zero_initialized_names_and_types()
-	defer C.rcl_names_and_types_fini(&cnamesAndTypes)
-	rc := get(cnode, cnamespace, &cnamesAndTypes)
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCastC(rc, "failed to get topic names and types")
+	defer rclIgnore(n.Logger(), "failed to finalize names and types", func() C.rcl_ret_t {
+		return C.rcl_names_and_types_fini(&cnamesAndTypes)
+	})
+	err := rclCall("failed to get topic names and types", func() C.rcl_ret_t {
+		return get(cnode, cnamespace, &cnamesAndTypes)
+	})
+	if err != nil {
+		return nil, err
 	}
 	names := unsafe.Slice(cnamesAndTypes.names.data, cnamesAndTypes.names.size)
 	types := unsafe.Slice(cnamesAndTypes.types, len(names))
@@ -167,7 +179,9 @@ func (n *Node) getNamesAndTypes(
 	return namesAndTypes, nil
 }
 
-const GIDSize = 24
+// GIDSize is the size of an rmw GID in the ROS distribution rclgo is built
+// against.
+const GIDSize = C.RMW_GID_STORAGE_SIZE
 
 type GID [GIDSize]byte
 
@@ -179,10 +193,29 @@ const (
 	EndpointSubscription
 )
 
+// TypeHash is a ROS 2 interface type hash per REP-2011 (rosidl_type_hash_t).
+// Version 0 means the hash is unset.
+type TypeHash struct {
+	Version uint8
+	Value   [32]byte
+}
+
+// String returns the hash as RIHS<version>_<64 lowercase hex digits>, the form
+// rosidl_stringify_type_hash produces for version 1, or "" when h is unset.
+func (h TypeHash) String() string {
+	if h.Version == 0 {
+		return ""
+	}
+	return fmt.Sprintf("RIHS%02d_%s", h.Version, hex.EncodeToString(h.Value[:]))
+}
+
 type TopicEndpointInfo struct {
 	NodeName      string
 	NodeNamespace string
 	TopicType     string
+	// TopicTypeHash is the hash of the endpoint's message type, unset if the
+	// middleware does not report one.
+	TopicTypeHash TypeHash
 	EndpointType  EndpointType
 	EndpointGID   GID
 	QosProfile    QosProfile
@@ -209,10 +242,14 @@ func (n *Node) getInfoByTopic(kind, topic string, mangle bool, get func(
 	ctopic := C.CString(topic)
 	defer C.free(unsafe.Pointer(ctopic))
 	infoArray := C.rmw_get_zero_initialized_topic_endpoint_info_array()
-	defer C.rmw_topic_endpoint_info_array_fini(&infoArray, n.context.rcl_allocator_t)
-	rc := get(ctopic, !C.bool(mangle), &infoArray)
-	if rc != C.RCL_RET_OK {
-		return nil, errorsCastC(rc, "failed to get "+kind+" info by topic")
+	defer rclIgnore(n.Logger(), "failed to finalize topic endpoint info", func() C.rcl_ret_t {
+		return C.rmw_topic_endpoint_info_array_fini(&infoArray, n.context.rcl_allocator_t)
+	})
+	err := rclCall("failed to get "+kind+" info by topic", func() C.rcl_ret_t {
+		return get(ctopic, !C.bool(mangle), &infoArray)
+	})
+	if err != nil {
+		return nil, err
 	}
 	infoSlice := unsafe.Slice(infoArray.info_array, infoArray.size)
 	infos := make([]TopicEndpointInfo, len(infoSlice))
@@ -221,7 +258,11 @@ func (n *Node) getInfoByTopic(kind, topic string, mangle bool, get func(
 			NodeName:      C.GoString(info.node_name),
 			NodeNamespace: C.GoString(info.node_namespace),
 			TopicType:     C.GoString(info.topic_type),
-			EndpointType:  EndpointType(info.endpoint_type),
+			TopicTypeHash: TypeHash{
+				Version: uint8(info.topic_type_hash.version),
+				Value:   *(*[32]byte)(unsafe.Pointer(&info.topic_type_hash.value)),
+			},
+			EndpointType: EndpointType(info.endpoint_type),
 		}
 		for j := range info.endpoint_gid {
 			infos[i].EndpointGID[j] = byte(info.endpoint_gid[j])
