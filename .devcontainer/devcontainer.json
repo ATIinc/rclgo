@@ -7,6 +7,8 @@
       "ROS_DISTRO": "lyrical"
     }
   },
+  // Stable container name instead of a randomly generated one.
+  "runArgs": ["--name=rclgo-dev"],
   // rclgo's cgo bindings need cgocheck disabled; keep it set in the running
   // container as well as at build time.
   "containerEnv": {
