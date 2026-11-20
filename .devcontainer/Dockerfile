@@ -1,13 +1,13 @@
 # Development / test container for rclgo.
 #
 # Mirrors the GitHub Actions CI environment (see .github/workflows/main.yaml):
-# ROS 2 Kilted as the base, plus Go, make and the ROS interface packages the
+# ROS 2 Lyrical as the base, plus Go, make and the ROS interface packages the
 # test suite depends on. Build args let you bump versions without editing the
 # file.
-ARG ROS_DISTRO=kilted
+ARG ROS_DISTRO=lyrical
 FROM ros:${ROS_DISTRO}-ros-base
 
-ARG ROS_DISTRO=kilted
+ARG ROS_DISTRO=lyrical
 ENV ROS_DISTRO=${ROS_DISTRO}
 
 # Go toolchain. go.mod declares `go 1.26`; with GOTOOLCHAIN=auto (the default)
@@ -73,12 +73,6 @@ RUN curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/main/ins
 # cgocheck=0 is required by rclgo's cgo bindings (see ros2.env).
 ENV GODEBUG=cgocheck=0
 ENV GOFLAGS=-buildvcs=false
-
-# Current Kilted rosidl headers transitively include "rcutils/allocator.h", but
-# the per-package ROS include layout puts it under .../include/rcutils/rcutils/.
-# CGO_CFLAGS is appended to each package's own #cgo flags, so adding the rcutils
-# roots here lets test fixtures with hard-coded include lists still compile.
-ENV CGO_CFLAGS="-I/opt/ros/${ROS_DISTRO}/include/rcutils -I/usr/include/rcutils"
 
 # Use the Zenoh middleware as the default RMW. Note: rmw_zenoh_cpp needs a Zenoh
 # router for discovery — start one in the container with

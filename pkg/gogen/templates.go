@@ -749,6 +749,10 @@ func {{.RosType | ucFirst}}__Sequence_to_Go(goSlice *[]{{.GoType}}, cSlice C{{.R
 	}
 }
 func {{.RosType | ucFirst}}__Sequence_to_C(cSlice *C{{.RosType | ucFirst}}__Sequence, goSlice []{{.GoType}}) {
+	// The enclosing struct may come from malloc, and Sequence__fini treats data
+	// as a rosidl::Buffer when both flags are set, so they must be cleared.
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
 		cSlice.data = nil
 		cSlice.capacity = 0
@@ -880,6 +884,7 @@ package test
 {{range $rootPath := $.Config.RootPaths -}}
 #cgo LDFLAGS: "-L{{$rootPath}}/lib" "-Wl,-rpath={{$rootPath}}/lib"
 #cgo CFLAGS: "-I{{$rootPath}}/include/builtin_interfaces"
+#cgo CFLAGS: "-I{{$rootPath}}/include/rcutils"
 #cgo CFLAGS: "-I{{$rootPath}}/include/rosidl_runtime_c"
 #cgo CFLAGS: "-I{{$rootPath}}/include/rosidl_typesupport_interface"
 #cgo CFLAGS: "-I{{$rootPath}}/include/sensor_msgs"

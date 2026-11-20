@@ -1,18 +1,19 @@
 {
-  "name": "rclgo (ROS 2 Kilted)",
+  "name": "rclgo (ROS 2 Lyrical)",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".",
     "args": {
-      "ROS_DISTRO": "kilted"
+      "ROS_DISTRO": "lyrical"
     }
   },
+  // Stable container name instead of a randomly generated one.
+  "runArgs": ["--name=rclgo-dev"],
   // rclgo's cgo bindings need cgocheck disabled; keep it set in the running
   // container as well as at build time.
   "containerEnv": {
     "GODEBUG": "cgocheck=0",
     "GOFLAGS": "-buildvcs=false",
-    "CGO_CFLAGS": "-I/opt/ros/kilted/include/rcutils -I/usr/include/rcutils",
     "RMW_IMPLEMENTATION": "rmw_zenoh_cpp"
   },
   "customizations": {

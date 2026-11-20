@@ -1,7 +1,7 @@
 name: main
 
 env:
-  ROS_DISTRO: kilted
+  ROS_DISTRO: lyrical
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
 jobs:
   run-tests:
     runs-on: ubuntu-latest
-    container: ros:kilted
+    container: ros:lyrical
     env:
       GOFLAGS: -buildvcs=false
     steps:
@@ -29,10 +29,10 @@ jobs:
           apt-get update
           apt-get install -y \
             make \
-            ros-kilted-action-msgs \
-            ros-kilted-example-interfaces \
-            ros-kilted-test-msgs \
-            ros-kilted-rmw-zenoh-cpp
+            ros-lyrical-action-msgs \
+            ros-lyrical-example-interfaces \
+            ros-lyrical-test-msgs \
+            ros-lyrical-rmw-zenoh-cpp
 
       - name: Run tests
         shell: bash
@@ -46,14 +46,6 @@ jobs:
           # CMAKE_PREFIX_PATH, etc. are set. GitHub Actions runs steps without
           # the image's ros_entrypoint.sh, so this is not set automatically.
           source /opt/ros/${ROS_DISTRO}/setup.bash
-          # ROS installs headers under per-package include dirs
-          # (/opt/ros/<distro>/include/<pkg>/<pkg>/...). cgo needs all of them on
-          # the include path so transitive includes (e.g. rcutils/allocator.h
-          # pulled in by rosidl_runtime_c/type_hash.h) resolve.
-          for d in /opt/ros/${ROS_DISTRO}/include/*/; do
-            CGO_CFLAGS="${CGO_CFLAGS} -I${d%/}"
-          done
-          export CGO_CFLAGS
           # rmw_zenoh_cpp needs a running Zenoh router for node discovery.
           # Start it in the background and ensure it is stopped when the step
           # finishes (including on test failure).
@@ -65,7 +57,7 @@ jobs:
 
   run-linter:
     runs-on: ubuntu-latest
-    container: ros:kilted
+    container: ros:lyrical
     steps:
       - uses: actions/checkout@v3
 
@@ -79,21 +71,16 @@ jobs:
         run: |
           apt-get update
           apt-get install -y \
-            ros-kilted-action-msgs \
-            ros-kilted-example-interfaces \
-            ros-kilted-test-msgs
-          # Source ROS and build CGO_CFLAGS so golangci-lint can compile the cgo
-          # packages (it runs the C compiler but not the binaries). See the
-          # run-tests job for why both are needed.
+            ros-lyrical-action-msgs \
+            ros-lyrical-example-interfaces \
+            ros-lyrical-test-msgs
+          # Source ROS so golangci-lint can compile the cgo packages (it runs
+          # the C compiler but not the binaries).
           source /opt/ros/${ROS_DISTRO}/setup.bash
-          for d in /opt/ros/${ROS_DISTRO}/include/*/; do
-            CGO_CFLAGS="${CGO_CFLAGS} -I${d%/}"
-          done
           # Export the variables the linter needs to subsequent steps. Listed
           # explicitly rather than dumping all of env, which would corrupt
           # $GITHUB_ENV with the multi-line shell functions sourcing ROS exports.
           {
-            echo "CGO_CFLAGS=${CGO_CFLAGS}"
             echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
             echo "AMENT_PREFIX_PATH=${AMENT_PREFIX_PATH}"
             echo "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"

@@ -3,10 +3,8 @@ GO111MODULE = on
 .ONESHELL:
 SHELL = /bin/bash
 
-all: configure build #default make target
-
-configure:
-	echo "" # make configure unimplemented. Unified deployment API between all software components.
+# default make target
+all: build
 
 build:
 	cd cmd/rclgo-gen && go build
@@ -16,11 +14,11 @@ install:
 
 .PHONY: test
 test:
-	go test -count=1 ./...
+	go test -count=1 -timeout=90s ./...
 
 .PHONY: test-verbose
 test-verbose:
-	go test -v -count=1 ./...
+	go test -v -count=1 -timeout=90s ./...
 
 generate:
 	dest_path=internal/msgs
@@ -43,4 +41,3 @@ generate:
 
 lint:
 	golangci-lint run ./...
-

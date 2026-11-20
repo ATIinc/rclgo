@@ -14,8 +14,8 @@ package primitives
 /*
 #cgo LDFLAGS: "-L/usr/lib" "-Wl,-rpath=/usr/lib"
 #cgo CFLAGS: "-I/usr/include/rosidl_runtime_c"
-#cgo LDFLAGS: "-L/opt/ros/kilted/lib" "-Wl,-rpath=/opt/ros/kilted/lib"
-#cgo CFLAGS: "-I/opt/ros/kilted/include/rosidl_runtime_c"
+#cgo LDFLAGS: "-L/opt/ros/lyrical/lib" "-Wl,-rpath=/opt/ros/lyrical/lib"
+#cgo CFLAGS: "-I/opt/ros/lyrical/include/rosidl_runtime_c"
 
 #cgo LDFLAGS: -lrcl -lrosidl_runtime_c -lrosidl_typesupport_c -lrcutils -lrmw_implementation
 
@@ -43,6 +43,10 @@ func Bool__Sequence_to_Go(goSlice *[]bool, cSlice CBool__Sequence) {
 	}
 }
 func Bool__Sequence_to_C(cSlice *CBool__Sequence, goSlice []bool) {
+	// The enclosing struct may come from malloc, and Sequence__fini treats data
+	// as a rosidl::Buffer when both flags are set, so they must be cleared.
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
 		cSlice.data = nil
 		cSlice.capacity = 0
@@ -83,6 +87,10 @@ func Byte__Sequence_to_Go(goSlice *[]byte, cSlice CByte__Sequence) {
 	}
 }
 func Byte__Sequence_to_C(cSlice *CByte__Sequence, goSlice []byte) {
+	// The enclosing struct may come from malloc, and Sequence__fini treats data
+	// as a rosidl::Buffer when both flags are set, so they must be cleared.
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
 		cSlice.data = nil
 		cSlice.capacity = 0
@@ -123,6 +131,10 @@ func Float32__Sequence_to_Go(goSlice *[]float32, cSlice CFloat32__Sequence) {
 	}
 }
 func Float32__Sequence_to_C(cSlice *CFloat32__Sequence, goSlice []float32) {
+	// The enclosing struct may come from malloc, and Sequence__fini treats data
+	// as a rosidl::Buffer when both flags are set, so they must be cleared.
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
 		cSlice.data = nil
 		cSlice.capacity = 0
@@ -163,6 +175,10 @@ func Float64__Sequence_to_Go(goSlice *[]float64, cSlice CFloat64__Sequence) {
 	}
 }
 func Float64__Sequence_to_C(cSlice *CFloat64__Sequence, goSlice []float64) {
+	// The enclosing struct may come from malloc, and Sequence__fini treats data
+	// as a rosidl::Buffer when both flags are set, so they must be cleared.
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
 		cSlice.data = nil
 		cSlice.capacity = 0
@@ -203,6 +219,10 @@ func Int16__Sequence_to_Go(goSlice *[]int16, cSlice CInt16__Sequence) {
 	}
 }
 func Int16__Sequence_to_C(cSlice *CInt16__Sequence, goSlice []int16) {
+	// The enclosing struct may come from malloc, and Sequence__fini treats data
+	// as a rosidl::Buffer when both flags are set, so they must be cleared.
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
 		cSlice.data = nil
 		cSlice.capacity = 0
@@ -243,6 +263,10 @@ func Int32__Sequence_to_Go(goSlice *[]int32, cSlice CInt32__Sequence) {
 	}
 }
 func Int32__Sequence_to_C(cSlice *CInt32__Sequence, goSlice []int32) {
+	// The enclosing struct may come from malloc, and Sequence__fini treats data
+	// as a rosidl::Buffer when both flags are set, so they must be cleared.
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
 		cSlice.data = nil
 		cSlice.capacity = 0
@@ -283,6 +307,10 @@ func Int64__Sequence_to_Go(goSlice *[]int64, cSlice CInt64__Sequence) {
 	}
 }
 func Int64__Sequence_to_C(cSlice *CInt64__Sequence, goSlice []int64) {
+	// The enclosing struct may come from malloc, and Sequence__fini treats data
+	// as a rosidl::Buffer when both flags are set, so they must be cleared.
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
 		cSlice.data = nil
 		cSlice.capacity = 0
@@ -323,6 +351,10 @@ func Int8__Sequence_to_Go(goSlice *[]int8, cSlice CInt8__Sequence) {
 	}
 }
 func Int8__Sequence_to_C(cSlice *CInt8__Sequence, goSlice []int8) {
+	// The enclosing struct may come from malloc, and Sequence__fini treats data
+	// as a rosidl::Buffer when both flags are set, so they must be cleared.
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
 		cSlice.data = nil
 		cSlice.capacity = 0
@@ -363,6 +395,10 @@ func Uint16__Sequence_to_Go(goSlice *[]uint16, cSlice CUint16__Sequence) {
 	}
 }
 func Uint16__Sequence_to_C(cSlice *CUint16__Sequence, goSlice []uint16) {
+	// The enclosing struct may come from malloc, and Sequence__fini treats data
+	// as a rosidl::Buffer when both flags are set, so they must be cleared.
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
 		cSlice.data = nil
 		cSlice.capacity = 0
@@ -403,6 +439,10 @@ func Uint32__Sequence_to_Go(goSlice *[]uint32, cSlice CUint32__Sequence) {
 	}
 }
 func Uint32__Sequence_to_C(cSlice *CUint32__Sequence, goSlice []uint32) {
+	// The enclosing struct may come from malloc, and Sequence__fini treats data
+	// as a rosidl::Buffer when both flags are set, so they must be cleared.
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
 		cSlice.data = nil
 		cSlice.capacity = 0
@@ -443,6 +483,10 @@ func Uint64__Sequence_to_Go(goSlice *[]uint64, cSlice CUint64__Sequence) {
 	}
 }
 func Uint64__Sequence_to_C(cSlice *CUint64__Sequence, goSlice []uint64) {
+	// The enclosing struct may come from malloc, and Sequence__fini treats data
+	// as a rosidl::Buffer when both flags are set, so they must be cleared.
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
 		cSlice.data = nil
 		cSlice.capacity = 0
@@ -483,6 +527,10 @@ func Uint8__Sequence_to_Go(goSlice *[]uint8, cSlice CUint8__Sequence) {
 	}
 }
 func Uint8__Sequence_to_C(cSlice *CUint8__Sequence, goSlice []uint8) {
+	// The enclosing struct may come from malloc, and Sequence__fini treats data
+	// as a rosidl::Buffer when both flags are set, so they must be cleared.
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
 		cSlice.data = nil
 		cSlice.capacity = 0
