@@ -37,6 +37,10 @@ func Char__Sequence_to_Go(goSlice *[]byte, cSlice CChar__Sequence) {
 }
 
 func Char__Sequence_to_C(cSlice *CChar__Sequence, goSlice []byte) {
+	// The enclosing struct may come from malloc, and Sequence__fini treats data
+	// as a rosidl::Buffer when both flags are set, so they must be cleared.
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
 		cSlice.data = nil
 		cSlice.capacity = 0
