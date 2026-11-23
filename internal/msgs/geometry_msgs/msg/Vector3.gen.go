@@ -179,7 +179,7 @@ func Vector3__Sequence_to_C(cSlice *CVector3__Sequence, goSlice []Vector3) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.geometry_msgs__msg__Vector3)(C.malloc(C.sizeof_struct_geometry_msgs__msg__Vector3 * C.size_t(len(goSlice))))
+	cSlice.data = (*C.geometry_msgs__msg__Vector3)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_geometry_msgs__msg__Vector3))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

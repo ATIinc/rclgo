@@ -14,13 +14,15 @@ package primitives
 /*
 #cgo LDFLAGS: "-L/usr/lib" "-Wl,-rpath=/usr/lib"
 #cgo CFLAGS: "-I/usr/include/rosidl_runtime_c"
-#cgo LDFLAGS: "-L/opt/ros/kilted/lib" "-Wl,-rpath=/opt/ros/kilted/lib"
-#cgo CFLAGS: "-I/opt/ros/kilted/include/rosidl_runtime_c"
+#cgo LDFLAGS: "-L/opt/ros/lyrical/lib" "-Wl,-rpath=/opt/ros/lyrical/lib"
+#cgo CFLAGS: "-I/opt/ros/lyrical/include/rosidl_runtime_c"
 
 #cgo LDFLAGS: -lrcl -lrosidl_runtime_c -lrosidl_typesupport_c -lrcutils -lrmw_implementation
 
+#include <stdlib.h>
 #include "rosidl_runtime_c/string.h"
 #include "rosidl_runtime_c/primitives_sequence.h"
+#include "rosidl_runtime_c/primitives_sequence_functions.h"
 
 */
 import "C"
@@ -42,14 +44,24 @@ func Bool__Sequence_to_Go(goSlice *[]bool, cSlice CBool__Sequence) {
 		(*goSlice)[i] = bool(src[i])
 	}
 }
+
+// Bool__Sequence_to_C frees what cSlice holds, so cSlice must be initialized or zeroed.
 func Bool__Sequence_to_C(cSlice *CBool__Sequence, goSlice []bool) {
+	// Frees what __init allocated, such as an IDL default. With both rosidl
+	// buffer flags set it would destroy data as a rosidl::Buffer instead, but
+	// __init and zeroed memory leave them clear.
+	C.rosidl_runtime_c__boolean__Sequence__fini(cSlice)
+	// Set every field rather than rely on what fini leaves behind. data below
+	// is a plain allocation, never a rosidl::Buffer.
+	cSlice.data = nil
+	cSlice.size = 0
+	cSlice.capacity = 0
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
-		cSlice.data = nil
-		cSlice.capacity = 0
-		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.bool)(C.malloc(C.sizeof_bool * C.size_t(len(goSlice))))
+	cSlice.data = (*C.bool)(C.calloc(C.size_t(len(goSlice)), C.sizeof_bool))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -82,14 +94,24 @@ func Byte__Sequence_to_Go(goSlice *[]byte, cSlice CByte__Sequence) {
 		(*goSlice)[i] = byte(src[i])
 	}
 }
+
+// Byte__Sequence_to_C frees what cSlice holds, so cSlice must be initialized or zeroed.
 func Byte__Sequence_to_C(cSlice *CByte__Sequence, goSlice []byte) {
+	// Frees what __init allocated, such as an IDL default. With both rosidl
+	// buffer flags set it would destroy data as a rosidl::Buffer instead, but
+	// __init and zeroed memory leave them clear.
+	C.rosidl_runtime_c__octet__Sequence__fini(cSlice)
+	// Set every field rather than rely on what fini leaves behind. data below
+	// is a plain allocation, never a rosidl::Buffer.
+	cSlice.data = nil
+	cSlice.size = 0
+	cSlice.capacity = 0
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
-		cSlice.data = nil
-		cSlice.capacity = 0
-		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.uint8_t)(C.malloc(C.sizeof_uint8_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.uint8_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_uint8_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -122,14 +144,24 @@ func Float32__Sequence_to_Go(goSlice *[]float32, cSlice CFloat32__Sequence) {
 		(*goSlice)[i] = float32(src[i])
 	}
 }
+
+// Float32__Sequence_to_C frees what cSlice holds, so cSlice must be initialized or zeroed.
 func Float32__Sequence_to_C(cSlice *CFloat32__Sequence, goSlice []float32) {
+	// Frees what __init allocated, such as an IDL default. With both rosidl
+	// buffer flags set it would destroy data as a rosidl::Buffer instead, but
+	// __init and zeroed memory leave them clear.
+	C.rosidl_runtime_c__float__Sequence__fini(cSlice)
+	// Set every field rather than rely on what fini leaves behind. data below
+	// is a plain allocation, never a rosidl::Buffer.
+	cSlice.data = nil
+	cSlice.size = 0
+	cSlice.capacity = 0
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
-		cSlice.data = nil
-		cSlice.capacity = 0
-		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.float)(C.malloc(C.sizeof_float * C.size_t(len(goSlice))))
+	cSlice.data = (*C.float)(C.calloc(C.size_t(len(goSlice)), C.sizeof_float))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -162,14 +194,24 @@ func Float64__Sequence_to_Go(goSlice *[]float64, cSlice CFloat64__Sequence) {
 		(*goSlice)[i] = float64(src[i])
 	}
 }
+
+// Float64__Sequence_to_C frees what cSlice holds, so cSlice must be initialized or zeroed.
 func Float64__Sequence_to_C(cSlice *CFloat64__Sequence, goSlice []float64) {
+	// Frees what __init allocated, such as an IDL default. With both rosidl
+	// buffer flags set it would destroy data as a rosidl::Buffer instead, but
+	// __init and zeroed memory leave them clear.
+	C.rosidl_runtime_c__double__Sequence__fini(cSlice)
+	// Set every field rather than rely on what fini leaves behind. data below
+	// is a plain allocation, never a rosidl::Buffer.
+	cSlice.data = nil
+	cSlice.size = 0
+	cSlice.capacity = 0
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
-		cSlice.data = nil
-		cSlice.capacity = 0
-		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.double)(C.malloc(C.sizeof_double * C.size_t(len(goSlice))))
+	cSlice.data = (*C.double)(C.calloc(C.size_t(len(goSlice)), C.sizeof_double))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -202,14 +244,24 @@ func Int16__Sequence_to_Go(goSlice *[]int16, cSlice CInt16__Sequence) {
 		(*goSlice)[i] = int16(src[i])
 	}
 }
+
+// Int16__Sequence_to_C frees what cSlice holds, so cSlice must be initialized or zeroed.
 func Int16__Sequence_to_C(cSlice *CInt16__Sequence, goSlice []int16) {
+	// Frees what __init allocated, such as an IDL default. With both rosidl
+	// buffer flags set it would destroy data as a rosidl::Buffer instead, but
+	// __init and zeroed memory leave them clear.
+	C.rosidl_runtime_c__int16__Sequence__fini(cSlice)
+	// Set every field rather than rely on what fini leaves behind. data below
+	// is a plain allocation, never a rosidl::Buffer.
+	cSlice.data = nil
+	cSlice.size = 0
+	cSlice.capacity = 0
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
-		cSlice.data = nil
-		cSlice.capacity = 0
-		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.int16_t)(C.malloc(C.sizeof_int16_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.int16_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_int16_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -242,14 +294,24 @@ func Int32__Sequence_to_Go(goSlice *[]int32, cSlice CInt32__Sequence) {
 		(*goSlice)[i] = int32(src[i])
 	}
 }
+
+// Int32__Sequence_to_C frees what cSlice holds, so cSlice must be initialized or zeroed.
 func Int32__Sequence_to_C(cSlice *CInt32__Sequence, goSlice []int32) {
+	// Frees what __init allocated, such as an IDL default. With both rosidl
+	// buffer flags set it would destroy data as a rosidl::Buffer instead, but
+	// __init and zeroed memory leave them clear.
+	C.rosidl_runtime_c__int32__Sequence__fini(cSlice)
+	// Set every field rather than rely on what fini leaves behind. data below
+	// is a plain allocation, never a rosidl::Buffer.
+	cSlice.data = nil
+	cSlice.size = 0
+	cSlice.capacity = 0
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
-		cSlice.data = nil
-		cSlice.capacity = 0
-		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.int32_t)(C.malloc(C.sizeof_int32_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.int32_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_int32_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -282,14 +344,24 @@ func Int64__Sequence_to_Go(goSlice *[]int64, cSlice CInt64__Sequence) {
 		(*goSlice)[i] = int64(src[i])
 	}
 }
+
+// Int64__Sequence_to_C frees what cSlice holds, so cSlice must be initialized or zeroed.
 func Int64__Sequence_to_C(cSlice *CInt64__Sequence, goSlice []int64) {
+	// Frees what __init allocated, such as an IDL default. With both rosidl
+	// buffer flags set it would destroy data as a rosidl::Buffer instead, but
+	// __init and zeroed memory leave them clear.
+	C.rosidl_runtime_c__int64__Sequence__fini(cSlice)
+	// Set every field rather than rely on what fini leaves behind. data below
+	// is a plain allocation, never a rosidl::Buffer.
+	cSlice.data = nil
+	cSlice.size = 0
+	cSlice.capacity = 0
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
-		cSlice.data = nil
-		cSlice.capacity = 0
-		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.int64_t)(C.malloc(C.sizeof_int64_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.int64_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_int64_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -322,14 +394,24 @@ func Int8__Sequence_to_Go(goSlice *[]int8, cSlice CInt8__Sequence) {
 		(*goSlice)[i] = int8(src[i])
 	}
 }
+
+// Int8__Sequence_to_C frees what cSlice holds, so cSlice must be initialized or zeroed.
 func Int8__Sequence_to_C(cSlice *CInt8__Sequence, goSlice []int8) {
+	// Frees what __init allocated, such as an IDL default. With both rosidl
+	// buffer flags set it would destroy data as a rosidl::Buffer instead, but
+	// __init and zeroed memory leave them clear.
+	C.rosidl_runtime_c__int8__Sequence__fini(cSlice)
+	// Set every field rather than rely on what fini leaves behind. data below
+	// is a plain allocation, never a rosidl::Buffer.
+	cSlice.data = nil
+	cSlice.size = 0
+	cSlice.capacity = 0
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
-		cSlice.data = nil
-		cSlice.capacity = 0
-		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.int8_t)(C.malloc(C.sizeof_int8_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.int8_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_int8_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -362,14 +444,24 @@ func Uint16__Sequence_to_Go(goSlice *[]uint16, cSlice CUint16__Sequence) {
 		(*goSlice)[i] = uint16(src[i])
 	}
 }
+
+// Uint16__Sequence_to_C frees what cSlice holds, so cSlice must be initialized or zeroed.
 func Uint16__Sequence_to_C(cSlice *CUint16__Sequence, goSlice []uint16) {
+	// Frees what __init allocated, such as an IDL default. With both rosidl
+	// buffer flags set it would destroy data as a rosidl::Buffer instead, but
+	// __init and zeroed memory leave them clear.
+	C.rosidl_runtime_c__uint16__Sequence__fini(cSlice)
+	// Set every field rather than rely on what fini leaves behind. data below
+	// is a plain allocation, never a rosidl::Buffer.
+	cSlice.data = nil
+	cSlice.size = 0
+	cSlice.capacity = 0
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
-		cSlice.data = nil
-		cSlice.capacity = 0
-		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.uint16_t)(C.malloc(C.sizeof_uint16_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.uint16_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_uint16_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -402,14 +494,24 @@ func Uint32__Sequence_to_Go(goSlice *[]uint32, cSlice CUint32__Sequence) {
 		(*goSlice)[i] = uint32(src[i])
 	}
 }
+
+// Uint32__Sequence_to_C frees what cSlice holds, so cSlice must be initialized or zeroed.
 func Uint32__Sequence_to_C(cSlice *CUint32__Sequence, goSlice []uint32) {
+	// Frees what __init allocated, such as an IDL default. With both rosidl
+	// buffer flags set it would destroy data as a rosidl::Buffer instead, but
+	// __init and zeroed memory leave them clear.
+	C.rosidl_runtime_c__uint32__Sequence__fini(cSlice)
+	// Set every field rather than rely on what fini leaves behind. data below
+	// is a plain allocation, never a rosidl::Buffer.
+	cSlice.data = nil
+	cSlice.size = 0
+	cSlice.capacity = 0
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
-		cSlice.data = nil
-		cSlice.capacity = 0
-		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.uint32_t)(C.malloc(C.sizeof_uint32_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.uint32_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_uint32_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -442,14 +544,24 @@ func Uint64__Sequence_to_Go(goSlice *[]uint64, cSlice CUint64__Sequence) {
 		(*goSlice)[i] = uint64(src[i])
 	}
 }
+
+// Uint64__Sequence_to_C frees what cSlice holds, so cSlice must be initialized or zeroed.
 func Uint64__Sequence_to_C(cSlice *CUint64__Sequence, goSlice []uint64) {
+	// Frees what __init allocated, such as an IDL default. With both rosidl
+	// buffer flags set it would destroy data as a rosidl::Buffer instead, but
+	// __init and zeroed memory leave them clear.
+	C.rosidl_runtime_c__uint64__Sequence__fini(cSlice)
+	// Set every field rather than rely on what fini leaves behind. data below
+	// is a plain allocation, never a rosidl::Buffer.
+	cSlice.data = nil
+	cSlice.size = 0
+	cSlice.capacity = 0
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
-		cSlice.data = nil
-		cSlice.capacity = 0
-		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.uint64_t)(C.malloc(C.sizeof_uint64_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.uint64_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_uint64_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -482,14 +594,24 @@ func Uint8__Sequence_to_Go(goSlice *[]uint8, cSlice CUint8__Sequence) {
 		(*goSlice)[i] = uint8(src[i])
 	}
 }
+
+// Uint8__Sequence_to_C frees what cSlice holds, so cSlice must be initialized or zeroed.
 func Uint8__Sequence_to_C(cSlice *CUint8__Sequence, goSlice []uint8) {
+	// Frees what __init allocated, such as an IDL default. With both rosidl
+	// buffer flags set it would destroy data as a rosidl::Buffer instead, but
+	// __init and zeroed memory leave them clear.
+	C.rosidl_runtime_c__uint8__Sequence__fini(cSlice)
+	// Set every field rather than rely on what fini leaves behind. data below
+	// is a plain allocation, never a rosidl::Buffer.
+	cSlice.data = nil
+	cSlice.size = 0
+	cSlice.capacity = 0
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
-		cSlice.data = nil
-		cSlice.capacity = 0
-		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.uint8_t)(C.malloc(C.sizeof_uint8_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.uint8_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_uint8_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

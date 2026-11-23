@@ -204,7 +204,7 @@ func Inertia__Sequence_to_C(cSlice *CInertia__Sequence, goSlice []Inertia) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.geometry_msgs__msg__Inertia)(C.malloc(C.sizeof_struct_geometry_msgs__msg__Inertia * C.size_t(len(goSlice))))
+	cSlice.data = (*C.geometry_msgs__msg__Inertia)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_geometry_msgs__msg__Inertia))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

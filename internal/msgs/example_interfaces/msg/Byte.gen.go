@@ -169,7 +169,7 @@ func Byte__Sequence_to_C(cSlice *CByte__Sequence, goSlice []Byte) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.example_interfaces__msg__Byte)(C.malloc(C.sizeof_struct_example_interfaces__msg__Byte * C.size_t(len(goSlice))))
+	cSlice.data = (*C.example_interfaces__msg__Byte)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_example_interfaces__msg__Byte))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

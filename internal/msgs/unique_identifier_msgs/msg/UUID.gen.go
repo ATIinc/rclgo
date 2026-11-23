@@ -172,7 +172,7 @@ func UUID__Sequence_to_C(cSlice *CUUID__Sequence, goSlice []UUID) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.unique_identifier_msgs__msg__UUID)(C.malloc(C.sizeof_struct_unique_identifier_msgs__msg__UUID * C.size_t(len(goSlice))))
+	cSlice.data = (*C.unique_identifier_msgs__msg__UUID)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_unique_identifier_msgs__msg__UUID))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

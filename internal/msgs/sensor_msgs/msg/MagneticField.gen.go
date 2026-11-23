@@ -184,7 +184,7 @@ func MagneticField__Sequence_to_C(cSlice *CMagneticField__Sequence, goSlice []Ma
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.sensor_msgs__msg__MagneticField)(C.malloc(C.sizeof_struct_sensor_msgs__msg__MagneticField * C.size_t(len(goSlice))))
+	cSlice.data = (*C.sensor_msgs__msg__MagneticField)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_sensor_msgs__msg__MagneticField))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

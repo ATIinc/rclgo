@@ -162,7 +162,7 @@ func Empty_Request__Sequence_to_C(cSlice *CEmpty_Request__Sequence, goSlice []Em
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.std_srvs__srv__Empty_Request)(C.malloc(C.sizeof_struct_std_srvs__srv__Empty_Request * C.size_t(len(goSlice))))
+	cSlice.data = (*C.std_srvs__srv__Empty_Request)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_std_srvs__srv__Empty_Request))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

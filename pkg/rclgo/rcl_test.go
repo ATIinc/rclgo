@@ -146,33 +146,43 @@ func TestPubSubCount(t *testing.T) {
 	requireValue(t, 1)(sub1.GetPublisherCount())
 	requireValue(t, 1)(sub2.GetPublisherCount())
 
-	subOptsUnrealiable := rclgo.NewDefaultSubscriptionOptions()
-	subOptsUnrealiable.Qos.Reliability = rclgo.ReliabilityBestEffort
-	subOptsUnrealiable.Qos.Durability = rclgo.DurabilityTransientLocal
-	subUnreliable := noErr(subNode.NewSubscription("string", std_msgs_msg.StringTypeSupport, subOptsUnrealiable, noopSub))(t)
+	// The QoS mixes below match on every RMW: a reader may request less than a writer offers.
+	subOptsBestEffort := rclgo.NewDefaultSubscriptionOptions()
+	subOptsBestEffort.Qos.Reliability = rclgo.ReliabilityBestEffort
+	subBestEffort := noErr(subNode.NewSubscription("string", std_msgs_msg.StringTypeSupport, subOptsBestEffort, noopSub))(t)
 
 	requireValue(t, 3)(pub.GetSubscriptionCount())
 	requireValue(t, 1)(sub1.GetPublisherCount())
 	requireValue(t, 1)(sub2.GetPublisherCount())
-	requireValue(t, 1)(subUnreliable.GetPublisherCount())
+	requireValue(t, 1)(subBestEffort.GetPublisherCount())
 
-	pubOptsUnrealiable := rclgo.NewDefaultPublisherOptions()
-	pubOptsUnrealiable.Qos.Reliability = rclgo.ReliabilityBestEffort
-	pubOptsUnrealiable.Qos.Durability = rclgo.DurabilityTransientLocal
-	pubUnreliable := noErr(pubNode.NewPublisher("string", std_msgs_msg.StringTypeSupport, pubOptsUnrealiable))(t)
+	pubOptsTransientLocal := rclgo.NewDefaultPublisherOptions()
+	pubOptsTransientLocal.Qos.Durability = rclgo.DurabilityTransientLocal
+	pubTransientLocal := noErr(pubNode.NewPublisher("string", std_msgs_msg.StringTypeSupport, pubOptsTransientLocal))(t)
 
 	requireValue(t, 3)(pub.GetSubscriptionCount())
-	requireValue(t, 3)(pubUnreliable.GetSubscriptionCount())
+	requireValue(t, 3)(pubTransientLocal.GetSubscriptionCount())
 	requireValue(t, 2)(sub1.GetPublisherCount())
 	requireValue(t, 2)(sub2.GetPublisherCount())
-	requireValue(t, 2)(subUnreliable.GetPublisherCount())
+	requireValue(t, 2)(subBestEffort.GetPublisherCount())
 
 	subOther := noErr(subNode.NewSubscription("other_string", std_msgs_msg.StringTypeSupport, nil, noopSub))(t)
 
 	requireValue(t, 3)(pub.GetSubscriptionCount())
-	requireValue(t, 3)(pubUnreliable.GetSubscriptionCount())
+	requireValue(t, 3)(pubTransientLocal.GetSubscriptionCount())
 	requireValue(t, 2)(sub1.GetPublisherCount())
 	requireValue(t, 2)(sub2.GetPublisherCount())
-	requireValue(t, 2)(subUnreliable.GetPublisherCount())
+	requireValue(t, 2)(subBestEffort.GetPublisherCount())
 	requireValue(t, 0)(subOther.GetPublisherCount())
+
+	// DDS refuses a transient-local reader on a volatile writer, while Zenoh matches every QoS.
+	if os.Getenv("RMW_IMPLEMENTATION") != "rmw_zenoh_cpp" {
+		subOptsTransientLocal := rclgo.NewDefaultSubscriptionOptions()
+		subOptsTransientLocal.Qos.Durability = rclgo.DurabilityTransientLocal
+		subTransientLocal := noErr(subNode.NewSubscription("string", std_msgs_msg.StringTypeSupport, subOptsTransientLocal, noopSub))(t)
+
+		requireValue(t, 3)(pub.GetSubscriptionCount())
+		requireValue(t, 4)(pubTransientLocal.GetSubscriptionCount())
+		requireValue(t, 1)(subTransientLocal.GetPublisherCount())
+	}
 }

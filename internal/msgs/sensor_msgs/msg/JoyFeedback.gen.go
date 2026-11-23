@@ -184,7 +184,7 @@ func JoyFeedback__Sequence_to_C(cSlice *CJoyFeedback__Sequence, goSlice []JoyFee
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.sensor_msgs__msg__JoyFeedback)(C.malloc(C.sizeof_struct_sensor_msgs__msg__JoyFeedback * C.size_t(len(goSlice))))
+	cSlice.data = (*C.sensor_msgs__msg__JoyFeedback)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_sensor_msgs__msg__JoyFeedback))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

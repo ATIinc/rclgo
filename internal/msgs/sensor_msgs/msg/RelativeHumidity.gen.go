@@ -180,7 +180,7 @@ func RelativeHumidity__Sequence_to_C(cSlice *CRelativeHumidity__Sequence, goSlic
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.sensor_msgs__msg__RelativeHumidity)(C.malloc(C.sizeof_struct_sensor_msgs__msg__RelativeHumidity * C.size_t(len(goSlice))))
+	cSlice.data = (*C.sensor_msgs__msg__RelativeHumidity)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_sensor_msgs__msg__RelativeHumidity))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

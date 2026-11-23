@@ -319,7 +319,7 @@ func NewNode(nodeName, namespace string) (*Node, error) {
 
 func (c *Context) NewNode(node_name, namespace string) (node *Node, err error) {
 	node = &Node{
-		rcl_node_t: (*C.rcl_node_t)(C.malloc(C.sizeof_rcl_node_t)),
+		rcl_node_t: (*C.rcl_node_t)(C.calloc(1, C.sizeof_rcl_node_t)),
 		context:    c,
 	}
 	*node.rcl_node_t = C.rcl_get_zero_initialized_node()
@@ -466,7 +466,7 @@ func (n *Node) NewPublisher(
 		TopicName:       topicName,
 		typeSupport:     ros2msg,
 		node:            n,
-		rcl_publisher_t: (*C.rcl_publisher_t)(C.malloc(C.sizeof_rcl_publisher_t)),
+		rcl_publisher_t: (*C.rcl_publisher_t)(C.calloc(1, C.sizeof_rcl_publisher_t)),
 		topicName:       C.CString(topicName),
 	}
 	*pub.rcl_publisher_t = C.rcl_get_zero_initialized_publisher()
@@ -641,7 +641,7 @@ func (c *Context) NewTimer(timeout time.Duration, timer_callback func(*Timer)) (
 		timeout = 1000 * time.Millisecond
 	}
 	timer = &Timer{
-		rcl_timer_t: (*C.rcl_timer_t)(C.malloc(C.sizeof_rcl_timer_t)),
+		rcl_timer_t: (*C.rcl_timer_t)(C.calloc(1, C.sizeof_rcl_timer_t)),
 		Callback:    timer_callback,
 		context:     c,
 	}
@@ -744,7 +744,7 @@ func (n *Node) NewSubscription(
 		Ros2MsgType:        ros2msg,
 		Callback:           subscriptionCallback,
 		node:               n,
-		rcl_subscription_t: (*C.rcl_subscription_t)(C.malloc(C.sizeof_rcl_subscription_t)),
+		rcl_subscription_t: (*C.rcl_subscription_t)(C.calloc(1, C.sizeof_rcl_subscription_t)),
 		topicName:          C.CString(topicName),
 	}
 	*sub.rcl_subscription_t = C.rcl_get_zero_initialized_subscription()
@@ -829,7 +829,7 @@ func (s *Subscription) TakeSerializedMessageInto(dst []byte, info *MessageInfo) 
 		if err != nil {
 			return nil, err
 		}
-		s.take = (*C.rclgo_take_state_t)(C.malloc(C.sizeof_rclgo_take_state_t))
+		s.take = (*C.rclgo_take_state_t)(C.calloc(1, C.sizeof_rclgo_take_state_t))
 		s.take.msg = C.rmw_serialized_message_t(msg)
 	}
 	s.take.info = C.rmw_message_info_t{}
@@ -911,7 +911,7 @@ type guardCondition struct {
 
 func (c *Context) newGuardCondition() (g *guardCondition, err error) {
 	g = &guardCondition{
-		rclGuardCondition: (*C.rcl_guard_condition_t)(C.malloc(C.sizeof_rcl_guard_condition_t)),
+		rclGuardCondition: (*C.rcl_guard_condition_t)(C.calloc(1, C.sizeof_rcl_guard_condition_t)),
 		context:           c,
 	}
 	*g.rclGuardCondition = C.rcl_get_zero_initialized_guard_condition()
@@ -1058,7 +1058,7 @@ func (n *Node) NewService(
 		requestTypeSupport:  typeSupport.Request(),
 		responseTypeSupport: typeSupport.Response(),
 		node:                n,
-		rclService:          (*C.rcl_service_t)(C.malloc(C.sizeof_rcl_service_t)),
+		rclService:          (*C.rcl_service_t)(C.calloc(1, C.sizeof_rcl_service_t)),
 		name:                C.CString(name),
 		handler:             handler,
 		introspectionState:  options.Introspection,
@@ -1237,7 +1237,7 @@ func (n *Node) NewClient(
 	}
 	c = &Client{
 		node:               n,
-		rclClient:          (*C.rcl_client_t)(C.malloc(C.sizeof_rcl_client_t)),
+		rclClient:          (*C.rcl_client_t)(C.calloc(1, C.sizeof_rcl_client_t)),
 		typeSupport:        typeSupport,
 		introspectionState: options.Introspection,
 	}

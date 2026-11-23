@@ -204,7 +204,7 @@ func MultiDOFJointState__Sequence_to_C(cSlice *CMultiDOFJointState__Sequence, go
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.sensor_msgs__msg__MultiDOFJointState)(C.malloc(C.sizeof_struct_sensor_msgs__msg__MultiDOFJointState * C.size_t(len(goSlice))))
+	cSlice.data = (*C.sensor_msgs__msg__MultiDOFJointState)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_sensor_msgs__msg__MultiDOFJointState))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

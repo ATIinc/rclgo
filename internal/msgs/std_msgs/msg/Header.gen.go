@@ -176,7 +176,7 @@ func Header__Sequence_to_C(cSlice *CHeader__Sequence, goSlice []Header) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.std_msgs__msg__Header)(C.malloc(C.sizeof_struct_std_msgs__msg__Header * C.size_t(len(goSlice))))
+	cSlice.data = (*C.std_msgs__msg__Header)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_std_msgs__msg__Header))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

@@ -178,7 +178,7 @@ func ChannelFloat32__Sequence_to_C(cSlice *CChannelFloat32__Sequence, goSlice []
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.sensor_msgs__msg__ChannelFloat32)(C.malloc(C.sizeof_struct_sensor_msgs__msg__ChannelFloat32 * C.size_t(len(goSlice))))
+	cSlice.data = (*C.sensor_msgs__msg__ChannelFloat32)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_sensor_msgs__msg__ChannelFloat32))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

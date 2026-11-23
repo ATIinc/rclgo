@@ -25,6 +25,8 @@ trap 'kill-jobs' SIGINT SIGTERM EXIT
 
 func shell(t *testing.T, script string) {
 	t.Helper()
+	// The child processes read RMW_IMPLEMENTATION, which the go test cache cannot see.
+	_ = os.Getenv("RMW_IMPLEMENTATION")
 	cmd := exec.CommandContext(t.Context(), "bash", "-c", shellPrelude+script) //nolint:gosec // only takes trusted input from test code
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -45,7 +47,8 @@ go generate
 go build
 
 ./greeter &
-msg=$(ros2 topic echo --once /greeter/hello greeting_msgs/msg/Hello)
+# A running ros2 daemon may be on another Zenoh router than this test.
+msg=$(ros2 topic echo --no-daemon --once /greeter/hello greeting_msgs/msg/Hello)
 test "$msg" == $'name: gopher\n---'
 `)
 }

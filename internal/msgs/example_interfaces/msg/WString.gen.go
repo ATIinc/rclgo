@@ -170,7 +170,7 @@ func WString__Sequence_to_C(cSlice *CWString__Sequence, goSlice []WString) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.example_interfaces__msg__WString)(C.malloc(C.sizeof_struct_example_interfaces__msg__WString * C.size_t(len(goSlice))))
+	cSlice.data = (*C.example_interfaces__msg__WString)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_example_interfaces__msg__WString))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

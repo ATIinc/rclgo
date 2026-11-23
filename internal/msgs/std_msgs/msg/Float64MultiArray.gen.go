@@ -178,7 +178,7 @@ func Float64MultiArray__Sequence_to_C(cSlice *CFloat64MultiArray__Sequence, goSl
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.std_msgs__msg__Float64MultiArray)(C.malloc(C.sizeof_struct_std_msgs__msg__Float64MultiArray * C.size_t(len(goSlice))))
+	cSlice.data = (*C.std_msgs__msg__Float64MultiArray)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_std_msgs__msg__Float64MultiArray))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

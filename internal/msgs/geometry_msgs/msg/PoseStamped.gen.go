@@ -175,7 +175,7 @@ func PoseStamped__Sequence_to_C(cSlice *CPoseStamped__Sequence, goSlice []PoseSt
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.geometry_msgs__msg__PoseStamped)(C.malloc(C.sizeof_struct_geometry_msgs__msg__PoseStamped * C.size_t(len(goSlice))))
+	cSlice.data = (*C.geometry_msgs__msg__PoseStamped)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_geometry_msgs__msg__PoseStamped))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

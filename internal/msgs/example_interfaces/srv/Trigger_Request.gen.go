@@ -162,7 +162,7 @@ func Trigger_Request__Sequence_to_C(cSlice *CTrigger_Request__Sequence, goSlice 
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.example_interfaces__srv__Trigger_Request)(C.malloc(C.sizeof_struct_example_interfaces__srv__Trigger_Request * C.size_t(len(goSlice))))
+	cSlice.data = (*C.example_interfaces__srv__Trigger_Request)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_example_interfaces__srv__Trigger_Request))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

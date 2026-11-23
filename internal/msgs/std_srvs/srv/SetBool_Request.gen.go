@@ -169,7 +169,7 @@ func SetBool_Request__Sequence_to_C(cSlice *CSetBool_Request__Sequence, goSlice 
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.std_srvs__srv__SetBool_Request)(C.malloc(C.sizeof_struct_std_srvs__srv__SetBool_Request * C.size_t(len(goSlice))))
+	cSlice.data = (*C.std_srvs__srv__SetBool_Request)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_std_srvs__srv__SetBool_Request))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

@@ -189,7 +189,7 @@ func CancelGoal_Response__Sequence_to_C(cSlice *CCancelGoal_Response__Sequence, 
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.action_msgs__srv__CancelGoal_Response)(C.malloc(C.sizeof_struct_action_msgs__srv__CancelGoal_Response * C.size_t(len(goSlice))))
+	cSlice.data = (*C.action_msgs__srv__CancelGoal_Response)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_action_msgs__srv__CancelGoal_Response))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

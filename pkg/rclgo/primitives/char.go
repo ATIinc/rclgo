@@ -10,8 +10,10 @@ Licensed under the Apache License, Version 2.0 (the "License");
 package primitives
 
 /*
+#include <stdlib.h>
 #include "rosidl_runtime_c/string.h"
 #include "rosidl_runtime_c/primitives_sequence.h"
+#include "rosidl_runtime_c/primitives_sequence_functions.h"
 */
 import "C"
 
@@ -36,14 +38,23 @@ func Char__Sequence_to_Go(goSlice *[]byte, cSlice CChar__Sequence) {
 	copy(*goSlice, src)
 }
 
+// Char__Sequence_to_C frees what cSlice holds, so cSlice must be initialized or zeroed.
 func Char__Sequence_to_C(cSlice *CChar__Sequence, goSlice []byte) {
+	// Frees what __init allocated, such as an IDL default. With both rosidl
+	// buffer flags set it would destroy data as a rosidl::Buffer instead, but
+	// __init and zeroed memory leave them clear.
+	C.rosidl_runtime_c__char__Sequence__fini(cSlice)
+	// Set every field rather than rely on what fini leaves behind. data below
+	// is a plain allocation, never a rosidl::Buffer.
+	cSlice.data = nil
+	cSlice.size = 0
+	cSlice.capacity = 0
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
-		cSlice.data = nil
-		cSlice.capacity = 0
-		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.schar)(C.malloc(C.sizeof_schar * C.size_t(len(goSlice))))
+	cSlice.data = (*C.schar)(C.calloc(C.size_t(len(goSlice)), C.sizeof_schar))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice((*byte)(unsafe.Pointer(cSlice.data)), cSlice.size)

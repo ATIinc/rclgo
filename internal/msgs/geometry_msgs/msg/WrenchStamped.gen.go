@@ -175,7 +175,7 @@ func WrenchStamped__Sequence_to_C(cSlice *CWrenchStamped__Sequence, goSlice []Wr
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.geometry_msgs__msg__WrenchStamped)(C.malloc(C.sizeof_struct_geometry_msgs__msg__WrenchStamped * C.size_t(len(goSlice))))
+	cSlice.data = (*C.geometry_msgs__msg__WrenchStamped)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_geometry_msgs__msg__WrenchStamped))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

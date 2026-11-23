@@ -169,7 +169,7 @@ func AddTwoInts_Response__Sequence_to_C(cSlice *CAddTwoInts_Response__Sequence, 
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.example_interfaces__srv__AddTwoInts_Response)(C.malloc(C.sizeof_struct_example_interfaces__srv__AddTwoInts_Response * C.size_t(len(goSlice))))
+	cSlice.data = (*C.example_interfaces__srv__AddTwoInts_Response)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_example_interfaces__srv__AddTwoInts_Response))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

@@ -9,7 +9,9 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 package primitives
 
+//#include <stdlib.h>
 //#include "rosidl_runtime_c/u16string.h"
+//#include "rosidl_runtime_c/u16string_functions.h"
 import "C"
 
 import (
@@ -17,16 +19,21 @@ import (
 	"unsafe"
 )
 
-func U16StringAsCStruct(dst unsafe.Pointer, m string) { // rosidl_runtime_c__U16String__assignn() does something like this, but to call it we still need to make a C string and free it.
+// U16StringAsCStruct writes m into dst, which must be an initialized or zeroed
+// rosidl_runtime_c__U16String. Assigning reallocates the buffer __init
+// allocated instead of leaking it.
+func U16StringAsCStruct(dst unsafe.Pointer, m string) {
 	mem := (*C.rosidl_runtime_c__U16String)(dst)
-	runescape := utf16.Encode([]rune(m))
-
-	mem.data = (*C.ushort)(C.malloc(C.sizeof_ushort * C.size_t(len(runescape)+1)))
-	mem.size = C.size_t(len(runescape))
-	mem.capacity = C.size_t(len(runescape) + 1)
-	memData := unsafe.Slice((*uint16)(mem.data), mem.capacity)
-	copy(memData, runescape)
-	memData[len(memData)-1] = 0
+	encoded := utf16.Encode([]rune(m))
+	// assignn rejects a NULL value, which an empty slice has no element to give.
+	var empty C.uint16_t
+	value := &empty
+	if len(encoded) > 0 {
+		value = (*C.uint16_t)(unsafe.Pointer(&encoded[0]))
+	}
+	if !C.rosidl_runtime_c__U16String__assignn(mem, value, C.size_t(len(encoded))) {
+		panic("rclgo: out of memory converting a wstring to C")
+	}
 }
 
 func U16StringAsGoStruct(msg *string, ros2_message_buffer unsafe.Pointer) {
@@ -51,14 +58,22 @@ func U16String__Sequence_to_Go(goSlice *[]string, cSlice CU16String__Sequence) {
 	}
 }
 
+// U16String__Sequence_to_C frees what cSlice holds, so cSlice must be initialized or zeroed.
 func U16String__Sequence_to_C(cSlice *CU16String__Sequence, goSlice []string) {
+	// Frees what __init allocated, such as an IDL default, including each
+	// element's buffer.
+	C.rosidl_runtime_c__U16String__Sequence__fini(cSlice)
+	// Set every field rather than rely on what fini leaves behind. data below
+	// is a plain allocation, never a rosidl::Buffer.
+	cSlice.data = nil
+	cSlice.size = 0
+	cSlice.capacity = 0
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
-		cSlice.data = nil
-		cSlice.capacity = 0
-		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.rosidl_runtime_c__U16String)(C.malloc((C.size_t)(C.sizeof_struct_rosidl_runtime_c__U16String * uintptr(len(goSlice)))))
+	cSlice.data = (*C.rosidl_runtime_c__U16String)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_rosidl_runtime_c__U16String))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

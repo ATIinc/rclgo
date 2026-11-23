@@ -200,7 +200,7 @@ func TestGetPublishersInfoByTopicTypeHash(t *testing.T) {
 
 	var infos []rclgo.TopicEndpointInfo
 	require.Eventually(t, func() bool {
-		infos, err = node.GetPublishersInfoByTopic(topic, false)
+		infos, err = node.GetPublishersInfoByTopic(topic, true)
 		return err == nil && len(infos) == 1
 	}, 3*time.Second, 50*time.Millisecond)
 	hash := infos[0].TopicTypeHash.String()

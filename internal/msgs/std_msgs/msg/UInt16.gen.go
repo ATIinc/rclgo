@@ -169,7 +169,7 @@ func UInt16__Sequence_to_C(cSlice *CUInt16__Sequence, goSlice []UInt16) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.std_msgs__msg__UInt16)(C.malloc(C.sizeof_struct_std_msgs__msg__UInt16 * C.size_t(len(goSlice))))
+	cSlice.data = (*C.std_msgs__msg__UInt16)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_std_msgs__msg__UInt16))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

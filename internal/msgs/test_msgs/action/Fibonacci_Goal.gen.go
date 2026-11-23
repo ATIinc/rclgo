@@ -169,7 +169,7 @@ func Fibonacci_Goal__Sequence_to_C(cSlice *CFibonacci_Goal__Sequence, goSlice []
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.test_msgs__action__Fibonacci_Goal)(C.malloc(C.sizeof_struct_test_msgs__action__Fibonacci_Goal * C.size_t(len(goSlice))))
+	cSlice.data = (*C.test_msgs__action__Fibonacci_Goal)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_test_msgs__action__Fibonacci_Goal))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

@@ -724,7 +724,7 @@ func (w *WaitSet) rebuildHandles() {
 	n := len(w.subscriptions) + len(w.timers) + len(w.services) + len(w.clients) + len(w.guardConditions)
 	if n > w.handlesCap {
 		C.free(unsafe.Pointer(w.handles.handles))
-		w.handles.handles = (*unsafe.Pointer)(C.malloc(C.size_t(n) * C.size_t(unsafe.Sizeof(unsafe.Pointer(nil)))))
+		w.handles.handles = (*unsafe.Pointer)(C.calloc(C.size_t(n), C.size_t(unsafe.Sizeof(unsafe.Pointer(nil)))))
 		w.handlesCap = n
 	}
 	handles := unsafe.Slice(w.handles.handles, n)[:0]

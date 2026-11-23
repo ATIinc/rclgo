@@ -186,7 +186,7 @@ func Arrays_Event__Sequence_to_C(cSlice *CArrays_Event__Sequence, goSlice []Arra
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.test_msgs__srv__Arrays_Event)(C.malloc(C.sizeof_struct_test_msgs__srv__Arrays_Event * C.size_t(len(goSlice))))
+	cSlice.data = (*C.test_msgs__srv__Arrays_Event)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_test_msgs__srv__Arrays_Event))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

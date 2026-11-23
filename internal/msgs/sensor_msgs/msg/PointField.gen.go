@@ -39,6 +39,9 @@ const (
 	PointField_UINT32 uint8 = 6
 	PointField_FLOAT32 uint8 = 7
 	PointField_FLOAT64 uint8 = 8
+	PointField_INT64 uint8 = 9
+	PointField_UINT64 uint8 = 10
+	PointField_BOOL uint8 = 11
 )
 
 type PointField struct {
@@ -195,7 +198,7 @@ func PointField__Sequence_to_C(cSlice *CPointField__Sequence, goSlice []PointFie
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.sensor_msgs__msg__PointField)(C.malloc(C.sizeof_struct_sensor_msgs__msg__PointField * C.size_t(len(goSlice))))
+	cSlice.data = (*C.sensor_msgs__msg__PointField)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_sensor_msgs__msg__PointField))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

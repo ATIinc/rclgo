@@ -1,6 +1,7 @@
 package rclgo_test
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -65,7 +66,7 @@ func TestTakeSerializedMessageInto(t *testing.T) {
 		assert.Equal(t, msg, back)
 		assert.False(t, info.ReceivedTimestamp.IsZero())
 
-		pubs, err := sub.Node().GetPublishersInfoByTopic(topic, false)
+		pubs, err := sub.Node().GetPublishersInfoByTopic(topic, true)
 		require.NoError(t, err)
 		require.Len(t, pubs, 1)
 		assert.NotEqual(t, rclgo.GID{}, info.PublisherGID)
@@ -81,7 +82,11 @@ func TestTakeSerializedMessageInto(t *testing.T) {
 			return err
 		})
 		assert.Equal(t, pubs[0].EndpointGID, typedInfo.PublisherGID)
-		assert.Greater(t, typedInfo.ReceptionSequenceNumber, info.ReceptionSequenceNumber)
+		assert.Greater(t, typedInfo.PublicationSequenceNumber, info.PublicationSequenceNumber)
+		// MaxUint64 means the RMW does not support reception sequence numbers, as with Fast DDS.
+		if info.ReceptionSequenceNumber != math.MaxUint64 {
+			assert.Greater(t, typedInfo.ReceptionSequenceNumber, info.ReceptionSequenceNumber)
+		}
 	})
 
 	t.Run("reuses dst", func(t *testing.T) {

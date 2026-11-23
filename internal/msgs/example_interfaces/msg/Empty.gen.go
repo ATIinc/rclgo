@@ -162,7 +162,7 @@ func Empty__Sequence_to_C(cSlice *CEmpty__Sequence, goSlice []Empty) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.example_interfaces__msg__Empty)(C.malloc(C.sizeof_struct_example_interfaces__msg__Empty * C.size_t(len(goSlice))))
+	cSlice.data = (*C.example_interfaces__msg__Empty)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_example_interfaces__msg__Empty))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

@@ -179,7 +179,7 @@ func Point__Sequence_to_C(cSlice *CPoint__Sequence, goSlice []Point) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.geometry_msgs__msg__Point)(C.malloc(C.sizeof_struct_geometry_msgs__msg__Point * C.size_t(len(goSlice))))
+	cSlice.data = (*C.geometry_msgs__msg__Point)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_geometry_msgs__msg__Point))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

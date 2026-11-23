@@ -177,7 +177,7 @@ func MultiArrayLayout__Sequence_to_C(cSlice *CMultiArrayLayout__Sequence, goSlic
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.std_msgs__msg__MultiArrayLayout)(C.malloc(C.sizeof_struct_std_msgs__msg__MultiArrayLayout * C.size_t(len(goSlice))))
+	cSlice.data = (*C.std_msgs__msg__MultiArrayLayout)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_std_msgs__msg__MultiArrayLayout))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

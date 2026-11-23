@@ -177,7 +177,7 @@ func GoalStatusArray__Sequence_to_C(cSlice *CGoalStatusArray__Sequence, goSlice 
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.action_msgs__msg__GoalStatusArray)(C.malloc(C.sizeof_struct_action_msgs__msg__GoalStatusArray * C.size_t(len(goSlice))))
+	cSlice.data = (*C.action_msgs__msg__GoalStatusArray)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_action_msgs__msg__GoalStatusArray))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

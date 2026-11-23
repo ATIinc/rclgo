@@ -229,7 +229,7 @@ func Defaults__Sequence_to_C(cSlice *CDefaults__Sequence, goSlice []Defaults) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.test_msgs__msg__Defaults)(C.malloc(C.sizeof_struct_test_msgs__msg__Defaults * C.size_t(len(goSlice))))
+	cSlice.data = (*C.test_msgs__msg__Defaults)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_test_msgs__msg__Defaults))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

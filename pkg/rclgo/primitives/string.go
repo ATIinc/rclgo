@@ -9,7 +9,9 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 package primitives
 
+// #include <stdlib.h>
 // #include "rosidl_runtime_c/string.h"
+// #include "rosidl_runtime_c/string_functions.h"
 import "C"
 
 import (
@@ -17,14 +19,20 @@ import (
 	"unsafe"
 )
 
+// StringAsCStruct writes m into dst, which must be an initialized or zeroed
+// rosidl_runtime_c__String. Assigning reallocates the buffer __init allocated
+// instead of leaking it.
 func StringAsCStruct(dst unsafe.Pointer, m string) {
-	mem := (*C.rosidl_runtime_c__String)(dst) // TODO add this to template generator
-	mem.data = (*C.char)(C.malloc(C.sizeof_char * C.size_t(len(m)+1)))
-	mem.size = C.size_t(len(m))
-	mem.capacity = C.size_t(len(m) + 1)
-	memData := unsafe.Slice((*byte)(unsafe.Pointer(mem.data)), mem.capacity)
-	copy(memData, m)
-	memData[len(memData)-1] = 0
+	mem := (*C.rosidl_runtime_c__String)(dst)
+	// assignn rejects a NULL value, and the data pointer of "" may be nil.
+	var empty C.char
+	value := &empty
+	if len(m) > 0 {
+		value = (*C.char)(unsafe.Pointer(unsafe.StringData(m)))
+	}
+	if !C.rosidl_runtime_c__String__assignn(mem, value, C.size_t(len(m))) {
+		panic("rclgo: out of memory converting a string to C")
+	}
 }
 
 func StringAsGoStruct(m *string, ros2_message_buffer unsafe.Pointer) {
@@ -51,14 +59,22 @@ func String__Sequence_to_Go(goSlice *[]string, cSlice CString__Sequence) {
 	}
 }
 
+// String__Sequence_to_C frees what cSlice holds, so cSlice must be initialized or zeroed.
 func String__Sequence_to_C(cSlice *CString__Sequence, goSlice []string) {
+	// Frees what __init allocated, such as an IDL default, including each
+	// element's buffer.
+	C.rosidl_runtime_c__String__Sequence__fini(cSlice)
+	// Set every field rather than rely on what fini leaves behind. data below
+	// is a plain allocation, never a rosidl::Buffer.
+	cSlice.data = nil
+	cSlice.size = 0
+	cSlice.capacity = 0
+	cSlice.is_rosidl_buffer = false
+	cSlice.owns_rosidl_buffer = false
 	if len(goSlice) == 0 {
-		cSlice.data = nil
-		cSlice.capacity = 0
-		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.rosidl_runtime_c__String)(C.malloc((C.size_t)(C.sizeof_struct_rosidl_runtime_c__String * uintptr(len(goSlice)))))
+	cSlice.data = (*C.rosidl_runtime_c__String)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_rosidl_runtime_c__String))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
