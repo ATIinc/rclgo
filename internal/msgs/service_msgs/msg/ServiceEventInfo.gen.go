@@ -194,7 +194,7 @@ func ServiceEventInfo__Sequence_to_C(cSlice *CServiceEventInfo__Sequence, goSlic
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.service_msgs__msg__ServiceEventInfo)(C.malloc(C.sizeof_struct_service_msgs__msg__ServiceEventInfo * C.size_t(len(goSlice))))
+	cSlice.data = (*C.service_msgs__msg__ServiceEventInfo)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_service_msgs__msg__ServiceEventInfo))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

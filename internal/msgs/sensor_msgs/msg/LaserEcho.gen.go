@@ -173,7 +173,7 @@ func LaserEcho__Sequence_to_C(cSlice *CLaserEcho__Sequence, goSlice []LaserEcho)
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.sensor_msgs__msg__LaserEcho)(C.malloc(C.sizeof_struct_sensor_msgs__msg__LaserEcho * C.size_t(len(goSlice))))
+	cSlice.data = (*C.sensor_msgs__msg__LaserEcho)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_sensor_msgs__msg__LaserEcho))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

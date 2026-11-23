@@ -172,7 +172,7 @@ func Polygon__Sequence_to_C(cSlice *CPolygon__Sequence, goSlice []Polygon) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.geometry_msgs__msg__Polygon)(C.malloc(C.sizeof_struct_geometry_msgs__msg__Polygon * C.size_t(len(goSlice))))
+	cSlice.data = (*C.geometry_msgs__msg__Polygon)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_geometry_msgs__msg__Polygon))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

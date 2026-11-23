@@ -175,7 +175,7 @@ func AccelStamped__Sequence_to_C(cSlice *CAccelStamped__Sequence, goSlice []Acce
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.geometry_msgs__msg__AccelStamped)(C.malloc(C.sizeof_struct_geometry_msgs__msg__AccelStamped * C.size_t(len(goSlice))))
+	cSlice.data = (*C.geometry_msgs__msg__AccelStamped)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_geometry_msgs__msg__AccelStamped))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

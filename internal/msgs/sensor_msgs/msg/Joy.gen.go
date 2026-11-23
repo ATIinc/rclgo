@@ -187,7 +187,7 @@ func Joy__Sequence_to_C(cSlice *CJoy__Sequence, goSlice []Joy) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.sensor_msgs__msg__Joy)(C.malloc(C.sizeof_struct_sensor_msgs__msg__Joy * C.size_t(len(goSlice))))
+	cSlice.data = (*C.sensor_msgs__msg__Joy)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_sensor_msgs__msg__Joy))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

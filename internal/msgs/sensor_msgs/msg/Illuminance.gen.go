@@ -180,7 +180,7 @@ func Illuminance__Sequence_to_C(cSlice *CIlluminance__Sequence, goSlice []Illumi
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.sensor_msgs__msg__Illuminance)(C.malloc(C.sizeof_struct_sensor_msgs__msg__Illuminance * C.size_t(len(goSlice))))
+	cSlice.data = (*C.sensor_msgs__msg__Illuminance)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_sensor_msgs__msg__Illuminance))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

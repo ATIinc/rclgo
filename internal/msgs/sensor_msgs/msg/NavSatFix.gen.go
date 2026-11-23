@@ -209,7 +209,7 @@ func NavSatFix__Sequence_to_C(cSlice *CNavSatFix__Sequence, goSlice []NavSatFix)
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.sensor_msgs__msg__NavSatFix)(C.malloc(C.sizeof_struct_sensor_msgs__msg__NavSatFix * C.size_t(len(goSlice))))
+	cSlice.data = (*C.sensor_msgs__msg__NavSatFix)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_sensor_msgs__msg__NavSatFix))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

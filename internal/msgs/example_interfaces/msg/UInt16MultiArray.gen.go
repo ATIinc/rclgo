@@ -178,7 +178,7 @@ func UInt16MultiArray__Sequence_to_C(cSlice *CUInt16MultiArray__Sequence, goSlic
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.example_interfaces__msg__UInt16MultiArray)(C.malloc(C.sizeof_struct_example_interfaces__msg__UInt16MultiArray * C.size_t(len(goSlice))))
+	cSlice.data = (*C.example_interfaces__msg__UInt16MultiArray)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_example_interfaces__msg__UInt16MultiArray))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

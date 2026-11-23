@@ -174,7 +174,7 @@ func Duration__Sequence_to_C(cSlice *CDuration__Sequence, goSlice []Duration) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.builtin_interfaces__msg__Duration)(C.malloc(C.sizeof_struct_builtin_interfaces__msg__Duration * C.size_t(len(goSlice))))
+	cSlice.data = (*C.builtin_interfaces__msg__Duration)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_builtin_interfaces__msg__Duration))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

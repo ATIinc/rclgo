@@ -169,7 +169,7 @@ func Bool__Sequence_to_C(cSlice *CBool__Sequence, goSlice []Bool) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.std_msgs__msg__Bool)(C.malloc(C.sizeof_struct_std_msgs__msg__Bool * C.size_t(len(goSlice))))
+	cSlice.data = (*C.std_msgs__msg__Bool)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_std_msgs__msg__Bool))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

@@ -175,7 +175,7 @@ func Builtins__Sequence_to_C(cSlice *CBuiltins__Sequence, goSlice []Builtins) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.test_msgs__msg__Builtins)(C.malloc(C.sizeof_struct_test_msgs__msg__Builtins * C.size_t(len(goSlice))))
+	cSlice.data = (*C.test_msgs__msg__Builtins)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_test_msgs__msg__Builtins))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

@@ -184,7 +184,7 @@ func ColorRGBA__Sequence_to_C(cSlice *CColorRGBA__Sequence, goSlice []ColorRGBA)
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.std_msgs__msg__ColorRGBA)(C.malloc(C.sizeof_struct_std_msgs__msg__ColorRGBA * C.size_t(len(goSlice))))
+	cSlice.data = (*C.std_msgs__msg__ColorRGBA)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_std_msgs__msg__ColorRGBA))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

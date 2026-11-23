@@ -177,7 +177,7 @@ func AccelWithCovariance__Sequence_to_C(cSlice *CAccelWithCovariance__Sequence, 
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.geometry_msgs__msg__AccelWithCovariance)(C.malloc(C.sizeof_struct_geometry_msgs__msg__AccelWithCovariance * C.size_t(len(goSlice))))
+	cSlice.data = (*C.geometry_msgs__msg__AccelWithCovariance)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_geometry_msgs__msg__AccelWithCovariance))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

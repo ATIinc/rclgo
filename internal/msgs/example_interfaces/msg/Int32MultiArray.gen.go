@@ -178,7 +178,7 @@ func Int32MultiArray__Sequence_to_C(cSlice *CInt32MultiArray__Sequence, goSlice 
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.example_interfaces__msg__Int32MultiArray)(C.malloc(C.sizeof_struct_example_interfaces__msg__Int32MultiArray * C.size_t(len(goSlice))))
+	cSlice.data = (*C.example_interfaces__msg__Int32MultiArray)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_example_interfaces__msg__Int32MultiArray))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

@@ -418,7 +418,7 @@ func BoundedSequences__Sequence_to_C(cSlice *CBoundedSequences__Sequence, goSlic
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.test_msgs__msg__BoundedSequences)(C.malloc(C.sizeof_struct_test_msgs__msg__BoundedSequences * C.size_t(len(goSlice))))
+	cSlice.data = (*C.test_msgs__msg__BoundedSequences)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_test_msgs__msg__BoundedSequences))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

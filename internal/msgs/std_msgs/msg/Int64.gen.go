@@ -169,7 +169,7 @@ func Int64__Sequence_to_C(cSlice *CInt64__Sequence, goSlice []Int64) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.std_msgs__msg__Int64)(C.malloc(C.sizeof_struct_std_msgs__msg__Int64 * C.size_t(len(goSlice))))
+	cSlice.data = (*C.std_msgs__msg__Int64)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_std_msgs__msg__Int64))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

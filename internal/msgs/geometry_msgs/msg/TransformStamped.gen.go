@@ -181,7 +181,7 @@ func TransformStamped__Sequence_to_C(cSlice *CTransformStamped__Sequence, goSlic
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.geometry_msgs__msg__TransformStamped)(C.malloc(C.sizeof_struct_geometry_msgs__msg__TransformStamped * C.size_t(len(goSlice))))
+	cSlice.data = (*C.geometry_msgs__msg__TransformStamped)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_geometry_msgs__msg__TransformStamped))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

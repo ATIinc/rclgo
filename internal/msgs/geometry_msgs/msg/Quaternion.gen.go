@@ -184,7 +184,7 @@ func Quaternion__Sequence_to_C(cSlice *CQuaternion__Sequence, goSlice []Quaterni
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.geometry_msgs__msg__Quaternion)(C.malloc(C.sizeof_struct_geometry_msgs__msg__Quaternion * C.size_t(len(goSlice))))
+	cSlice.data = (*C.geometry_msgs__msg__Quaternion)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_geometry_msgs__msg__Quaternion))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

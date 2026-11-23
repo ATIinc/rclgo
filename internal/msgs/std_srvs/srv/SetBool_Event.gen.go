@@ -186,7 +186,7 @@ func SetBool_Event__Sequence_to_C(cSlice *CSetBool_Event__Sequence, goSlice []Se
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.std_srvs__srv__SetBool_Event)(C.malloc(C.sizeof_struct_std_srvs__srv__SetBool_Event * C.size_t(len(goSlice))))
+	cSlice.data = (*C.std_srvs__srv__SetBool_Event)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_std_srvs__srv__SetBool_Event))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

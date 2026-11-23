@@ -174,7 +174,7 @@ func Twist__Sequence_to_C(cSlice *CTwist__Sequence, goSlice []Twist) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.geometry_msgs__msg__Twist)(C.malloc(C.sizeof_struct_geometry_msgs__msg__Twist * C.size_t(len(goSlice))))
+	cSlice.data = (*C.geometry_msgs__msg__Twist)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_geometry_msgs__msg__Twist))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

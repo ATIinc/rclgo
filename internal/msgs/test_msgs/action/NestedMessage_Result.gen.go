@@ -181,7 +181,7 @@ func NestedMessage_Result__Sequence_to_C(cSlice *CNestedMessage_Result__Sequence
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.test_msgs__action__NestedMessage_Result)(C.malloc(C.sizeof_struct_test_msgs__action__NestedMessage_Result * C.size_t(len(goSlice))))
+	cSlice.data = (*C.test_msgs__action__NestedMessage_Result)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_test_msgs__action__NestedMessage_Result))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

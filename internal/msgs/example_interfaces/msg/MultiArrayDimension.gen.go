@@ -180,7 +180,7 @@ func MultiArrayDimension__Sequence_to_C(cSlice *CMultiArrayDimension__Sequence, 
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.example_interfaces__msg__MultiArrayDimension)(C.malloc(C.sizeof_struct_example_interfaces__msg__MultiArrayDimension * C.size_t(len(goSlice))))
+	cSlice.data = (*C.example_interfaces__msg__MultiArrayDimension)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_example_interfaces__msg__MultiArrayDimension))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
