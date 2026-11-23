@@ -12,10 +12,12 @@ build:
 install:
 	cd cmd/rclgo-gen && go install
 
-# Tests run on rmw_zenoh against a private router, so they never join another stack's graph on the
-# default port 7447. The port is keyed on the checkout path; override it with ZENOH_TEST_PORT.
-define with_zenoh_router
-	set -euo pipefail
+# Tests run on RMW_IMPLEMENTATION, e.g. `make test RMW_IMPLEMENTATION=rmw_fastrtps_cpp`.
+RMW_IMPLEMENTATION ?= rmw_zenoh_cpp
+
+# On rmw_zenoh, tests use a private router so they never join another stack's graph on the default
+# port 7447. The port is keyed on the checkout path; override it with ZENOH_TEST_PORT.
+define start_zenoh_router
 	port="$${ZENOH_TEST_PORT:-$$((20000 + 16#$$(printf '%s' "rclgo:$(CURDIR)" | md5sum | cut -c1-8) % 10000))}"
 	listening() { (exec 3<>"/dev/tcp/127.0.0.1/$$port") 2>/dev/null; }
 	if listening; then echo "zenoh test port $$port is in use; set ZENOH_TEST_PORT" >&2; exit 1; fi
@@ -25,23 +27,28 @@ define with_zenoh_router
 	trap 'kill $$router 2>/dev/null; wait $$router 2>/dev/null || true' EXIT
 	for _ in $$(seq 100); do listening && break; sleep 0.1; done
 	if ! listening; then echo "zenoh router did not listen on port $$port" >&2; exit 1; fi
-	export RMW_IMPLEMENTATION=rmw_zenoh_cpp
 	export ZENOH_CONFIG_OVERRIDE="connect/endpoints=[\"tcp/127.0.0.1:$$port\"]"
+endef
+
+define with_test_rmw
+	set -euo pipefail
+	export RMW_IMPLEMENTATION=$(RMW_IMPLEMENTATION)
+	$(if $(filter rmw_zenoh_cpp,$(RMW_IMPLEMENTATION)),$(start_zenoh_router))
 	$(1)
 endef
 
 .PHONY: test
 test:
-	$(call with_zenoh_router,go test -count=1 -timeout=90s ./...)
+	$(call with_test_rmw,go test -count=1 -timeout=90s ./...)
 
 # cgocheck2 makes the runtime check every pointer write into non-Go memory.
 .PHONY: test-cgocheck2
 test-cgocheck2:
-	$(call with_zenoh_router,GOEXPERIMENT=cgocheck2 go test -count=1 -timeout=90s ./...)
+	$(call with_test_rmw,GOEXPERIMENT=cgocheck2 go test -count=1 -timeout=90s ./...)
 
 .PHONY: test-verbose
 test-verbose:
-	$(call with_zenoh_router,go test -v -count=1 -timeout=90s ./...)
+	$(call with_test_rmw,go test -v -count=1 -timeout=90s ./...)
 
 generate:
 	dest_path=internal/msgs
