@@ -70,8 +70,6 @@ ENV PATH=/usr/local/go/bin:${GOPATH}/bin:${PATH}
 RUN curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/main/install.sh \
         | sh -s -- -b /usr/local/bin "${GOLANGCI_LINT_VERSION}"
 
-# cgocheck=0 is required by rclgo's cgo bindings (see ros2.env).
-ENV GODEBUG=cgocheck=0
 ENV GOFLAGS=-buildvcs=false
 
 # Use the Zenoh middleware as the default RMW. Note: rmw_zenoh_cpp needs a Zenoh

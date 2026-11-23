@@ -9,10 +9,7 @@
   },
   // Stable container name instead of a randomly generated one.
   "runArgs": ["--name=rclgo-dev"],
-  // rclgo's cgo bindings need cgocheck disabled; keep it set in the running
-  // container as well as at build time.
   "containerEnv": {
-    "GODEBUG": "cgocheck=0",
     "GOFLAGS": "-buildvcs=false",
     "RMW_IMPLEMENTATION": "rmw_zenoh_cpp"
   },
@@ -27,9 +24,6 @@
         "go.toolsManagement.checkForUpdates": "off",
         "go.lintTool": "golangci-lint",
         "go.lintOnSave": "package",
-        "go.testEnvVars": {
-          "GODEBUG": "cgocheck=0"
-        },
         "terminal.integrated.defaultProfile.linux": "bash"
       }
     }

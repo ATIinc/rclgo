@@ -20,8 +20,7 @@
             "LD_LIBRARY_PATH": "/opt/ros/galactic/opt/yaml_cpp_vendor/lib:/opt/ros/galactic/lib/x86_64-linux-gnu:/opt/ros/galactic/lib",
             "ROS_DISTRO": "galactic",
             "ROS_PYTHON_VERSION": "3",
-            "ROS_VERSION": "2",
-            "GODEBUG": "cgocheck=0"
+            "ROS_VERSION": "2"
           },
         },
         "problemMatcher": ["$gcc"],
