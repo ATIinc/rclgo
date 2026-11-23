@@ -331,7 +331,7 @@ func {{$Md.Name}}__Sequence_to_C(cSlice *C{{$Md.Name}}__Sequence, goSlice []{{$M
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.{{$Md.Package}}__{{$Md.Type}}__{{$Md.Name}})(C.malloc(C.sizeof_struct_{{$Md.Package}}__{{$Md.Type}}__{{$Md.Name}} * C.size_t(len(goSlice))))
+	cSlice.data = (*C.{{$Md.Package}}__{{$Md.Type}}__{{$Md.Name}})(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_{{$Md.Package}}__{{$Md.Type}}__{{$Md.Name}}))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -724,6 +724,7 @@ package primitives
 {{end}}
 #cgo LDFLAGS: -lrcl -lrosidl_runtime_c -lrosidl_typesupport_c -lrcutils -lrmw_implementation
 
+#include <stdlib.h>
 #include "rosidl_runtime_c/string.h"
 #include "rosidl_runtime_c/primitives_sequence.h"
 
@@ -759,7 +760,7 @@ func {{.RosType | ucFirst}}__Sequence_to_C(cSlice *C{{.RosType | ucFirst}}__Sequ
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.{{.CType}})(C.malloc(C.sizeof_{{.CType}} * C.size_t(len(goSlice))))
+	cSlice.data = (*C.{{.CType}})(C.calloc(C.size_t(len(goSlice)), C.sizeof_{{.CType}}))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

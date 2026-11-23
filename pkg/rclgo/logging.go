@@ -106,7 +106,7 @@ var (
 	currentLoggingOutputHandler = DefaultLoggingOutputHandler
 	loggingInitialized          = false
 	loggingAllocator            = func() *C.rcl_allocator_t {
-		alloc := (*C.rcl_allocator_t)(C.malloc(C.sizeof_rcl_allocator_t))
+		alloc := (*C.rcl_allocator_t)(C.calloc(1, C.sizeof_rcl_allocator_t))
 		*alloc = C.rcl_get_default_allocator()
 		return alloc
 	}()

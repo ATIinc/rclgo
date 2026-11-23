@@ -523,7 +523,7 @@ func (s *ActionServer) acceptGoal(goal *GoalHandle) error {
 	runtime.UnlockOSThread()
 	// The handle must be copied because it's deallocated when the goal expires
 	// and then it wouldn't be possible to finalize it.
-	goal.handle = (*C.rcl_action_goal_handle_t)(C.malloc(C.sizeof_rcl_action_goal_handle_t))
+	goal.handle = (*C.rcl_action_goal_handle_t)(C.calloc(1, C.sizeof_rcl_action_goal_handle_t))
 	*goal.handle = *handle
 	runtime.SetFinalizer(goal, func(g *GoalHandle) {
 		if g.handle != nil {

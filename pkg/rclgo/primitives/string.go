@@ -9,6 +9,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 package primitives
 
+// #include <stdlib.h>
 // #include "rosidl_runtime_c/string.h"
 import "C"
 
@@ -19,7 +20,7 @@ import (
 
 func StringAsCStruct(dst unsafe.Pointer, m string) {
 	mem := (*C.rosidl_runtime_c__String)(dst) // TODO add this to template generator
-	mem.data = (*C.char)(C.malloc(C.sizeof_char * C.size_t(len(m)+1)))
+	mem.data = (*C.char)(C.calloc(C.size_t(len(m)+1), C.sizeof_char))
 	mem.size = C.size_t(len(m))
 	mem.capacity = C.size_t(len(m) + 1)
 	memData := unsafe.Slice((*byte)(unsafe.Pointer(mem.data)), mem.capacity)
@@ -62,7 +63,7 @@ func String__Sequence_to_C(cSlice *CString__Sequence, goSlice []string) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.rosidl_runtime_c__String)(C.malloc((C.size_t)(C.sizeof_struct_rosidl_runtime_c__String * uintptr(len(goSlice)))))
+	cSlice.data = (*C.rosidl_runtime_c__String)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_rosidl_runtime_c__String))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

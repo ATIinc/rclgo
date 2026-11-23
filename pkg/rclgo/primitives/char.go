@@ -10,6 +10,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 package primitives
 
 /*
+#include <stdlib.h>
 #include "rosidl_runtime_c/string.h"
 #include "rosidl_runtime_c/primitives_sequence.h"
 */
@@ -47,7 +48,7 @@ func Char__Sequence_to_C(cSlice *CChar__Sequence, goSlice []byte) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.schar)(C.malloc(C.sizeof_schar * C.size_t(len(goSlice))))
+	cSlice.data = (*C.schar)(C.calloc(C.size_t(len(goSlice)), C.sizeof_schar))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice((*byte)(unsafe.Pointer(cSlice.data)), cSlice.size)

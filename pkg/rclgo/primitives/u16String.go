@@ -9,6 +9,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 package primitives
 
+//#include <stdlib.h>
 //#include "rosidl_runtime_c/u16string.h"
 import "C"
 
@@ -21,7 +22,7 @@ func U16StringAsCStruct(dst unsafe.Pointer, m string) { // rosidl_runtime_c__U16
 	mem := (*C.rosidl_runtime_c__U16String)(dst)
 	runescape := utf16.Encode([]rune(m))
 
-	mem.data = (*C.ushort)(C.malloc(C.sizeof_ushort * C.size_t(len(runescape)+1)))
+	mem.data = (*C.ushort)(C.calloc(C.size_t(len(runescape)+1), C.sizeof_ushort))
 	mem.size = C.size_t(len(runescape))
 	mem.capacity = C.size_t(len(runescape) + 1)
 	memData := unsafe.Slice((*uint16)(mem.data), mem.capacity)
@@ -62,7 +63,7 @@ func U16String__Sequence_to_C(cSlice *CU16String__Sequence, goSlice []string) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.rosidl_runtime_c__U16String)(C.malloc((C.size_t)(C.sizeof_struct_rosidl_runtime_c__U16String * uintptr(len(goSlice)))))
+	cSlice.data = (*C.rosidl_runtime_c__U16String)(C.calloc(C.size_t(len(goSlice)), C.sizeof_struct_rosidl_runtime_c__U16String))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

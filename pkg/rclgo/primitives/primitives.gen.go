@@ -19,6 +19,7 @@ package primitives
 
 #cgo LDFLAGS: -lrcl -lrosidl_runtime_c -lrosidl_typesupport_c -lrcutils -lrmw_implementation
 
+#include <stdlib.h>
 #include "rosidl_runtime_c/string.h"
 #include "rosidl_runtime_c/primitives_sequence.h"
 
@@ -53,7 +54,7 @@ func Bool__Sequence_to_C(cSlice *CBool__Sequence, goSlice []bool) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.bool)(C.malloc(C.sizeof_bool * C.size_t(len(goSlice))))
+	cSlice.data = (*C.bool)(C.calloc(C.size_t(len(goSlice)), C.sizeof_bool))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -97,7 +98,7 @@ func Byte__Sequence_to_C(cSlice *CByte__Sequence, goSlice []byte) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.uint8_t)(C.malloc(C.sizeof_uint8_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.uint8_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_uint8_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -141,7 +142,7 @@ func Float32__Sequence_to_C(cSlice *CFloat32__Sequence, goSlice []float32) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.float)(C.malloc(C.sizeof_float * C.size_t(len(goSlice))))
+	cSlice.data = (*C.float)(C.calloc(C.size_t(len(goSlice)), C.sizeof_float))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -185,7 +186,7 @@ func Float64__Sequence_to_C(cSlice *CFloat64__Sequence, goSlice []float64) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.double)(C.malloc(C.sizeof_double * C.size_t(len(goSlice))))
+	cSlice.data = (*C.double)(C.calloc(C.size_t(len(goSlice)), C.sizeof_double))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -229,7 +230,7 @@ func Int16__Sequence_to_C(cSlice *CInt16__Sequence, goSlice []int16) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.int16_t)(C.malloc(C.sizeof_int16_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.int16_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_int16_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -273,7 +274,7 @@ func Int32__Sequence_to_C(cSlice *CInt32__Sequence, goSlice []int32) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.int32_t)(C.malloc(C.sizeof_int32_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.int32_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_int32_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -317,7 +318,7 @@ func Int64__Sequence_to_C(cSlice *CInt64__Sequence, goSlice []int64) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.int64_t)(C.malloc(C.sizeof_int64_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.int64_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_int64_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -361,7 +362,7 @@ func Int8__Sequence_to_C(cSlice *CInt8__Sequence, goSlice []int8) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.int8_t)(C.malloc(C.sizeof_int8_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.int8_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_int8_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -405,7 +406,7 @@ func Uint16__Sequence_to_C(cSlice *CUint16__Sequence, goSlice []uint16) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.uint16_t)(C.malloc(C.sizeof_uint16_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.uint16_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_uint16_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -449,7 +450,7 @@ func Uint32__Sequence_to_C(cSlice *CUint32__Sequence, goSlice []uint32) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.uint32_t)(C.malloc(C.sizeof_uint32_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.uint32_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_uint32_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -493,7 +494,7 @@ func Uint64__Sequence_to_C(cSlice *CUint64__Sequence, goSlice []uint64) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.uint64_t)(C.malloc(C.sizeof_uint64_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.uint64_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_uint64_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)
@@ -537,7 +538,7 @@ func Uint8__Sequence_to_C(cSlice *CUint8__Sequence, goSlice []uint8) {
 		cSlice.size = 0
 		return
 	}
-	cSlice.data = (*C.uint8_t)(C.malloc(C.sizeof_uint8_t * C.size_t(len(goSlice))))
+	cSlice.data = (*C.uint8_t)(C.calloc(C.size_t(len(goSlice)), C.sizeof_uint8_t))
 	cSlice.capacity = C.size_t(len(goSlice))
 	cSlice.size = cSlice.capacity
 	dst := unsafe.Slice(cSlice.data, cSlice.size)

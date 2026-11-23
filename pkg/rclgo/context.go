@@ -224,9 +224,9 @@ func NewContextWithOpts(rclArgs *Args, opts *ContextOptions) (ctx *Context, err 
 		opts = NewDefaultContextOptions()
 	}
 
-	ctx.rcl_allocator_t = (*C.rcl_allocator_t)(C.malloc(C.sizeof_rcl_allocator_t))
+	ctx.rcl_allocator_t = (*C.rcl_allocator_t)(C.calloc(1, C.sizeof_rcl_allocator_t))
 	*ctx.rcl_allocator_t = C.rcl_get_default_allocator()
-	ctx.rcl_context_t = (*C.rcl_context_t)(C.malloc(C.sizeof_rcl_context_t))
+	ctx.rcl_context_t = (*C.rcl_context_t)(C.calloc(1, C.sizeof_rcl_context_t))
 	*ctx.rcl_context_t = C.rcl_get_zero_initialized_context()
 
 	if err := rclInitLogging(rclArgs, false); err != nil {
