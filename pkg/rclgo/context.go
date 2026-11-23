@@ -25,6 +25,7 @@ import (
 	"io"
 	"maps"
 	"math"
+	"os"
 	"runtime"
 	"slices"
 	"sync"
@@ -211,6 +212,9 @@ automatically using rclArgs for logging configuration.
 If opts is nil, default options are used.
 */
 func NewContextWithOpts(rclArgs *Args, opts *ContextOptions) (ctx *Context, err error) {
+	// rcl reads RMW_IMPLEMENTATION in C, which the go test cache cannot see; this
+	// read keys cached test results on the RMW.
+	_ = os.Getenv("RMW_IMPLEMENTATION")
 	ctx = &Context{}
 	defer onErr(&err, ctx.Close)
 
