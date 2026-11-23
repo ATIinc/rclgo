@@ -45,7 +45,8 @@ go generate
 go build
 
 ./greeter &
-msg=$(ros2 topic echo --once /greeter/hello greeting_msgs/msg/Hello)
+# A running ros2 daemon may be on another Zenoh router than this test.
+msg=$(ros2 topic echo --no-daemon --once /greeter/hello greeting_msgs/msg/Hello)
 test "$msg" == $'name: gopher\n---'
 `)
 }
