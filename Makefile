@@ -17,7 +17,7 @@ install:
 define with_zenoh_router
 	set -euo pipefail
 	port="$${ZENOH_TEST_PORT:-$$((20000 + 16#$$(printf '%s' "rclgo:$(CURDIR)" | md5sum | cut -c1-8) % 10000))}"
-	listening() { ss -ltnH "( sport = :$$port )" | grep -q .; }
+	listening() { (exec 3<>"/dev/tcp/127.0.0.1/$$port") 2>/dev/null; }
 	if listening; then echo "zenoh test port $$port is in use; set ZENOH_TEST_PORT" >&2; exit 1; fi
 	ZENOH_CONFIG_OVERRIDE="listen/endpoints=[\"tcp/127.0.0.1:$$port\"]" \
 		/opt/ros/$${ROS_DISTRO}/lib/rmw_zenoh_cpp/rmw_zenohd >/dev/null 2>&1 &
