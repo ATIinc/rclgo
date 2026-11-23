@@ -33,11 +33,11 @@ jobs:
           apt-get update
           apt-get install -y \
             make \
-            ros-lyrical-action-msgs \
-            ros-lyrical-example-interfaces \
-            ros-lyrical-test-msgs \
-            ros-lyrical-rmw-zenoh-cpp \
-            ros-lyrical-rmw-fastrtps-cpp
+            ros-${ROS_DISTRO}-action-msgs \
+            ros-${ROS_DISTRO}-example-interfaces \
+            ros-${ROS_DISTRO}-test-msgs \
+            ros-${ROS_DISTRO}-rmw-zenoh-cpp \
+            ros-${ROS_DISTRO}-rmw-fastrtps-cpp
 
       - name: Run tests
         shell: bash
@@ -65,9 +65,9 @@ jobs:
         run: |
           apt-get update
           apt-get install -y \
-            ros-lyrical-action-msgs \
-            ros-lyrical-example-interfaces \
-            ros-lyrical-test-msgs
+            ros-${ROS_DISTRO}-action-msgs \
+            ros-${ROS_DISTRO}-example-interfaces \
+            ros-${ROS_DISTRO}-test-msgs
           # Source ROS so golangci-lint can compile the cgo packages (it runs
           # the C compiler but not the binaries).
           source /opt/ros/${ROS_DISTRO}/setup.bash
